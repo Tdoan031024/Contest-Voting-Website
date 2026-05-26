@@ -2,56 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Candidate } from '@huitfest/shared';
+import Link from 'next/link';
 
 const LOCAL_MOCK_CANDIDATES: Candidate[] = [
-  {
-    id: '1',
-    sbd: '085',
-    name: 'Nguyễn Thanh Tân',
-    votes: 106100,
-    imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=300&h=380',
-    description: 'Thí sinh tài năng của HUIT\'s Iconic 2024.',
-  },
-  {
-    id: '2',
-    sbd: '089',
-    name: 'Nguyễn Đình Tú',
-    votes: 62215,
-    imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300&h=380',
-    description: 'Chiến binh bản lĩnh mang màu sắc nhiệt huyết.',
-  },
-  {
-    id: '3',
-    sbd: '024',
-    name: 'Lê Ngọc Yến Vy',
-    votes: 22800,
-    imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=300&h=380',
-    description: 'Đại diện cho vẻ đẹp tri thức và sự duyên dáng.',
-  },
-  {
-    id: '4',
-    sbd: '096',
-    name: 'Võ Bá Thiện',
-    votes: 20590,
-    imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300&h=380',
-    description: 'Nụ cười tỏa nắng cùng trái tim ấm áp.',
-  },
-  {
-    id: '5',
-    sbd: '018',
-    name: 'Trần Tuyết Ngân',
-    votes: 16070,
-    imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=300&h=380',
-    description: 'Gương mặt cá tính đầy bứt phá.',
-  },
-  {
-    id: '6',
-    sbd: '095',
-    name: 'Nguyễn Thị Cẩm Thanh',
-    votes: 8410,
-    imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=300&h=380',
-    description: 'Sự kết hợp hoàn hảo giữa năng động và dịu dàng.',
-  },
+  { id: '1', sbd: '085', name: 'Nguyễn Thanh Tân', votes: 106100, imageUrl: '/original_assets/image389b.png', description: 'Thí sinh tài năng của HUIT\'s Iconic 2024.' },
+  { id: '2', sbd: '089', name: 'Nguyễn Đình Tú', votes: 62215, imageUrl: '/original_assets/image725f.png', description: 'Chiến binh bản lĩnh mang màu sắc nhiệt huyết.' },
+  { id: '3', sbd: '024', name: 'Lê Ngọc Yến Vy', votes: 22800, imageUrl: '/original_assets/image940e.jpg', description: 'Đại diện cho vẻ đẹp tri thức và sự duyên dáng.' },
+  { id: '4', sbd: '096', name: 'Võ Bá Thiện', votes: 20590, imageUrl: '/original_assets/image8681.png', description: 'Nụ cười tỏa nắng cùng trái tim ấm áp.' },
+  { id: '5', sbd: '018', name: 'Trần Tuyết Ngân', votes: 16070, imageUrl: '/original_assets/imageada2.png', description: 'Gương mặt cá tính đầy bứt phá.' },
+  { id: '6', sbd: '095', name: 'Nguyễn Thị Cẩm Thanh', votes: 8410, imageUrl: '/original_assets/image4706.png', description: 'Sự kết hợp hoàn hảo giữa năng động và dịu dàng.' },
 ];
 
 export default function HomePage() {
@@ -60,7 +19,6 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Try to load candidates from NestJS API
     async function loadCandidates() {
       setIsLoading(true);
       try {
@@ -78,8 +36,7 @@ export default function HomePage() {
     loadCandidates();
   }, []);
 
-  const handleVote = async (sbd: string) => {
-    // Try to vote via NestJS API
+  const handleVote = async (sbd: string, name: string) => {
     try {
       const res = await fetch(`http://localhost:5000/api/candidates/${sbd}/vote`, {
         method: 'POST',
@@ -89,118 +46,216 @@ export default function HomePage() {
       if (res.ok) {
         const updated = await res.json();
         setCandidates(prev => prev.map(c => c.sbd === sbd ? updated : c));
-        alert(`Bình chọn thành công cho ${updated.name}!`);
+        alert(`Bình chọn thành công cho ${name}!`);
         return;
       }
     } catch (err) {
       console.log('NestJS Backend API offline, executing client-side mock vote.');
     }
 
-    // Client-side local state vote (fallback)
     setCandidates(prev =>
       prev.map(c => c.sbd === sbd ? { ...c, votes: c.votes + 1 } : c)
     );
-    const candidate = candidates.find(c => c.sbd === sbd);
-    alert(`Bình chọn offline thành công cho ${candidate?.name}!`);
+    alert(`Bình chọn offline thành công cho ${name}!`);
   };
 
-  const filteredCandidates = candidates.filter(c =>
+  // Sort candidates by votes descending
+  const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes);
+
+  const filteredCandidates = sortedCandidates.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) || c.sbd.includes(search)
   );
 
   return (
-    <div className="w-full flex flex-col items-center">
+    <>
+      <style>{`
+        @media (min-width: 812px) {
+          .iUzfqH {
+            background-image: url(/media-platform.1vote.vn/uploads/tAtj0/1727187460437.jpg);
+            background-color: white;
+            background-attachment: fixed;
+            background-size: cover;
+            background-repeat: no-repeat;
+          }
+        }
+      `}</style>
       
-      {/* Banner / Title Section */}
-      <section className="w-full text-center py-16 bg-[#0B1530] border-b border-white/5 relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#1A284F]/30 to-transparent pointer-events-none"></div>
-        <div className="max-w-[1200px] mx-auto px-6 z-10 relative">
-          <h1 className="text-[28px] sm:text-[48px] font-extrabold uppercase tracking-wide text-white">
-            Danh sách thí sinh
-          </h1>
-          <p className="text-[16px] sm:text-[24px] text-secondary font-medium tracking-widest uppercase mt-2">
-            HUIT's Iconic
-          </p>
+      <main className="sc-908a50-0 iUzfqH flex-1">
+        
+        {/* Banner Section */}
+        <div className="sc-1a037b37-0 fgDcug relative flex flex-col">
+          <div className="relative w-[100vw] max-w-[100%] h-[calc(100vw/1440*768)] sm:h-[calc(100vw/1440*768)]">
+            <h1 className="text-transparent absolute -z-[1] text-transparent-transparent">HUIT's Iconic</h1>
+            <img alt="Banner" className="sm:block aspect-[1440/768] hidden" style={{ color: 'transparent', width: '100%', maxWidth: '100%', height: 'auto' }} src="/original_assets/image974c.jpg"/>
+            <img alt="Banner" className="sm:hidden aspect-[1440/768] block" style={{ color: 'transparent', width: '100%', maxWidth: '100%', height: 'auto' }} src="/original_assets/image6981.jpg"/>
+          </div>
+        </div>
 
-          {/* Search bar */}
-          <div className="max-w-[500px] mx-auto mt-10">
-            <div className="flex items-center space-x-3 rounded-full px-5 py-3 border border-white/10 bg-[#1D253E] h-[48px] sm:h-[54px] w-full">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white/60"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-              <input
-                type="text"
-                placeholder="Tìm kiếm theo tên hoặc SBD..."
-                className="w-full bg-transparent focus:outline-none text-white placeholder-white/40 text-[15px]"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
+        {/* Voting & Candidates Container */}
+        <div className="relative">
+          <div className="sc-1a037b37-0 ekqPrV relative">
+            <div className="pt-3 sm:pt-[85px] flex flex-col items-center">
+              
+              {/* Leaderboard title */}
+              <div className="flex flex-col space-y-4 text-center">
+                <div className="flex flex-col space-y-1.5">
+                  <h2 className="text-[22px] sm:text-[42px] tracking-[-1px] leading-[27px] sm:leading-[52px] font-normal uppercase text-black dark:text-neutral-white">
+                    Bảng xếp hạng
+                  </h2>
+                  <h3 className="text-[16px] sm:text-[28px] py-1 leading-[24px] uppercase font-normal text-black dark:text-neutral-white">
+                    HUIT's Iconic
+                  </h3>
+                </div>
+              </div>
+
+              {/* Search Bar matching sample web */}
+              <div className="max-w-[615px] w-full mt-3 sm:mt-[64px]">
+                <div className="flex items-center space-x-[8px] rounded-[20px] px-[8px] py-[7px] border border-grey-lightGrey1 dark:border-grey-darkGrey bg-grey-lightGrey2 dark:bg-grey-dimGrey h-[36px] sm:h-[60px] !px-2 rounded-[40px] w-full">
+                  <div className="fill-neutral-neutral1 dark:fill-neutral-white pl-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="18" viewBox="0 0 17 18">
+                      <path d="M0 7.4353C0 6.52222 0.171549 5.66724 0.514648 4.87036C0.857747 4.06795 1.33366 3.36239 1.94238 2.75366C2.55111 2.14494 3.25391 1.66903 4.05078 1.32593C4.85319 0.982829 5.71094 0.811279 6.62402 0.811279C7.53711 0.811279 8.39209 0.982829 9.18896 1.32593C9.99137 1.66903 10.6969 2.14494 11.3057 2.75366C11.9144 3.36239 12.3903 4.06795 12.7334 4.87036C13.0765 5.66724 13.248 6.52222 13.248 7.4353C13.248 8.19344 13.1263 8.91284 12.8828 9.59351C12.6449 10.2742 12.3128 10.8912 11.8867 11.4446L15.9458 15.5286C16.0343 15.6171 16.1007 15.7195 16.145 15.8357C16.1948 15.9519 16.2197 16.0764 16.2197 16.2092C16.2197 16.3918 16.1782 16.5579 16.0952 16.7073C16.0177 16.8567 15.9071 16.9729 15.7632 17.0559C15.6193 17.1444 15.4533 17.1887 15.2651 17.1887C15.1323 17.1887 15.005 17.1638 14.8833 17.114C14.7671 17.0697 14.6592 17.0006 14.5596 16.9065L10.4756 12.8142C9.93327 13.2016 9.33561 13.5059 8.68262 13.7273C8.02962 13.9486 7.34342 14.0593 6.62402 14.0593C5.71094 14.0593 4.85319 13.8878 4.05078 13.5447C3.25391 13.2016 2.55111 12.7257 1.94238 12.1169C1.33366 11.5082 0.857747 10.8054 0.514648 10.0085C0.171549 9.20614 0 8.34839 0 7.4353ZM1.41943 7.4353C1.41943 8.1547 1.55225 8.82983 1.81787 9.46069C2.08903 10.086 2.46257 10.6366 2.93848 11.1125C3.41992 11.5885 3.97331 11.962 4.59863 12.2332C5.22949 12.5043 5.90462 12.6399 6.62402 12.6399C7.34342 12.6399 8.01579 12.5043 8.64111 12.2332C9.27197 11.962 9.82536 11.5885 10.3013 11.1125C10.7772 10.6366 11.1507 10.086 11.4219 9.46069C11.693 8.82983 11.8286 8.1547 11.8286 7.4353C11.8286 6.7159 11.693 6.04354 11.4219 5.41821C11.1507 4.78735 10.7772 4.23397 10.3013 3.75806C9.82536 3.27661 9.27197 2.90308 8.64111 2.63745C8.01579 2.36629 7.34342 2.23071 6.62402 2.23071C5.90462 2.23071 5.22949 2.36629 4.59863 2.63745C3.97331 2.90308 3.41992 3.27661 2.93848 3.75806C2.46257 4.23397 2.08903 4.78735 1.81787 5.41821C1.55225 6.04354 1.41943 6.7159 1.41943 7.4353Z" fill="currentColor"></path>
+                    </svg>
+                  </div>
+                  <input 
+                    className="w-full bg-transparent focus:outline-none text-neutral-neutral1 dark:text-neutral-white placeholder:text-neutral-neutral1 dark:placeholder:text-neutral-white pl-2 text-[14px]" 
+                    placeholder="Tìm kiếm thí sinh..." 
+                    type="text" 
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {/* Grid of Candidates - mirroring 1vote structure */}
+              <div className="w-full mt-3 sm:mt-[64px]"></div>
+              
+              {isLoading ? (
+                <div className="flex justify-center items-center py-20 text-white">
+                  Đang tải danh sách thí sinh...
+                </div>
+              ) : filteredCandidates.length === 0 ? (
+                <div className="text-center py-20 text-white/50">
+                  Không tìm thấy thí sinh phù hợp
+                </div>
+              ) : (
+                <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[40px] md:gap-[60px] justify-items-center max-w-[1110px] mx-auto px-4">
+                  {filteredCandidates.map((c) => {
+                    // Find actual rank based on overall sorted position
+                    const rank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
+                    
+                    return (
+                      <div key={c.id} className="h-full group w-full mobile:max-w-[286px] sm:max-w-[340px]">
+                        <div className="relative backdrop-blur-[8px] rounded-[24px] border border-transparent bg-[rgba(222,222,222,0.15)] group-hover:bg-[rgb(222,222,222)]/40 group-hover:dark:bg-[rgb(222,222,222)]/20 group-hover:shadow group-hover:shadow-black/10 group-hover:dark:shadow-white/10 cursor-pointer transition-all duration-300">
+                          
+                          {/* Candidate Image Link */}
+                          <Link className="focus:outline-none relative flex cursor-pointer w-full aspect-[360/461]" href={`/thi-sinh/${c.sbd}`}>
+                            <div className="mx-2 mt-2 flex-1 relative sm:mx-3 sm:mt-3 overflow-hidden rounded-lg">
+                              <img 
+                                alt={c.name} 
+                                className="object-cover object-top w-full h-full group-hover:scale-105 transition-transform duration-500" 
+                                src={c.imageUrl}
+                              />
+                            </div>
+                          </Link>
+
+                          {/* Details section */}
+                          <div className="flex-1 flex flex-col px-3 pt-2 pb-3">
+                            <div className="flex-1 flex flex-col justify-between space-y-2">
+                              
+                              <div className="rounded-[12px] flex justify-between items-center px-3 py-0.5 bg-grey-lightGrey2 dark:bg-grey-dimGrey h-[36px]">
+                                <div className="flex sm:hidden w-[72px] text-center gap-[6px] items-center">
+                                  <span className="text-[12px] text-neutral-neutral1 dark:text-neutral-white">SBD:</span>
+                                  <p className="text-[14px] font-bold text-neutral-neutral1 dark:text-neutral-white">{c.sbd}</p>
+                                </div>
+                                <div className="hidden sm:flex w-[72px] text-center gap-[6px] items-center">
+                                  <p className="text-[13px] text-neutral-neutral1 dark:text-neutral-white">SBD:</p>
+                                  <p className="text-[15px] font-bold text-neutral-neutral1 dark:text-neutral-white">{c.sbd}</p>
+                                </div>
+                                <div className="h-[24px] w-[1px] bg-neutral-neutral1/20 dark:bg-[#94949E]/20"></div>
+                                <div className="w-[110px] sm:w-[140px] text-right">
+                                  <h6 className="text-[15px] font-bold text-neutral-neutral1 leading-[27px] dark:text-neutral-white">
+                                    {c.votes.toLocaleString()}
+                                  </h6>
+                                </div>
+                              </div>
+
+                              <div className="flex flex-1 flex-col space-y-2">
+                                <div className="h-[12px]"></div>
+                                <div className="h-[54px] py-[5px]">
+                                  <p className="text-[18px] font-bold text-neutral-neutral1 dark:text-neutral-white leading-snug">
+                                    {c.name}
+                                  </p>
+                                </div>
+                              </div>
+
+                            </div>
+
+                            {/* Vote & Laurel ranking */}
+                            <div className="flex items-end gap-3 h-[72px] sm:gap-4 sm:h-[80px] mt-2">
+                              <button 
+                                onClick={() => handleVote(c.sbd, c.name)}
+                                className="sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 bg-primary dark:bg-neutral-white rounded-lg py-[10px] w-full border-0 cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all"
+                              >
+                                <p className="text-[16px] leading-[20px] text-neutral-white dark:text-primary font-medium">Bình chọn</p>
+                              </button>
+
+                              {/* Laurel Rank graphics */}
+                              <div className="relative flex-shrink-0">
+                                <div className="hidden sm:block w-[71.5px] sm:w-[80px]">
+                                  <img alt="" className="block dark:hidden" src="/original_assets/static/media/laurel-light-big.58ee16d9.svg"/>
+                                  <img alt="" className="hidden dark:block" src="/original_assets/static/media/laurel-dark-big.6d9a838c.svg"/>
+                                </div>
+                                <div className="block sm:hidden w-[71.5px]">
+                                  <img alt="" className="block dark:hidden" src="/original_assets/static/media/laurel-light-small.27b47318.svg"/>
+                                  <img alt="" className="hidden dark:block" src="/original_assets/static/media/laurel-dark-small.e0887cc3.svg"/>
+                                </div>
+                                <div className="hidden sm:block absolute w-full text-center top-[14px]">
+                                  <h3 className="text-[20px] font-bold text-grey-darkGrey dark:text-grey-lightGrey2">{rank}</h3>
+                                </div>
+                                <div className="block sm:hidden absolute w-full text-center top-[18px]">
+                                  <span className="text-grey-darkGrey dark:text-grey-lightGrey2 text-[18px] font-semibold leading-[120%] tracking-[-0.48px]">{rank}</span>
+                                </div>
+                              </div>
+                            </div>
+
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Candidates Grid */}
-      <section className="w-full max-w-[1200px] mx-auto px-6 py-12">
-        {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-secondary"></div>
-          </div>
-        ) : filteredCandidates.length === 0 ? (
-          <div className="text-center py-20 text-white/50">
-            Không tìm thấy thí sinh phù hợp
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
-            {filteredCandidates.map(c => (
-              <div key={c.id} className="w-full max-w-[320px] rounded-[24px] overflow-hidden bg-[rgba(222,222,222,0.06)] hover:bg-[rgba(222,222,222,0.12)] border border-white/5 hover:border-white/10 hover:shadow-xl transition-all duration-300 flex flex-col justify-between">
-                
-                {/* Photo link */}
-                <a href={`/thi-sinh/${c.sbd}`} className="block relative aspect-[286/354] w-full overflow-hidden group">
-                  <img
-                    alt={c.name}
-                    src={c.imageUrl}
-                    className="object-cover object-top w-full h-full group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                    <span className="text-[12px] text-white/80 font-medium underline">Xem thông tin chi tiết</span>
-                  </div>
-                </a>
-
-                {/* Body details */}
-                <div className="p-4 flex flex-col space-y-4">
-                  {/* SBD & Points Header */}
-                  <div className="h-[38px] rounded-[12px] flex justify-between items-center px-4 bg-[rgba(255,255,255,0.04)] border border-white/5">
-                    <div className="flex items-center gap-1">
-                      <span className="text-[12px] text-white/60">SBD:</span>
-                      <span className="text-[14px] font-bold text-secondary">{c.sbd}</span>
-                    </div>
-                    <div className="h-[18px] w-[1px] bg-white/10"></div>
-                    <span className="text-[14px] font-bold text-white">
-                      {c.votes.toLocaleString()}
-                    </span>
-                  </div>
-
-                  {/* Name */}
-                  <div className="h-[48px] flex items-center">
-                    <h3 className="text-[18px] font-bold text-white leading-tight">
-                      {c.name}
-                    </h3>
-                  </div>
-
-                  {/* Vote Button */}
-                  <button
-                    onClick={() => handleVote(c.sbd)}
-                    className="w-full py-2.5 bg-primary hover:bg-[#1E3A8A] border border-[#0A2FFF] rounded-[12px] text-white text-[15px] font-semibold tracking-wide transition-all shadow-md active:scale-[0.98]"
-                  >
-                    Bình chọn
-                  </button>
-                </div>
-
+        {/* Sponsor Section matching sample web */}
+        <div className="sc-1a037b37-0 ekqPrV relative">
+          <div className="pt-8 sm:pt-[85px] flex flex-col space-y-[48px] items-center">
+            <div className="flex flex-col space-y-2 text-center">
+              <div className="flex flex-col space-y-1.5">
+                <h2 className="text-[22px] sm:text-[42px] tracking-[-1px] leading-[27px] sm:leading-[52px] font-normal uppercase text-black dark:text-neutral-white">
+                  NHÀ TÀI TRỢ &amp; ĐỐI TÁC
+                </h2>
+                <h3 className="text-[16px] sm:text-[28px] py-1 leading-[24px] uppercase font-normal text-black dark:text-neutral-white">
+                  HUIT's Iconic
+                </h3>
               </div>
-            ))}
+            </div>
+            
+            <div className="w-full max-w-[1000px] px-4">
+              <img alt="Sponsors Logo" className="w-full h-auto object-contain rounded-xl" src="/original_assets/image4b12.png"/>
+            </div>
           </div>
-        )}
-      </section>
+        </div>
 
-    </div>
+        {/* Mobile Background bottom overlay */}
+        <div className="fixed left-0 top-0 right-0 supports-[height:100cqh]:h-[100cqh] supports-[height:100dvh]:h-[100dvh] sm:hidden -z-50">
+          <img alt="" className="absolute top-0 max-w-[1920px] max-h-[1080px] h-[1920px] w-[1080px]" src="/original_assets/image87ce.jpg"/>
+        </div>
+
+      </main>
+    </>
   );
 }
