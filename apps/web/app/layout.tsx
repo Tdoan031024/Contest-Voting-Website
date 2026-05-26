@@ -27,59 +27,6 @@ export default function RootLayout({
         <link rel="stylesheet" href="/css/be16ba848ed13f21.css" />
         <link rel="stylesheet" href="/css/431944509084d071.css" />
         <link rel="stylesheet" href="/eventista-platform-api.1vote.vn/v1/internal/tenants/tAtj0/colors.css" />
-        
-        <style>{`
-          /* Custom overrides for monorepo layouts */
-          body {
-            background-color: #030612 !important;
-            margin: 0;
-            font-family: 'Inter', sans-serif;
-          }
-          .RKByV {
-            padding: 0px 128px;
-            padding-top: 0;
-            width: calc(1311px + 128px * 2);
-            margin-left: auto;
-            margin-right: auto;
-          }
-          @media (max-width: 1504px) {
-            .RKByV { width: 1312px; padding: 0px 0px; }
-          }
-          @media (max-width: 1312px) {
-            .RKByV { width: 1110px; padding: 0px 0px; }
-          }
-          @media (max-width: 1199px) {
-            .RKByV { width: calc(984px + 69px * 2); padding: 0px 0px; }
-          }
-          @media (max-width: 1121px) {
-            .RKByV { width: calc(744px + 37px * 2); padding: 0px 37px; }
-          }
-          @media (max-width: 812px) {
-            .RKByV { width: 100%; padding: 0px 0px; margin-left: 0; margin-right: 0; }
-          }
-          .ekqPrV {
-            padding: 0px 128px;
-            padding-top: 0;
-            width: calc(1311px + 128px * 2);
-            margin-left: auto;
-            margin-right: auto;
-          }
-          @media (max-width: 1504px) {
-            .ekqPrV { width: 1312px; padding: 0px 0px; }
-          }
-          @media (max-width: 1312px) {
-            .ekqPrV { width: 1110px; padding: 0px 0px; }
-          }
-          @media (max-width: 1199px) {
-            .ekqPrV { width: calc(984px + 69px * 2); padding: 0px 0px; }
-          }
-          @media (max-width: 1121px) {
-            .ekqPrV { width: calc(744px + 37px * 2); padding: 0px 37px; }
-          }
-          @media (max-width: 812px) {
-            .ekqPrV { width: auto; padding: 0px 16px; margin-left: auto; margin-right: auto; }
-          }
-        `}</style>
       </head>
       <body className="dark">
         <main>

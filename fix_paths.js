@@ -17,4 +17,15 @@ function fixDir(dir) {
       // Fix /_next/static/media/ -> /images/
       newContent = newContent.split('/_next/static/media/').join('/images/');
       // Fix /_next/static/css/ -> /css/
-      newContent
+      newContent = newContent.split('/_next/static/css/').join('/css/');
+      
+      if (newContent !== content) {
+        fs.writeFileSync(full, newContent, 'utf8');
+        console.log('Fixed: ' + path.relative(appDir, full));
+      }
+    }
+  }
+}
+
+fixDir(appDir);
+console.log('All done!');

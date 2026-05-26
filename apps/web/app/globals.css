@@ -5,7 +5,7 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #030612;
+  background-color: #030612 !important;
   color: #FFFFFF;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -17,3 +17,51 @@ body {
 .box-shadow-12 {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
+
+/* Custom overrides for monorepo layouts */
+.RKByV {
+  padding: 0px 128px;
+  padding-top: 0;
+  width: calc(1311px + 128px * 2);
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (max-width: 1504px) {
+  .RKByV { width: 1312px; padding: 0px 0px; }
+}
+@media (max-width: 1312px) {
+  .RKByV { width: 1110px; padding: 0px 0px; }
+}
+@media (max-width: 1199px) {
+  .RKByV { width: calc(984px + 69px * 2); padding: 0px 0px; }
+}
+@media (max-width: 1121px) {
+  .RKByV { width: calc(744px + 37px * 2); padding: 0px 37px; }
+}
+@media (max-width: 812px) {
+  .RKByV { width: 100%; padding: 0px 0px; margin-left: 0; margin-right: 0; }
+}
+
+.ekqPrV {
+  padding: 0px 128px;
+  padding-top: 0;
+  width: calc(1311px + 128px * 2);
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (max-width: 1504px) {
+  .ekqPrV { width: 1312px; padding: 0px 0px; }
+}
+@media (max-width: 1312px) {
+  .ekqPrV { width: 1110px; padding: 0px 0px; }
+}
+@media (max-width: 1199px) {
+  .ekqPrV { width: calc(984px + 69px * 2); padding: 0px 0px; }
+}
+@media (max-width: 1121px) {
+  .ekqPrV { width: calc(744px + 37px * 2); padding: 0px 37px; }
+}
+@media (max-width: 812px) {
+  .ekqPrV { width: auto; padding: 0px 16px; margin-left: auto; margin-right: auto; }
+}
+
