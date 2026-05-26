@@ -21,12 +21,65 @@ export default function RootLayout({
         <title>Cổng bình chọn HUIT's Iconic</title>
         <meta name="description" content="Bình chọn HUIT's Warrior" />
         <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16" />
-        
+
         {/* Load original CSS files copied from Binhchon mirror */}
         <link rel="stylesheet" href="/css/82aef30d151230ac.css" />
         <link rel="stylesheet" href="/css/be16ba848ed13f21.css" />
         <link rel="stylesheet" href="/css/431944509084d071.css" />
         <link rel="stylesheet" href="/eventista-platform-api.1vote.vn/v1/internal/tenants/tAtj0/colors.css" />
+
+        <style suppressHydrationWarning>{`
+          /* Custom overrides for monorepo layouts */
+          body {
+            background-color: #030612 !important;
+            margin: 0;
+            font-family: Inter, sans-serif;
+          }
+          .RKByV {
+            padding: 0px 128px;
+            padding-top: 0;
+            width: calc(1311px + 128px * 2);
+            margin-left: auto;
+            margin-right: auto;
+          }
+          @media (max-width: 1504px) {
+            .RKByV { width: 1312px; padding: 0px 0px; }
+          }
+          @media (max-width: 1312px) {
+            .RKByV { width: 1110px; padding: 0px 0px; }
+          }
+          @media (max-width: 1199px) {
+            .RKByV { width: calc(984px + 69px * 2); padding: 0px 0px; }
+          }
+          @media (max-width: 1121px) {
+            .RKByV { width: calc(744px + 37px * 2); padding: 0px 37px; }
+          }
+          @media (max-width: 812px) {
+            .RKByV { width: 100%; padding: 0px 0px; margin-left: 0; margin-right: 0; }
+          }
+          .ekqPrV {
+            padding: 0px 128px;
+            padding-top: 0;
+            width: calc(1311px + 128px * 2);
+            margin-left: auto;
+            margin-right: auto;
+          }
+          @media (max-width: 1504px) {
+            .ekqPrV { width: 1312px; padding: 0px 0px; }
+          }
+          @media (max-width: 1312px) {
+            .ekqPrV { width: 1110px; padding: 0px 0px; }
+          }
+          @media (max-width: 1199px) {
+            .ekqPrV { width: calc(984px + 69px * 2); padding: 0px 0px; }
+          }
+          @media (max-width: 1121px) {
+            .ekqPrV { width: calc(744px + 37px * 2); padding: 0px 37px; }
+          }
+          @media (max-width: 812px) {
+            .ekqPrV { width: auto; padding: 0px 16px; margin-left: auto; margin-right: auto; }
+          }
+        `}</style>
       </head>
       <body className="dark">
         <main>
@@ -36,10 +89,10 @@ export default function RootLayout({
               <div className="absolute h-[60px] top-0 left-0 right-0 w-full flex justify-center bg-[#272B34] box-shadow-12">
                 <div className="sc-1a037b37-0 RKByV flex w-full md:justify-between">
                   <div className="flex-1 flex md:flex-auto">
-                    
+
                     {/* Mobile Menu Icon */}
                     <div className="flex items-center sm-desktop:hidden h-[60px]">
-                      <button 
+                      <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         className="focus:outline-none sc-f65501b1-0 eCoCwA fill-icon-brand-light dark:fill-icon-brand-dark h-[60px] pl-[20px] pr-1 w-[48px] flex justify-center items-center bg-transparent border-0 cursor-pointer"
                       >
@@ -54,9 +107,9 @@ export default function RootLayout({
                     {/* Logo Section */}
                     <div className="h-full flex items-center gap-1 md:gap-[40px]">
                       <Link className="focus:outline-none w-[105px] sm:w-[139px] flex items-center" href="/">
-                        <img alt="Eventista" width="139" height="16" className="mobile:max-w-[105px]" src="/images/eventista.7a1126d5.svg"/>
+                        <img alt="Eventista" width="139" height="16" className="mobile:max-w-[105px]" src="/images/eventista.7a1126d5.svg" />
                       </Link>
-                      <img alt="HUIT's Iconic" width="115" height="36" className="object-contain max-h-[60px] mobile:max-w-[60px]" src="/images/imageb821.png"/>
+                      <img alt="HUIT's Iconic" width="115" height="36" className="object-contain max-h-[60px] mobile:max-w-[60px]" src="/images/imageb821.png" />
                     </div>
                   </div>
 
@@ -169,10 +222,10 @@ export default function RootLayout({
                     <div className="flex flex-col gap-1 text-[13px] text-white/70">
                       <p>Email: <a href="mailto:support@eventista.vn" className="hover:underline">support@eventista.vn</a></p>
                       <p>Website: <a href="https://eventista.vn/" target="_blank" className="hover:underline">Eventista.vn</a></p>
-                      <p>Hotline: <br/><a href="tel:+84 90 1946686" className="hover:underline">+84 90 1946686</a></p>
+                      <p>Hotline: <br /><a href="tel:+84 90 1946686" className="hover:underline">+84 90 1946686</a></p>
                     </div>
                   </div>
-                  
+
                   <div className="flex flex-col space-y-2 max-w-[300px]">
                     <span className="text-button text-white text-[18px] font-bold">Chứng nhận bởi</span>
                     <div className="w-[186px]">
