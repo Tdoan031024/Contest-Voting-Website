@@ -1,0 +1,63 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum SponsorTier {
+  PLATINUM
+  GOLD
+  SILVER
+  PARTNER
+}
+
+model Candidate {
+  id          String   @id @default(uuid())
+  sbd         String   @unique
+  name        String
+  votes       Int      @default(0)
+  imageUrl    String
+  description String   @db.Text
+  biography   String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Sponsor {
+  id        String      @id @default(uuid())
+  name      String
+  logoUrl   String
+  tier      SponsorTier @default(PARTNER)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Banner {
+  id        String   @id @default(uuid())
+  title     String
+  imageUrl  String
+  link      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model TimelineEvent {
+  id          String   @id @default(uuid())
+  date        String
+  title       String
+  description String   @db.Text
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model VoteRecord {
+  id            String   @id @default(uuid())
+  candidateId   String
+  voterPhone    String
+  voteTime      DateTime @default(now())
+  transactionId String?
+}

@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #030612;
+  color: #FFFFFF;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.bg-radial-gradient {
+  background: radial-gradient(136.91% 72.82% at 50% 17.51%, #1A284F 0%, #060B1E 52.88%, #030612 100%);
+}
+
+.box-shadow-12 {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
