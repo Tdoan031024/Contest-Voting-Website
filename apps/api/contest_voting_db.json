@@ -1,0 +1,119 @@
+{
+  "candidates": [
+    {
+      "id": "1",
+      "sbd": "085",
+      "name": "Nguyễn Thanh Tân",
+      "votes": 106100,
+      "imageUrl": "/original_assets/image389b.png",
+      "description": "Thí sinh tài năng của HUIT's Iconic 2024.",
+      "biography": "Nguyễn Thanh Tân là sinh viên khoa Công nghệ thông tin của HUIT. Anh đam mê lập trình và hoạt động nghệ thuật, mong muốn mang lại nguồn năng lượng tích cực."
+    },
+    {
+      "id": "2",
+      "sbd": "089",
+      "name": "Nguyễn Đình Tú",
+      "votes": 62215,
+      "imageUrl": "/original_assets/image725f.png",
+      "description": "Chiến binh bản lĩnh mang màu sắc nhiệt huyết.",
+      "biography": "Nguyễn Đình Tú hiện là sinh viên khoa Quản trị kinh doanh. Với vẻ ngoài điển trai và năng lực giao tiếp xuất sắc, Tú muốn chinh phục thử thách."
+    },
+    {
+      "id": "3",
+      "sbd": "024",
+      "name": "Lê Ngọc Yến Vy",
+      "votes": 22800,
+      "imageUrl": "/original_assets/image940e.jpg",
+      "description": "Đại diện cho vẻ đẹp tri thức và sự duyên dáng.",
+      "biography": "Lê Ngọc Yến Vy, sinh viên khoa Ngoại ngữ. Cô thông thạo 2 ngoại ngữ và tích cực tham gia các phong trào sinh viên của trường."
+    },
+    {
+      "id": "4",
+      "sbd": "096",
+      "name": "Võ Bá Thiện",
+      "votes": 20590,
+      "imageUrl": "/original_assets/image8681.png",
+      "description": "Nụ cười tỏa nắng cùng trái tim ấm áp.",
+      "biography": "Võ Bá Thiện đại diện khoa Công nghệ thực phẩm. Thiện yêu thích thể thao, đặc biệt là bóng rổ, luôn hướng tới phong cách năng động."
+    },
+    {
+      "id": "5",
+      "sbd": "018",
+      "name": "Trần Tuyết Ngân",
+      "votes": 16070,
+      "imageUrl": "/original_assets/imageada2.png",
+      "description": "Gương mặt cá tính đầy bứt phá.",
+      "biography": "Trần Tuyết Ngân là sinh viên khoa Tài chính ngân hàng. Ngân có năng khiếu nhảy hiện đại và khả năng lãnh đạo nhóm xuất sắc."
+    },
+    {
+      "id": "6",
+      "sbd": "095",
+      "name": "Nguyễn Thị Cẩm Thanh",
+      "votes": 8410,
+      "imageUrl": "/original_assets/image4706.png",
+      "description": "Sự kết hợp hoàn hảo giữa năng động và dịu dàng.",
+      "biography": "Nguyễn Thị Cẩm Thanh đến từ khoa Luật. Thanh mong muốn dùng tri thức pháp luật để đóng góp cho cộng đồng sinh viên."
+    }
+  ],
+  "sponsors": [
+    {
+      "id": "s1",
+      "name": "Eventista",
+      "logoUrl": "/images/eventista.7a1126d5.svg",
+      "tier": "PLATINUM"
+    },
+    {
+      "id": "s2",
+      "name": "HUIT Media",
+      "logoUrl": "/images/imageb821.png",
+      "tier": "GOLD"
+    },
+    {
+      "id": "s3",
+      "name": "Sen Vàng Entertainment",
+      "logoUrl": "/images/image5999.jpg",
+      "tier": "SILVER"
+    }
+  ],
+  "timeline": [
+    {
+      "id": "t1",
+      "date": "20/10/2024 - 30/10/2024",
+      "title": "VÒNG SƠ KHẢO",
+      "description": "Xét duyệt hồ sơ trực tuyến, đánh giá các chỉ số nhân trắc học và phỏng vấn trực tiếp.",
+      "isActive": false
+    },
+    {
+      "id": "t2",
+      "date": "03/11/2024 - 15/11/2024",
+      "title": "VÒNG BÁN KẾT (BÌNH CHỌN ONLINE)",
+      "description": "Cổng bình chọn trực tuyến mở công khai. Khán giả và hội đồng tiến hành bầu chọn trực tiếp.",
+      "isActive": true
+    },
+    {
+      "id": "t3",
+      "date": "20/11/2024 - 24/11/2024",
+      "title": "ĐÊM CHUNG KẾT & VINH QUANG",
+      "description": "Gala trình diễn nghệ thuật, kiểm tra kiến thức và trao giải cho các ngôi vị cao nhất.",
+      "isActive": false
+    }
+  ],
+  "banners": [
+    {
+      "id": "b1",
+      "title": "HUIT's Iconic Banner",
+      "imageUrl": "/original_assets/image974c.jpg",
+      "link": "#"
+    }
+  ],
+  "settings": {
+    "isGateOpen": true,
+    "startDate": "2024-10-20T00:00",
+    "endDate": "2024-11-24T23:59",
+    "maxVotesPerPhone": 5,
+    "eventTitle": "HUIT's Iconic 2024",
+    "organizer": "Trường Đại học Công Thương TP.HCM (HUIT)",
+    "contactEmail": "support@voting.vn",
+    "isMaintenanceMode": false
+  }
+}

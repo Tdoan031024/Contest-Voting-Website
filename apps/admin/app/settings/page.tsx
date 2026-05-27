@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 export default function SettingsAdminPage() {
   // Gate settings state
   const [isGateOpen, setIsGateOpen] = useState(true);
   const [startDate, setStartDate] = useState('2024-10-20T00:00');
-  const [endDate, setEndDate] = useState('2024-11-15T23:59');
+  const [endDate, setEndDate] = useState('2024-11-24T23:59');
   const [maxVotesPerPhone, setMaxVotesPerPhone] = useState(5);
 
   // General settings state
@@ -17,18 +17,75 @@ export default function SettingsAdminPage() {
   // Maintenance state
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
 
-  const handleSaveSettings = (e: React.FormEvent) => {
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch('http://localhost:5000/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setIsGateOpen(data.isGateOpen);
+          setStartDate(data.startDate);
+          setEndDate(data.endDate);
+          setMaxVotesPerPhone(data.maxVotesPerPhone);
+          setEventTitle(data.eventTitle);
+          setOrganizer(data.organizer);
+          setContactEmail(data.contactEmail);
+          setIsMaintenanceMode(data.isMaintenanceMode);
+        }
+      } catch (err) {
+        console.error('Failed to load system settings from backend, using defaults.', err);
+      }
+    }
+    loadSettings();
+  }, []);
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert('Đã lưu cấu hình hệ thống thành công! (Mock)');
+    const updatedSettings = {
+      isGateOpen,
+      startDate,
+      endDate,
+      maxVotesPerPhone,
+      eventTitle,
+      organizer,
+      contactEmail,
+      isMaintenanceMode
+    };
+
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedSettings)
+      });
+      if (res.ok) {
+        alert('Đã lưu cấu hình hệ thống thành công!');
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to save settings to API.', err);
+    }
+    alert('Không thể kết nối đến backend API. Lưu cấu hình thất bại!');
   };
 
-  const handleResetVotes = () => {
-    const confirm1 = confirm('CẢNH BÁO NGUY HIỂM: Bạn có chắc chắn muốn RESET toàn bộ số phiếu bình chọn về 0?');
+  const handleResetVotes = async () => {
+    const confirm1 = confirm('CẢNH BÁO NGUY HIỂM: Bạn có chắc chắn muốn RESET toàn bộ số phiếu bình chọn của các thí sinh về 0?');
     if (!confirm1) return;
     const confirm2 = confirm('XÁC NHẬN LẦN CUỐI: Hành động này không thể hoàn tác. Nhấn OK để thực hiện reset.');
-    if (confirm2) {
-      alert('Đã reset toàn bộ điểm bình chọn về 0! (Mock)');
+    if (!confirm2) return;
+
+    try {
+      const res = await fetch('http://localhost:5000/api/admin/settings/reset-votes', {
+        method: 'POST'
+      });
+      if (res.ok) {
+        alert('Đã reset toàn bộ điểm bình chọn của thí sinh về 0 thành công!');
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to reset votes on API.', err);
     }
+    alert('Không thể kết nối đến backend API. Đặt lại số phiếu thất bại!');
   };
 
   return (

@@ -17,6 +17,7 @@ export default function RankingPage() {
   const [candidates, setCandidates] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {
     async function loadCandidates() {
@@ -34,9 +35,53 @@ export default function RankingPage() {
       }
     }
     loadCandidates();
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch('http://localhost:5000/api/candidates');
+        if (res.ok) {
+          const data = await res.json();
+          setCandidates(data);
+        }
+      } catch (err) {
+        console.log('Poll candidates failed');
+      }
+    }, 10000);
+    return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch('http://localhost:5000/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setSettings(data);
+        }
+      } catch (err) {
+        console.log('Load settings failed');
+      }
+    }
+    loadSettings();
+    const interval = setInterval(loadSettings, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isGateCurrentlyOpen = () => {
+    if (!settings) return true;
+    if (!settings.isGateOpen) return false;
+    
+    const now = new Date();
+    const start = new Date(settings.startDate);
+    const end = new Date(settings.endDate);
+    return now >= start && now <= end;
+  };
+
   const handleVote = async (sbd: string, name: string) => {
+    if (!isGateCurrentlyOpen()) {
+      alert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!");
+      return;
+    }
     try {
       const res = await fetch(`http://localhost:5000/api/candidates/${sbd}/vote`, {
         method: 'POST',
@@ -64,6 +109,18 @@ export default function RankingPage() {
   const filteredCandidates = sortedCandidates.filter(c =>
     c.name.toLowerCase().includes(search.toLowerCase()) || c.sbd.includes(search)
   );
+
+  const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0) || 1;
+  const getPercentage = (votes: number) => {
+    return ((votes / totalVotes) * 100).toFixed(2) + '%';
+  };
+
+  const top5 = sortedCandidates.slice(0, 5);
+  // Order for staggered display: Rank 4, Rank 2, Rank 1, Rank 3, Rank 5
+  const podiumOrder = [3, 1, 0, 2, 4];
+  const orderedTop5 = podiumOrder
+    .map(idx => top5[idx])
+    .filter(c => c !== undefined);
 
   return (
     <>
@@ -128,12 +185,148 @@ export default function RankingPage() {
                   Không tìm thấy thí sinh phù hợp
                 </div>
               ) : (
-                <div className="w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[40px] md:gap-[60px] justify-items-center max-w-[1110px] mx-auto px-4">
+                <>
+                  {/* Top 5 Podium Section */}
+                  {!search && orderedTop5.length > 0 && (
+                    <div className="w-full max-w-[1360px] mx-auto px-4 mb-20 mt-8 sm:mt-12">
+                      <div className="relative w-full">
+                        {/* Top 5 Row */}
+                        <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-pink-300 scrollbar-track-transparent">
+                          <div className="flex justify-center items-end gap-3 sm:gap-6 min-w-[960px] lg:min-w-0 pt-28 pb-4 px-2">
+                            {orderedTop5.map((c) => {
+                              const originalRank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
+                              const percentage = getPercentage(c.votes);
+                              
+                              let staggerClass = "";
+                              let cardSizeClass = "";
+                              let imageSizeClass = "";
+                              let borderClass = "border-transparent";
+
+                              if (originalRank === 1) {
+                                staggerClass = "-translate-y-6 sm:-translate-y-12 z-10 scale-[1.03] sm:scale-105";
+                                cardSizeClass = "w-[195px] sm:w-[240px]";
+                                imageSizeClass = "h-[190px] sm:h-[235px]";
+                                borderClass = "border-2 border-[#FFD700]/70 shadow-[0_0_20px_rgba(255,215,0,0.15)]";
+                              } else if (originalRank === 2) {
+                                staggerClass = "-translate-y-2 sm:-translate-y-5 z-0";
+                                cardSizeClass = "w-[185px] sm:w-[230px]";
+                                imageSizeClass = "h-[180px] sm:h-[220px]";
+                                borderClass = "border-2 border-[#C0C0C0]/70 shadow-[0_0_20px_rgba(192,192,192,0.12)]";
+                              } else if (originalRank === 3) {
+                                staggerClass = "-translate-y-2 sm:-translate-y-5 z-0";
+                                cardSizeClass = "w-[185px] sm:w-[230px]";
+                                imageSizeClass = "h-[180px] sm:h-[220px]";
+                                borderClass = "border-2 border-[#CD7F32]/70 shadow-[0_0_20px_rgba(205,127,50,0.12)]";
+                              } else if (originalRank === 4) {
+                                staggerClass = "translate-y-2 sm:translate-y-5 z-0";
+                                cardSizeClass = "w-[170px] sm:w-[210px]";
+                                imageSizeClass = "h-[165px] sm:h-[200px]";
+                              } else if (originalRank === 5) {
+                                staggerClass = "translate-y-2 sm:translate-y-5 z-0";
+                                cardSizeClass = "w-[170px] sm:w-[210px]";
+                                imageSizeClass = "h-[165px] sm:h-[200px]";
+                              }
+
+                              // Laurel wreath rank icon for all podium cards
+                              const badgeElement = (
+                                <div className="absolute -top-9 sm:-top-10 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center">
+                                  <div className="relative w-[65px] h-[65px] sm:w-[75px] sm:h-[75px] flex items-center justify-center">
+                                    <img alt="" className="block dark:hidden w-full h-full object-contain" src="/original_assets/static/media/laurel-light-big.58ee16d9.svg"/>
+                                    <img alt="" className="hidden dark:block w-full h-full object-contain" src="/original_assets/static/media/laurel-dark-big.6d9a838c.svg"/>
+                                    <span className="absolute text-grey-darkGrey dark:text-grey-lightGrey2 text-[15px] sm:text-[18px] font-black top-[21px] sm:top-[25px] left-1/2 transform -translate-x-1/2">
+                                      {originalRank}
+                                    </span>
+                                  </div>
+                                </div>
+                              );
+
+                              return (
+                                <div 
+                                  key={c.id} 
+                                  className={`flex-shrink-0 transition-all duration-500 hover:scale-[1.03] ${staggerClass}`}
+                                >
+                                  <div className={`relative backdrop-blur-[8px] rounded-[24px] border ${borderClass} bg-[rgba(222,222,222,0.15)] hover:bg-[rgb(222,222,222)]/40 hover:dark:bg-[rgb(222,222,222)]/20 hover:shadow hover:shadow-black/10 hover:dark:shadow-white/10 cursor-pointer transition-all duration-300 flex flex-col ${cardSizeClass}`}>
+                                    
+                                    {badgeElement}
+
+                                    {/* Candidate Image Link */}
+                                    <Link className="focus:outline-none relative flex cursor-pointer w-full aspect-[360/461]" href={`/thi-sinh/${c.sbd}`}>
+                                      <div className="mx-2 mt-2 flex-1 relative sm:mx-3 sm:mt-3 overflow-hidden rounded-lg">
+                                        <img 
+                                          alt={c.name} 
+                                          className="object-cover object-top w-full h-full hover:scale-105 transition-transform duration-500" 
+                                          src={c.imageUrl}
+                                        />
+                                      </div>
+                                    </Link>
+
+                                    {/* Details section */}
+                                    <div className="flex-1 flex flex-col px-3 pt-2 pb-3">
+                                      <div className="flex-1 flex flex-col justify-between space-y-2">
+                                        {/* SBD & Vote Count Bar */}
+                                        <div className="rounded-[12px] flex justify-between items-center px-2.5 bg-grey-lightGrey2 dark:bg-grey-dimGrey h-[36px] w-full text-[11px] sm:text-[13px] font-bold text-neutral-neutral1 dark:text-neutral-white">
+                                          <span>SBD: {c.sbd}</span>
+                                          <span>{c.votes.toLocaleString()}</span>
+                                        </div>
+ 
+                                        <div className="flex flex-1 flex-col space-y-1">
+                                          <div className="h-[6px]"></div>
+                                          <div className="py-[3px] text-center">
+                                            <p className="text-[13px] sm:text-[15px] font-bold text-neutral-neutral1 dark:text-neutral-white leading-tight line-clamp-2 h-[34px] sm:h-[40px] uppercase w-full px-1 flex items-center justify-center text-center">
+                                              {c.name}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      {/* Vote button */}
+                                      <div className="flex items-end mt-3">
+                                        <button 
+                                          onClick={() => handleVote(c.sbd, c.name)}
+                                          className={`sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-lg py-[8px] sm:py-[10px] w-full border-0 cursor-pointer transition-all ${
+                                            isGateCurrentlyOpen() 
+                                              ? 'bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]' 
+                                              : 'bg-slate-700/50 cursor-not-allowed opacity-50'
+                                          }`}
+                                        >
+                                          <p className={`text-[13px] sm:text-[14px] leading-[20px] font-medium ${
+                                            isGateCurrentlyOpen() 
+                                              ? 'text-neutral-white dark:text-primary' 
+                                              : 'text-slate-400'
+                                          }`}>
+                                            {isGateCurrentlyOpen() ? 'Bình chọn' : 'Đã đóng'}
+                                          </p>
+                                        </button>
+                                      </div>
+
+                                    </div>
+
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Section Title for Full Grid */}
+                  {!search && (
+                    <div className="flex flex-col items-center mb-8 sm:mb-12">
+                      <h3 className="text-[18px] sm:text-[28px] tracking-wide font-normal uppercase text-black dark:text-white">
+                        Danh sách xếp hạng đầy đủ
+                      </h3>
+                      <div className="h-[2px] w-[40px] bg-primary rounded-full mt-1.5"></div>
+                    </div>
+                  )}
+
+                  <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center max-w-[1280px] mx-auto px-4">
                   {filteredCandidates.map((c) => {
                     const rank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
                     
                     return (
-                      <div key={c.id} className="h-full group w-full mobile:max-w-[286px] sm:max-w-[340px]">
+                      <div key={c.id} className="h-full group w-full mobile:max-w-[286px] sm:max-w-[280px]">
                         <div className="relative backdrop-blur-[8px] rounded-[24px] border border-transparent bg-[rgba(222,222,222,0.15)] group-hover:bg-[rgb(222,222,222)]/40 group-hover:dark:bg-[rgb(222,222,222)]/20 group-hover:shadow group-hover:shadow-black/10 group-hover:dark:shadow-white/10 cursor-pointer transition-all duration-300">
                           
                           {/* Candidate Image Link */}
@@ -183,9 +376,19 @@ export default function RankingPage() {
                             <div className="flex items-end gap-3 h-[72px] sm:gap-4 sm:h-[80px] mt-2">
                               <button 
                                 onClick={() => handleVote(c.sbd, c.name)}
-                                className="sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 bg-primary dark:bg-neutral-white rounded-lg py-[10px] w-full border-0 cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all"
+                                className={`sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-lg py-[10px] w-full border-0 cursor-pointer transition-all ${
+                                  isGateCurrentlyOpen() 
+                                    ? 'bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]' 
+                                    : 'bg-slate-700/50 cursor-not-allowed opacity-50'
+                                }`}
                               >
-                                <p className="text-[16px] leading-[20px] text-neutral-white dark:text-primary font-medium">Bình chọn</p>
+                                <p className={`text-[16px] leading-[20px] font-medium ${
+                                  isGateCurrentlyOpen() 
+                                    ? 'text-neutral-white dark:text-primary' 
+                                    : 'text-slate-400'
+                                }`}>
+                                  {isGateCurrentlyOpen() ? 'Bình chọn' : 'Đã đóng'}
+                                </p>
                               </button>
 
                               {/* Laurel Rank graphics */}
@@ -213,7 +416,8 @@ export default function RankingPage() {
                     );
                   })}
                 </div>
-              )}
+              </>
+            )}
 
             </div>
           </div>

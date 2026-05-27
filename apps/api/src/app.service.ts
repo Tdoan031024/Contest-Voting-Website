@@ -1,8 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Candidate, Sponsor, TimelineEvent, Banner } from '@huitfest/shared';
+import * as fs from 'fs';
+import * as path from 'path';
+
+export interface SystemSettings {
+  isGateOpen: boolean;
+  startDate: string;
+  endDate: string;
+  maxVotesPerPhone: number;
+  eventTitle: string;
+  organizer: string;
+  contactEmail: string;
+  isMaintenanceMode: boolean;
+}
 
 @Injectable()
 export class AppService {
+  private dbFilePath = path.join(process.cwd(), 'contest_voting_db.json');
+
   private candidates: Candidate[] = [
     {
       id: '1',
@@ -64,19 +79,19 @@ export class AppService {
     {
       id: 's1',
       name: 'Eventista',
-      logoUrl: '/original_assets/static/media/eventista.7a1126d5.svg',
+      logoUrl: '/images/eventista.7a1126d5.svg',
       tier: 'PLATINUM',
     },
     {
       id: 's2',
       name: 'HUIT Media',
-      logoUrl: '/original_assets/imageb821.png',
+      logoUrl: '/images/imageb821.png',
       tier: 'GOLD',
     },
     {
       id: 's3',
       name: 'Sen Vàng Entertainment',
-      logoUrl: '/original_assets/image5999.jpg',
+      logoUrl: '/images/image5999.jpg',
       tier: 'SILVER',
     },
   ];
@@ -84,18 +99,25 @@ export class AppService {
   private timeline: TimelineEvent[] = [
     {
       id: 't1',
-      date: '20/10/2024 - 10/11/2024',
-      title: 'MỞ CỔNG BÌNH CHỌN',
-      description: 'Cổng bình chọn chính thức hoạt động trên toàn quốc.',
-      isActive: true,
+      date: '20/10/2024 - 30/10/2024',
+      title: 'VÒNG SƠ KHẢO',
+      description: 'Xét duyệt hồ sơ trực tuyến, đánh giá các chỉ số nhân trắc học và phỏng vấn trực tiếp.',
+      isActive: false,
     },
     {
       id: 't2',
-      date: '15/11/2024',
-      title: 'ĐÊM CHUNG KẾT HUIT FEST',
-      description: 'Tìm ra đại diện xuất sắc nhất HUIT\'s Iconic 2024.',
-      isActive: false,
+      date: '03/11/2024 - 15/11/2024',
+      title: 'VÒNG BÁN KẾT (BÌNH CHỌN ONLINE)',
+      description: 'Cổng bình chọn trực tuyến mở công khai. Khán giả và hội đồng tiến hành bầu chọn trực tiếp.',
+      isActive: true,
     },
+    {
+      id: 't3',
+      date: '20/11/2024 - 24/11/2024',
+      title: 'ĐÊM CHUNG KẾT & VINH QUANG',
+      description: 'Gala trình diễn nghệ thuật, kiểm tra kiến thức và trao giải cho các ngôi vị cao nhất.',
+      isActive: false,
+    }
   ];
 
   private banners: Banner[] = [
@@ -107,6 +129,56 @@ export class AppService {
     },
   ];
 
+  private settings: SystemSettings = {
+    isGateOpen: true,
+    startDate: '2024-10-20T00:00',
+    endDate: '2024-11-24T23:59',
+    maxVotesPerPhone: 5,
+    eventTitle: "HUIT's Iconic 2024",
+    organizer: "Trường Đại học Công Thương TP.HCM (HUIT)",
+    contactEmail: "support@voting.vn",
+    isMaintenanceMode: false
+  };
+
+  constructor() {
+    this.loadDb();
+  }
+
+  private loadDb() {
+    try {
+      if (fs.existsSync(this.dbFilePath)) {
+        const fileContent = fs.readFileSync(this.dbFilePath, 'utf8');
+        const data = JSON.parse(fileContent);
+        if (data.candidates) this.candidates = data.candidates;
+        if (data.sponsors) this.sponsors = data.sponsors;
+        if (data.timeline) this.timeline = data.timeline;
+        if (data.banners) this.banners = data.banners;
+        if (data.settings) this.settings = data.settings;
+        console.log('✅ Loaded data from database store successfully.');
+      } else {
+        this.saveDb();
+      }
+    } catch (e) {
+      console.error('❌ Failed to load local database store:', e);
+    }
+  }
+
+  private saveDb() {
+    try {
+      const data = {
+        candidates: this.candidates,
+        sponsors: this.sponsors,
+        timeline: this.timeline,
+        banners: this.banners,
+        settings: this.settings
+      };
+      fs.writeFileSync(this.dbFilePath, JSON.stringify(data, null, 2), 'utf8');
+    } catch (e) {
+      console.error('❌ Failed to save data to database store:', e);
+    }
+  }
+
+  // --- CANDIDATES ---
   getCandidates(): Candidate[] {
     return [...this.candidates].sort((a, b) => b.votes - a.votes);
   }
@@ -126,33 +198,23 @@ export class AppService {
     }
     candidate.votes += 1;
     console.log(`[VOTE] 1 vote received for SBD ${sbd} (phone: ${phone}). New total: ${candidate.votes}`);
+    this.saveDb();
     return candidate;
-  }
-
-  getSponsors(): Sponsor[] {
-    return this.sponsors;
-  }
-
-  getTimeline(): TimelineEvent[] {
-    return this.timeline;
-  }
-
-  getBanners(): Banner[] {
-    return this.banners;
   }
 
   addCandidate(newCandidate: Partial<Candidate>): Candidate {
     const sbd = newCandidate.sbd || Math.floor(Math.random() * 100).toString().padStart(3, '0');
     const candidate: Candidate = {
-      id: (this.candidates.length + 1).toString(),
+      id: Date.now().toString(),
       sbd,
       name: newCandidate.name || 'Thí sinh mới',
-      votes: 0,
-      imageUrl: newCandidate.imageUrl || '/_next/image389b.png',
+      votes: newCandidate.votes || 0,
+      imageUrl: newCandidate.imageUrl || '/original_assets/image389b.png',
       description: newCandidate.description || 'Thí sinh mới của HUIT\'s Iconic.',
       biography: newCandidate.biography || 'Thông tin tiểu sử đang được cập nhật.',
     };
     this.candidates.push(candidate);
+    this.saveDb();
     return candidate;
   }
 
@@ -162,6 +224,7 @@ export class AppService {
       throw new NotFoundException(`Không tìm thấy thí sinh với ID ${id}`);
     }
     Object.assign(candidate, updatedFields);
+    this.saveDb();
     return candidate;
   }
 
@@ -171,17 +234,24 @@ export class AppService {
       throw new NotFoundException(`Không tìm thấy thí sinh với ID ${id}`);
     }
     this.candidates.splice(index, 1);
+    this.saveDb();
     return { success: true };
+  }
+
+  // --- SPONSORS ---
+  getSponsors(): Sponsor[] {
+    return this.sponsors;
   }
 
   addSponsor(newSponsor: Partial<Sponsor>): Sponsor {
     const sponsor: Sponsor = {
-      id: 's' + (this.sponsors.length + 1),
+      id: 's' + Date.now(),
       name: newSponsor.name || 'Nhà tài trợ mới',
-      logoUrl: newSponsor.logoUrl || '/_next/static/media/eventista.7a1126d5.svg',
+      logoUrl: newSponsor.logoUrl || '/images/eventista.7a1126d5.svg',
       tier: newSponsor.tier || 'PARTNER',
     };
     this.sponsors.push(sponsor);
+    this.saveDb();
     return sponsor;
   }
 
@@ -191,6 +261,7 @@ export class AppService {
       throw new NotFoundException(`Không tìm thấy nhà tài trợ với ID ${id}`);
     }
     Object.assign(sponsor, updatedFields);
+    this.saveDb();
     return sponsor;
   }
 
@@ -200,6 +271,102 @@ export class AppService {
       throw new NotFoundException(`Không tìm thấy nhà tài trợ với ID ${id}`);
     }
     this.sponsors.splice(index, 1);
+    this.saveDb();
+    return { success: true };
+  }
+
+  // --- TIMELINE ---
+  getTimeline(): TimelineEvent[] {
+    return this.timeline;
+  }
+
+  addTimelineEvent(newEvent: Partial<TimelineEvent>): TimelineEvent {
+    const event: TimelineEvent = {
+      id: 't' + Date.now(),
+      date: newEvent.date || '2024-11-01',
+      title: newEvent.title || 'Sự kiện mới',
+      description: newEvent.description || 'Chi tiết nội dung sự kiện...',
+      isActive: newEvent.isActive ?? false,
+    };
+    this.timeline.push(event);
+    this.saveDb();
+    return event;
+  }
+
+  updateTimelineEvent(id: string, updatedFields: Partial<TimelineEvent>): TimelineEvent {
+    const event = this.timeline.find(t => t.id === id);
+    if (!event) {
+      throw new NotFoundException(`Không tìm thấy lộ trình với ID ${id}`);
+    }
+    Object.assign(event, updatedFields);
+    this.saveDb();
+    return event;
+  }
+
+  deleteTimelineEvent(id: string): { success: boolean } {
+    const index = this.timeline.findIndex(t => t.id === id);
+    if (index === -1) {
+      throw new NotFoundException(`Không tìm thấy lộ trình với ID ${id}`);
+    }
+    this.timeline.splice(index, 1);
+    this.saveDb();
+    return { success: true };
+  }
+
+  // --- BANNERS ---
+  getBanners(): Banner[] {
+    return this.banners;
+  }
+
+  addBanner(newBanner: Partial<Banner>): Banner {
+    const banner: Banner = {
+      id: 'b' + Date.now(),
+      title: newBanner.title || 'Banner mới',
+      imageUrl: newBanner.imageUrl || '/original_assets/image974c.jpg',
+      link: newBanner.link || '#',
+    };
+    this.banners.push(banner);
+    this.saveDb();
+    return banner;
+  }
+
+  updateBanner(id: string, updatedFields: Partial<Banner>): Banner {
+    const banner = this.banners.find(b => b.id === id);
+    if (!banner) {
+      throw new NotFoundException(`Không tìm thấy banner với ID ${id}`);
+    }
+    Object.assign(banner, updatedFields);
+    this.saveDb();
+    return banner;
+  }
+
+  deleteBanner(id: string): { success: boolean } {
+    const index = this.banners.findIndex(b => b.id === id);
+    if (index === -1) {
+      throw new NotFoundException(`Không tìm thấy banner với ID ${id}`);
+    }
+    this.banners.splice(index, 1);
+    this.saveDb();
+    return { success: true };
+  }
+
+  // --- SYSTEM SETTINGS ---
+  getSettings(): SystemSettings {
+    return this.settings;
+  }
+
+  updateSettings(updatedFields: Partial<SystemSettings>): SystemSettings {
+    Object.assign(this.settings, updatedFields);
+    this.saveDb();
+    return this.settings;
+  }
+
+  resetVotes(): { success: boolean } {
+    this.candidates.forEach(c => {
+      c.votes = 0;
+    });
+    this.saveDb();
+    console.log('[RESET] All candidate votes have been reset to 0.');
     return { success: true };
   }
 }

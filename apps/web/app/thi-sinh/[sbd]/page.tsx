@@ -42,6 +42,8 @@ export default function CandidateDetailPage() {
   const [copyText, setCopyText] = useState('SAO CHÉP');
   const [copied, setCopied] = useState(false);
 
+  const [settings, setSettings] = useState<any>(null);
+
   useEffect(() => {
     async function loadData() {
       setIsLoading(true);
@@ -66,10 +68,59 @@ export default function CandidateDetailPage() {
       setIsLoading(false);
     }
     loadData();
+
+    // Poll candidate scores and list
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/candidates`);
+        if (res.ok) {
+          const list = await res.json();
+          setCandidatesList(list);
+          const found = list.find((c: Candidate) => c.sbd === sbd);
+          if (found) {
+            setCandidate(found);
+          }
+        }
+      } catch (err) {
+        console.log('Poll detail candidates failed');
+      }
+    }, 10000);
+    return () => clearInterval(interval);
   }, [sbd]);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch('http://localhost:5000/api/settings');
+        if (res.ok) {
+          const data = await res.json();
+          setSettings(data);
+        }
+      } catch (err) {
+        console.log('Load settings failed');
+      }
+    }
+    loadSettings();
+    const interval = setInterval(loadSettings, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const isGateCurrentlyOpen = () => {
+    if (!settings) return true;
+    if (!settings.isGateOpen) return false;
+    
+    const now = new Date();
+    const start = new Date(settings.startDate);
+    const end = new Date(settings.endDate);
+    return now >= start && now <= end;
+  };
 
   const handleVote = async () => {
     if (!candidate) return;
+    if (!isGateCurrentlyOpen()) {
+      alert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!");
+      return;
+    }
     try {
       const res = await fetch(`http://localhost:5000/api/candidates/${candidate.sbd}/vote`, {
         method: 'POST',
@@ -365,12 +416,22 @@ export default function CandidateDetailPage() {
               {/* Right Column: Vote Button */}
               <button 
                 onClick={handleVote}
-                className="sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 bg-white dark:bg-primary text-neutral-neutral1 dark:text-white rounded-lg h-[50px] w-full sm:w-[200px] border-0 cursor-pointer hover:opacity-90 active:scale-[0.98] transition-all font-semibold"
+                className={`sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 text-neutral-neutral1 dark:text-white rounded-lg h-[50px] w-full sm:w-[200px] border-0 cursor-pointer transition-all font-semibold ${
+                  isGateCurrentlyOpen() 
+                    ? 'bg-white dark:bg-primary hover:opacity-90 active:scale-[0.98]' 
+                    : 'bg-slate-700/50 cursor-not-allowed opacity-50'
+                }`}
               >
-                <p className="text-[15px] uppercase tracking-wider font-bold">Bình chọn</p>
-                <svg xmlns="http://www.w3.org/2000/svg" width="21" height="20" viewBox="0 0 21 20" fill="currentColor">
-                  <path d="M17.8172 10.4425L12.1922 16.0675C12.0749 16.1848 11.9159 16.2507 11.75 16.2507C11.5841 16.2507 11.4251 16.1848 11.3078 16.0675C11.1905 15.9503 11.1247 15.7912 11.1247 15.6253C11.1247 15.4595 11.1905 15.3004 11.3078 15.1832L15.8664 10.6253H3.625C3.45924 10.6253 3.30027 10.5595 3.18306 10.4423C3.06585 10.3251 3 10.1661 3 10.0003C3 9.83459 3.06585 9.67562 3.18306 9.55841C3.30027 9.4412 3.45924 9.37535 3.625 9.37535H15.8664L11.3078 4.81753C11.1905 4.70026 11.1247 4.5412 11.1247 4.37535C11.1247 4.2095 11.1905 4.05044 11.3078 3.93316C11.4251 3.81588 11.5841 3.75 11.75 3.75C11.9159 3.75 12.0749 3.81588 12.1922 3.93316L17.8172 9.55816C17.8753 9.61621 17.9214 9.68514 17.9529 9.76101C17.9843 9.83688 18.0005 9.91821 18.0005 10.0003C18.0005 10.0825 17.9843 10.1638 17.9529 10.2397C17.9214 10.3156 17.8753 10.3845 17.8172 10.4425Z"></path>
-                </svg>
+                <p className={`text-[15px] uppercase tracking-wider font-bold ${
+                  isGateCurrentlyOpen() ? '' : 'text-slate-400'
+                }`}>
+                  {isGateCurrentlyOpen() ? 'Bình chọn' : 'Đã đóng'}
+                </p>
+                {isGateCurrentlyOpen() && (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="21" height="20" viewBox="0 0 21 20" fill="currentColor">
+                    <path d="M17.8172 10.4425L12.1922 16.0675C12.0749 16.1848 11.9159 16.2507 11.75 16.2507C11.5841 16.2507 11.4251 16.1848 11.3078 16.0675C11.1905 15.9503 11.1247 15.7912 11.1247 15.6253C11.1247 15.4595 11.1905 15.3004 11.3078 15.1832L15.8664 10.6253H3.625C3.45924 10.6253 3.30027 10.5595 3.18306 10.4423C3.06585 10.3251 3 10.1661 3 10.0003C3 9.83459 3.06585 9.67562 3.18306 9.55841C3.30027 9.4412 3.45924 9.37535 3.625 9.37535H15.8664L11.3078 4.81753C11.1905 4.70026 11.1247 4.5412 11.1247 4.37535C11.1247 4.2095 11.1905 4.05044 11.3078 3.93316C11.4251 3.81588 11.5841 3.75 11.75 3.75C11.9159 3.75 12.0749 3.81588 12.1922 3.93316L17.8172 9.55816C17.8753 9.61621 17.9214 9.68514 17.9529 9.76101C17.9843 9.83688 18.0005 9.91821 18.0005 10.0003C18.0005 10.0825 17.9843 10.1638 17.9529 10.2397C17.9214 10.3156 17.8753 10.3845 17.8172 10.4425Z"></path>
+                  </svg>
+                )}
               </button>
 
             </div>
