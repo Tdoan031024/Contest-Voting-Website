@@ -21,6 +21,7 @@ export interface Banner {
   title: string;
   imageUrl: string;
   link?: string;
+  isActive: boolean;
 }
 
 export interface TimelineEvent {

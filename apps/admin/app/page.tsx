@@ -1,7 +1,22 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Candidate, Sponsor } from '@huitfest/shared';
+
+function StatIcon({ type }: { type: 'votes' | 'users' | 'leader' | 'gate' }) {
+  const paths = {
+    votes: <path d="M4 19V9m5 10V5m5 14v-7m5 7V3" />,
+    users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /></>,
+    leader: <><path d="M8 21h8" /><path d="M12 17v4" /><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" /><path d="M5 4H3v2a3 3 0 0 0 3 3" /><path d="M19 4h2v2a3 3 0 0 1-3 3" /></>,
+    gate: <><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
+  };
+
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      {paths[type]}
+    </svg>
+  );
+}
 
 export default function OverviewPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
@@ -16,125 +31,147 @@ export default function OverviewPage() {
         const [candRes, sponRes, setRes] = await Promise.all([
           fetch('http://localhost:5000/api/candidates'),
           fetch('http://localhost:5000/api/sponsors'),
-          fetch('http://localhost:5000/api/settings')
+          fetch('http://localhost:5000/api/settings'),
         ]);
 
-        if (candRes.ok) {
-          const candData = await candRes.json();
-          setCandidates(candData);
-        }
-        if (sponRes.ok) {
-          const sponData = await sponRes.json();
-          setSponsors(sponData);
-        }
+        if (candRes.ok) setCandidates(await candRes.json());
+        if (sponRes.ok) setSponsors(await sponRes.json());
         if (setRes.ok) {
-          const setData = await setRes.json();
-          setGateOpen(setData.isGateOpen);
-          setEventTitle(setData.eventTitle);
+          const settings = await setRes.json();
+          setGateOpen(settings.isGateOpen);
+          setEventTitle(settings.eventTitle);
         }
       } catch (err) {
-        console.error('Failed to load stats from API, using default mock data.', err);
+        console.error('Failed to load admin overview data.', err);
       } finally {
         setIsLoading(false);
       }
     }
+
     loadStats();
   }, []);
 
-  const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0);
-  const leadingCandidate = candidates.length > 0 ? [...candidates].sort((a, b) => b.votes - a.votes)[0] : null;
+  const totalVotes = candidates.reduce((sum, candidate) => sum + candidate.votes, 0);
+  const rankedCandidates = useMemo(() => [...candidates].sort((a, b) => b.votes - a.votes), [candidates]);
+  const leadingCandidate = rankedCandidates[0] || null;
+  const maxVotes = Math.max(...rankedCandidates.slice(0, 6).map((candidate) => candidate.votes), 1);
 
   const stats = [
-    { name: 'Tổng số phiếu bầu', value: totalVotes.toLocaleString() + ' phiếu', icon: '📈', change: 'Tính từ thời gian thực' },
-    { name: 'Tổng số thí sinh', value: candidates.length.toString() + ' thí sinh', icon: '👤', change: 'Thí sinh đã kích hoạt' },
-    { name: 'Thí sinh dẫn đầu', value: leadingCandidate ? leadingCandidate.name : 'Chưa có', icon: '🏆', change: leadingCandidate ? `${leadingCandidate.votes.toLocaleString()} phiếu` : '0 phiếu' },
-    { name: 'Trạng thái cổng', value: gateOpen ? 'Đang mở' : 'Đang đóng', icon: '🔔', change: `Sự kiện: ${eventTitle}` },
-  ];
-
-  const recentVotes = [
-    { phone: '098****321', candidate: candidates[0]?.name || 'Nguyễn Thanh Tân', sbd: candidates[0]?.sbd || '085', time: '1 phút trước', status: 'Hợp lệ' },
-    { phone: '090****888', candidate: candidates[2]?.name || 'Lê Ngọc Yến Vy', sbd: candidates[2]?.sbd || '024', time: '5 phút trước', status: 'Hợp lệ' },
-    { phone: '035****456', candidate: candidates[1]?.name || 'Nguyễn Đình Tú', sbd: candidates[1]?.sbd || '089', time: '12 phút trước', status: 'Hợp lệ' },
-    { phone: '086****789', candidate: candidates[3]?.name || 'Võ Bá Thiện', sbd: candidates[3]?.sbd || '096', time: '20 phút trước', status: 'Hợp lệ' },
+    {
+      name: 'Tong phieu bau',
+      value: totalVotes.toLocaleString(),
+      detail: 'Cap nhat tu API thoi gian thuc',
+      type: 'votes' as const,
+    },
+    {
+      name: 'Thi sinh',
+      value: candidates.length.toString(),
+      detail: 'Ho so dang hien thi',
+      type: 'users' as const,
+    },
+    {
+      name: 'Dang dan dau',
+      value: leadingCandidate ? leadingCandidate.name : 'Chua co du lieu',
+      detail: leadingCandidate ? `${leadingCandidate.votes.toLocaleString()} phieu` : '0 phieu',
+      type: 'leader' as const,
+    },
+    {
+      name: 'Cong binh chon',
+      value: gateOpen ? 'Dang mo' : 'Dang dong',
+      detail: eventTitle,
+      type: 'gate' as const,
+    },
   ];
 
   return (
-    <div className="flex flex-col space-y-8">
-      
-      {/* Welcome */}
-      <div>
-        <h1 className="text-[26px] font-bold text-slate-100">Tổng quan hệ thống</h1>
-        <p className="text-[14px] text-slate-400 mt-1">Chào mừng bạn trở lại, thống kê dữ liệu bình chọn thời gian thực.</p>
-      </div>
-
-      {/* Stats Widgets */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat, idx) => (
-          <div key={idx} className="bg-slate-800 border border-slate-700 p-6 rounded-xl flex items-center justify-between shadow-md">
-            <div className="flex flex-col space-y-1">
-              <span className="text-[13px] text-slate-400 font-medium">{stat.name}</span>
-              <span className="text-[20px] sm:text-[22px] font-bold text-slate-100 truncate max-w-[150px]">{stat.value}</span>
-              <span className="text-[11px] text-slate-500 font-medium">{stat.change}</span>
+    <div className="space-y-8">
+      <section className="overflow-hidden rounded-lg border border-[#dce5e1] bg-[#123c34] text-white shadow-sm">
+        <div className="flex flex-col gap-8 p-6 md:flex-row md:items-end md:justify-between md:p-8">
+          <div className="max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#9bd8cf]">Dashboard</p>
+            <h2 className="mt-3 text-3xl font-black md:text-4xl">{eventTitle}</h2>
+            <p className="mt-3 text-sm leading-6 text-white/72">
+              Theo doi luot binh chon, trang thai cong va cac ho so noi bat trong mot man hinh lam viec tap trung.
+            </p>
+          </div>
+          <div className="grid min-w-[260px] grid-cols-2 gap-3 rounded-lg bg-white/8 p-3">
+            <div className="rounded-lg bg-white/10 p-4">
+              <p className="text-xs text-white/60">Nha tai tro</p>
+              <p className="mt-1 text-2xl font-black">{sponsors.length}</p>
             </div>
-            <div className="text-[28px] p-3 bg-slate-700/50 rounded-lg flex items-center justify-center">
-              {stat.icon}
+            <div className="rounded-lg bg-white/10 p-4">
+              <p className="text-xs text-white/60">Trang thai</p>
+              <p className="mt-1 text-sm font-black uppercase text-[#9bd8cf]">{gateOpen ? 'Online' : 'Paused'}</p>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {stats.map((stat) => (
+          <article key={stat.name} className="rounded-lg border border-[#dce5e1] bg-white p-5 shadow-sm">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#7a8b85]">{stat.name}</p>
+                <p className="mt-3 truncate text-2xl font-black text-[#18211f]">{isLoading ? '...' : stat.value}</p>
+              </div>
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-[#edf4f1] text-[#0f766e]">
+                <StatIcon type={stat.type} />
+              </span>
+            </div>
+            <p className="mt-4 truncate text-sm font-medium text-[#6b7773]">{stat.detail}</p>
+          </article>
         ))}
-      </div>
+      </section>
 
-      {/* Grid: Charts Placeholder & Recent Votes */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        {/* Mock Analytics Chart Card */}
-        <div className="lg:col-span-2 bg-slate-800 border border-slate-700 p-6 rounded-xl flex flex-col justify-between min-h-[340px] shadow-md">
-          <div>
-            <h3 className="text-[16px] font-bold text-slate-200">Biểu đồ tốc độ bình chọn (phiếu / giờ)</h3>
-            <p className="text-[12px] text-slate-400 mt-0.5">Dữ liệu phân tích trong 24 giờ qua</p>
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-[1.55fr_1fr]">
+        <article className="rounded-lg border border-[#dce5e1] bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h3 className="text-lg font-black text-[#18211f]">Top binh chon</h3>
+              <p className="text-sm text-[#6b7773]">So sanh nhanh cac thi sinh co luot vote cao nhat.</p>
+            </div>
+            <span className="rounded-full bg-[#fff2e8] px-3 py-1 text-xs font-bold text-[#b4492f]">Top {Math.min(rankedCandidates.length, 6)}</span>
           </div>
-          
-          {/* Mock Bar chart bars */}
-          <div className="h-48 flex items-end justify-between gap-2 px-4 pt-6">
-            {[20, 35, 45, 30, 55, 75, 90, 85, 60, 40, 50, 70].map((h, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
-                <div 
-                  className="w-full bg-blue-600 hover:bg-blue-500 rounded-t transition-all relative" 
-                  style={{ height: `${h}%` }}
-                >
-                  <span className="absolute -top-7 left-1/2 -translate-x-1/2 bg-slate-700 text-[10px] text-white px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
-                    {h * 15} phiếu
-                  </span>
+
+          <div className="mt-6 space-y-4">
+            {rankedCandidates.slice(0, 6).map((candidate, index) => (
+              <div key={candidate.id} className="grid grid-cols-[44px_1fr_auto] items-center gap-4">
+                <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#f4f7f6] text-sm font-black text-[#123c34]">
+                  {index + 1}
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center justify-between gap-4">
+                    <p className="truncate text-sm font-bold text-[#18211f]">{candidate.name}</p>
+                    <p className="shrink-0 text-sm font-black text-[#0f766e]">{candidate.votes.toLocaleString()}</p>
+                  </div>
+                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#edf4f1]">
+                    <div className="h-full rounded-full bg-[#0f766e]" style={{ width: `${Math.max((candidate.votes / maxVotes) * 100, 4)}%` }} />
+                  </div>
                 </div>
-                <span className="text-[9px] text-slate-500">{i * 2}h</span>
+                <span className="rounded-full bg-[#edf4f1] px-2.5 py-1 text-xs font-bold text-[#52605b]">SBD {candidate.sbd}</span>
               </div>
             ))}
           </div>
-        </div>
+        </article>
 
-        {/* Recent Activities */}
-        <div className="bg-slate-800 border border-slate-700 p-6 rounded-xl flex flex-col shadow-md">
-          <h3 className="text-[16px] font-bold text-slate-200 mb-4">Lượt bình chọn mới nhất</h3>
-          
-          <div className="flex-1 flex flex-col space-y-4">
-            {recentVotes.map((vote, idx) => (
-              <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-slate-700/20 border border-slate-700/50">
-                <div className="flex flex-col">
-                  <span className="text-[13px] font-bold text-slate-200">{vote.phone}</span>
-                  <span className="text-[11px] text-slate-400">Bình chọn: {vote.candidate} (SBD: {vote.sbd})</span>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <span className="text-[10px] text-green-400 font-medium px-2 py-0.5 rounded bg-green-500/10 border border-green-500/10">
-                    {vote.status}
-                  </span>
-                  <span className="text-[10px] text-slate-500">{vote.time}</span>
-                </div>
+        <article className="rounded-lg border border-[#dce5e1] bg-white p-6 shadow-sm">
+          <h3 className="text-lg font-black text-[#18211f]">Van hanh hom nay</h3>
+          <div className="mt-5 space-y-3">
+            {[
+              ['Du lieu ung vien', candidates.length > 0 ? 'Da tai' : 'Dang cho API'],
+              ['Dong bo nha tai tro', sponsors.length > 0 ? 'San sang' : 'Chua co du lieu'],
+              ['Trang thai cong', gateOpen ? 'Cho phep vote' : 'Tam dung vote'],
+              ['Muc uu tien', leadingCandidate ? `Theo doi ${leadingCandidate.sbd}` : 'Kiem tra du lieu'],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between rounded-lg border border-[#edf2f0] bg-[#fbfdfc] px-4 py-3">
+                <span className="text-sm font-semibold text-[#52605b]">{label}</span>
+                <span className="text-right text-sm font-black text-[#18211f]">{value}</span>
               </div>
             ))}
           </div>
-        </div>
-
-      </div>
-
+        </article>
+      </section>
     </div>
   );
 }

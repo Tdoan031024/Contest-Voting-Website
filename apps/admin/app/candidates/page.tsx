@@ -1,27 +1,102 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Candidate } from '@huitfest/shared';
 
 const INITIAL_MOCK_CANDIDATES: Candidate[] = [
-  { id: '1', sbd: '085', name: 'Nguyễn Thanh Tân', votes: 106100, imageUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150', description: 'Thí sinh tài năng của HUIT\'s Iconic 2024.' },
-  { id: '2', sbd: '089', name: 'Nguyễn Đình Tú', votes: 62215, imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150', description: 'Chiến binh bản lĩnh mang màu sắc nhiệt huyết.' },
-  { id: '3', sbd: '024', name: 'Lê Ngọc Yến Vy', votes: 22800, imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150', description: 'Đại diện cho vẻ đẹp tri thức và sự duyên dáng.' },
-  { id: '4', sbd: '096', name: 'Võ Bá Thiện', votes: 20590, imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=150&h=150', description: 'Nụ cười tỏa nắng cùng trái tim ấm áp.' },
-  { id: '5', sbd: '018', name: 'Trần Tuyết Ngân', votes: 16070, imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150', description: 'Gương mặt cá tính đầy bứt phá.' },
-  { id: '6', sbd: '095', name: 'Nguyễn Thị Cẩm Thanh', votes: 8410, imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150', description: 'Sự kết hợp hoàn hảo giữa năng động và dịu dàng.' },
+  { id: '1', sbd: '085', name: 'Nguyen Thanh Tan', votes: 106100, imageUrl: '/original_assets/image389b.png', description: "Thi sinh cua HUIT's Iconic 2024." },
+  { id: '2', sbd: '089', name: 'Nguyen Dinh Tu', votes: 62215, imageUrl: '/original_assets/image725f.png', description: "Thi sinh cua HUIT's Iconic 2024." },
+  { id: '3', sbd: '024', name: 'Le Ngoc Yen Vy', votes: 22800, imageUrl: '/original_assets/image940e.jpg', description: "Thi sinh cua HUIT's Iconic 2024." },
 ];
+
+function CandidateModal({
+  title,
+  formName,
+  formSbd,
+  formVotes,
+  formDesc,
+  formImage,
+  setFormName,
+  setFormSbd,
+  setFormVotes,
+  setFormDesc,
+  setFormImage,
+  onClose,
+  onSubmit,
+}: {
+  title: string;
+  formName: string;
+  formSbd: string;
+  formVotes: number;
+  formDesc: string;
+  formImage: string;
+  setFormName: (value: string) => void;
+  setFormSbd: (value: string) => void;
+  setFormVotes: (value: number) => void;
+  setFormDesc: (value: string) => void;
+  setFormImage: (value: string) => void;
+  onClose: () => void;
+  onSubmit: (event: React.FormEvent) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-[#10211d]/60 p-4 backdrop-blur-sm">
+      <form onSubmit={onSubmit} className="w-full max-w-[560px] rounded-lg border border-[#dce5e1] bg-white p-6 shadow-2xl">
+        <div className="flex items-start justify-between gap-4 border-b border-[#edf2f0] pb-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#0f766e]">Ho so thi sinh</p>
+            <h3 className="mt-1 text-xl font-black text-[#18211f]">{title}</h3>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg border border-[#dce5e1] px-3 py-2 text-sm font-bold text-[#52605b] hover:border-[#0f766e] hover:text-[#0f766e]">
+            Dong
+          </button>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label className="space-y-2 sm:col-span-2">
+            <span className="text-sm font-bold text-[#52605b]">Ho va ten</span>
+            <input className="h-11 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-sm font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formName} onChange={(event) => setFormName(event.target.value)} required />
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-bold text-[#52605b]">So bao danh</span>
+            <input className="h-11 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-sm font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formSbd} onChange={(event) => setFormSbd(event.target.value)} required />
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-bold text-[#52605b]">So phieu</span>
+            <input type="number" className="h-11 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-sm font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formVotes} onChange={(event) => setFormVotes(Number(event.target.value))} min={0} />
+          </label>
+
+          <label className="space-y-2 sm:col-span-2">
+            <span className="text-sm font-bold text-[#52605b]">Duong dan anh</span>
+            <input className="h-11 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-sm font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formImage} onChange={(event) => setFormImage(event.target.value)} />
+          </label>
+
+          <label className="space-y-2 sm:col-span-2">
+            <span className="text-sm font-bold text-[#52605b]">Mo ta ngan</span>
+            <textarea className="h-24 w-full resize-none rounded-lg border border-[#dce5e1] bg-[#fbfdfc] p-3 text-sm font-medium text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formDesc} onChange={(event) => setFormDesc(event.target.value)} required />
+          </label>
+        </div>
+
+        <div className="mt-6 flex justify-end gap-3 border-t border-[#edf2f0] pt-4">
+          <button type="button" onClick={onClose} className="rounded-lg border border-[#dce5e1] bg-white px-4 py-2.5 text-sm font-bold text-[#52605b] hover:border-[#0f766e] hover:text-[#0f766e]">
+            Huy
+          </button>
+          <button type="submit" className="rounded-lg bg-[#123c34] px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#0f766e]">
+            Luu ho so
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
 
 export default function CandidatesAdminPage() {
   const [candidates, setCandidates] = useState<Candidate[]>(INITIAL_MOCK_CANDIDATES);
   const [search, setSearch] = useState('');
-  
-  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
-  
-  // Form fields state
   const [formName, setFormName] = useState('');
   const [formSbd, setFormSbd] = useState('');
   const [formVotes, setFormVotes] = useState(0);
@@ -32,47 +107,50 @@ export default function CandidatesAdminPage() {
     async function loadFromApi() {
       try {
         const res = await fetch('http://localhost:5000/api/candidates');
-        if (res.ok) {
-          const data = await res.json();
-          setCandidates(data);
-        }
+        if (res.ok) setCandidates(await res.json());
       } catch (e) {
         console.log('Backend API offline, showing local mock admin candidates.');
       }
     }
+
     loadFromApi();
   }, []);
+
+  const rankedCandidates = useMemo(() => [...candidates].sort((a, b) => b.votes - a.votes), [candidates]);
+  const filteredCandidates = rankedCandidates.filter((candidate) =>
+    candidate.name.toLowerCase().includes(search.toLowerCase()) || candidate.sbd.includes(search)
+  );
+  const totalVotes = candidates.reduce((sum, candidate) => sum + candidate.votes, 0);
 
   const openAddModal = () => {
     setFormName('');
     setFormSbd('');
     setFormVotes(0);
     setFormDesc('');
-    setFormImage('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150&h=150');
+    setFormImage('/original_assets/image389b.png');
     setIsAddModalOpen(true);
   };
 
-  const openEditModal = (c: Candidate) => {
-    setSelectedCandidate(c);
-    setFormName(c.name);
-    setFormSbd(c.sbd);
-    setFormVotes(c.votes);
-    setFormDesc(c.description);
-    setFormImage(c.imageUrl);
+  const openEditModal = (candidate: Candidate) => {
+    setSelectedCandidate(candidate);
+    setFormName(candidate.name);
+    setFormSbd(candidate.sbd);
+    setFormVotes(candidate.votes);
+    setFormDesc(candidate.description);
+    setFormImage(candidate.imageUrl);
     setIsEditModalOpen(true);
   };
 
-  const handleAddSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAddSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     const newCandidate: Partial<Candidate> = {
       name: formName,
       sbd: formSbd,
       votes: formVotes,
       description: formDesc,
-      imageUrl: formImage
+      imageUrl: formImage,
     };
 
-    // Try posting to NestJS
     try {
       const res = await fetch('http://localhost:5000/api/admin/candidates', {
         method: 'POST',
@@ -81,29 +159,18 @@ export default function CandidatesAdminPage() {
       });
       if (res.ok) {
         const added = await res.json();
-        setCandidates(prev => [...prev, added]);
+        setCandidates((prev) => [...prev, added]);
         setIsAddModalOpen(false);
-        alert('Thêm thí sinh thành công!');
         return;
       }
     } catch (err) {}
 
-    // Fallback local mock state update
-    const addedMock: Candidate = {
-      id: (candidates.length + 1).toString(),
-      name: formName,
-      sbd: formSbd,
-      votes: formVotes,
-      description: formDesc,
-      imageUrl: formImage
-    };
-    setCandidates([...candidates, addedMock]);
+    setCandidates((prev) => [...prev, { id: Date.now().toString(), name: formName, sbd: formSbd, votes: formVotes, description: formDesc, imageUrl: formImage }]);
     setIsAddModalOpen(false);
-    alert('Thêm thí sinh offline thành công!');
   };
 
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEditSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!selectedCandidate) return;
 
     const fieldsToUpdate: Partial<Candidate> = {
@@ -111,10 +178,9 @@ export default function CandidatesAdminPage() {
       sbd: formSbd,
       votes: formVotes,
       description: formDesc,
-      imageUrl: formImage
+      imageUrl: formImage,
     };
 
-    // Try put request to NestJS
     try {
       const res = await fetch(`http://localhost:5000/api/admin/candidates/${selectedCandidate.id}`, {
         method: 'PUT',
@@ -123,196 +189,159 @@ export default function CandidatesAdminPage() {
       });
       if (res.ok) {
         const updated = await res.json();
-        setCandidates(prev => prev.map(c => c.id === selectedCandidate.id ? updated : c));
+        setCandidates((prev) => prev.map((candidate) => candidate.id === selectedCandidate.id ? updated : candidate));
         setIsEditModalOpen(false);
-        alert('Cập nhật thí sinh thành công!');
         return;
       }
     } catch (err) {}
 
-    // Fallback local mock state update
-    setCandidates(prev =>
-      prev.map(c => c.id === selectedCandidate.id ? { ...c, ...fieldsToUpdate } : c)
-    );
+    setCandidates((prev) => prev.map((candidate) => candidate.id === selectedCandidate.id ? { ...candidate, ...fieldsToUpdate } : candidate));
     setIsEditModalOpen(false);
-    alert('Cập nhật thí sinh offline thành công!');
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Bạn có chắc chắn muốn xóa thí sinh này không?')) return;
+    if (!confirm('Ban co chac chan muon xoa thi sinh nay?')) return;
 
-    // Try delete request to NestJS
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/candidates/${id}`, {
-        method: 'DELETE',
-      });
+      const res = await fetch(`http://localhost:5000/api/admin/candidates/${id}`, { method: 'DELETE' });
       if (res.ok) {
-        setCandidates(prev => prev.filter(c => c.id !== id));
-        alert('Xóa thí sinh thành công!');
+        setCandidates((prev) => prev.filter((candidate) => candidate.id !== id));
         return;
       }
     } catch (err) {}
 
-    // Fallback local mock state update
-    setCandidates(prev => prev.filter(c => c.id !== id));
-    alert('Xóa thí sinh offline thành công!');
+    setCandidates((prev) => prev.filter((candidate) => candidate.id !== id));
   };
 
-  const filteredCandidates = candidates.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) || c.sbd.includes(search)
-  );
-
   return (
-    <div className="flex flex-col space-y-6">
-      
-      {/* Title Header */}
-      <div className="flex justify-between items-center">
+    <div className="space-y-6">
+      <section className="flex flex-col gap-4 rounded-lg border border-[#dce5e1] bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-[26px] font-bold text-slate-100">Quản lý Thí sinh</h1>
-          <p className="text-[14px] text-slate-400 mt-1">Danh sách tất cả thí sinh tham gia HUIT's Iconic 2024.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#0f766e]">Quan ly du lieu</p>
+          <h2 className="mt-1 text-2xl font-black text-[#18211f]">Thi sinh</h2>
+          <p className="mt-1 text-sm text-[#6b7773]">Theo doi ho so, so bao danh va luot binh chon hien tai.</p>
         </div>
-        <button 
-          onClick={openAddModal}
-          className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white font-medium text-[14px] transition-colors"
-        >
-          + Thêm thí sinh
+        <button onClick={openAddModal} className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#e45136] px-4 py-3 text-sm font-black text-white shadow-sm transition hover:bg-[#c83f28]">
+          <span className="text-lg leading-none">+</span>
+          Them thi sinh
         </button>
-      </div>
+      </section>
 
-      {/* Filter / Search input */}
-      <div className="w-full max-w-[400px]">
-        <input 
-          type="text" 
-          placeholder="Tìm kiếm thí sinh theo tên hoặc SBD..." 
-          className="w-full h-[40px] px-4 rounded-lg bg-slate-800 border border-slate-700 text-white placeholder-slate-500 text-[14px] focus:outline-none focus:border-blue-500"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      </div>
+      <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="rounded-lg border border-[#dce5e1] bg-white p-5 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#7a8b85]">Tong thi sinh</p>
+          <p className="mt-2 text-3xl font-black text-[#18211f]">{candidates.length}</p>
+        </div>
+        <div className="rounded-lg border border-[#dce5e1] bg-white p-5 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#7a8b85]">Tong phieu</p>
+          <p className="mt-2 text-3xl font-black text-[#18211f]">{totalVotes.toLocaleString()}</p>
+        </div>
+        <div className="rounded-lg border border-[#dce5e1] bg-white p-5 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#7a8b85]">Dang dan dau</p>
+          <p className="mt-2 truncate text-2xl font-black text-[#18211f]">{rankedCandidates[0]?.name || 'Chua co'}</p>
+        </div>
+      </section>
 
-      {/* Candidates Table */}
-      <div className="w-full bg-slate-800 border border-slate-700 rounded-xl overflow-hidden shadow-lg">
-        <table className="w-full border-collapse text-left text-slate-200">
-          <thead className="bg-slate-700/50 text-[13px] uppercase tracking-wider text-slate-400 border-b border-slate-700">
-            <tr>
-              <th className="px-6 py-3.5">Ảnh</th>
-              <th className="px-6 py-3.5">SBD</th>
-              <th className="px-6 py-3.5">Họ và Tên</th>
-              <th className="px-6 py-3.5">Số phiếu</th>
-              <th className="px-6 py-3.5">Mô tả</th>
-              <th className="px-6 py-3.5 text-right">Hành động</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-700 text-[14px]">
-            {filteredCandidates.map(c => (
-              <tr key={c.id} className="hover:bg-slate-700/20 transition-colors">
-                <td className="px-6 py-4">
-                  <img src={c.imageUrl} className="w-10 h-10 object-cover object-top rounded-full border border-slate-600" alt="" />
-                </td>
-                <td className="px-6 py-4 font-bold text-blue-400">{c.sbd}</td>
-                <td className="px-6 py-4 font-semibold text-slate-100">{c.name}</td>
-                <td className="px-6 py-4">{c.votes.toLocaleString()}</td>
-                <td className="px-6 py-4 max-w-[250px] truncate text-slate-400">{c.description}</td>
-                <td className="px-6 py-4 text-right space-x-3">
-                  <button 
-                    onClick={() => openEditModal(c)}
-                    className="text-blue-400 hover:text-blue-300 font-medium text-[13px]"
-                  >
-                    Sửa
-                  </button>
-                  <button 
-                    onClick={() => handleDelete(c.id)}
-                    className="text-red-400 hover:text-red-300 font-medium text-[13px]"
-                  >
-                    Xóa
-                  </button>
-                </td>
+      <section className="rounded-lg border border-[#dce5e1] bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-[#edf2f0] p-4 md:flex-row md:items-center md:justify-between">
+          <div className="relative w-full md:max-w-md">
+            <svg viewBox="0 0 24 24" className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8aa098]" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="7" />
+              <path d="m20 20-3-3" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Tim theo ten hoac SBD..."
+              className="h-11 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] pl-10 pr-3 text-sm font-semibold text-[#18211f] outline-none transition placeholder:text-[#9aa9a4] focus:border-[#0f766e] focus:bg-white"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
+          <p className="text-sm font-semibold text-[#6b7773]">{filteredCandidates.length} ket qua</p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[920px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-[#edf2f0] bg-[#fbfdfc] text-xs font-black uppercase tracking-[0.12em] text-[#7a8b85]">
+                <th className="px-5 py-4">Thi sinh</th>
+                <th className="px-5 py-4">SBD</th>
+                <th className="px-5 py-4">So phieu</th>
+                <th className="px-5 py-4">Mo ta</th>
+                <th className="px-5 py-4 text-right">Thao tac</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-[#edf2f0]">
+              {filteredCandidates.map((candidate, index) => (
+                <tr key={candidate.id} className="transition hover:bg-[#fbfdfc]">
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-12 w-12 overflow-hidden rounded-lg border border-[#dce5e1] bg-[#edf4f1]">
+                        <img src={candidate.imageUrl} className="h-full w-full object-cover object-top" alt={candidate.name} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-black text-[#18211f]">{candidate.name}</p>
+                        <p className="text-xs font-semibold text-[#7a8b85]">Hang #{index + 1}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className="rounded-full bg-[#edf4f1] px-3 py-1 text-sm font-black text-[#0f766e]">{candidate.sbd}</span>
+                  </td>
+                  <td className="px-5 py-4 text-sm font-black text-[#18211f]">{candidate.votes.toLocaleString()}</td>
+                  <td className="max-w-[320px] truncate px-5 py-4 text-sm font-medium text-[#6b7773]">{candidate.description}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex justify-end gap-2">
+                      <button onClick={() => openEditModal(candidate)} className="rounded-lg border border-[#dce5e1] bg-white px-3 py-2 text-sm font-bold text-[#0f766e] transition hover:border-[#0f766e]">
+                        Sua
+                      </button>
+                      <button onClick={() => handleDelete(candidate.id)} className="rounded-lg border border-[#f0c9bd] bg-[#fff5f2] px-3 py-2 text-sm font-bold text-[#c83f28] transition hover:border-[#e45136]">
+                        Xoa
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-      {/* ADD CANDIDATE MODAL */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <form onSubmit={handleAddSubmit} className="bg-slate-800 border border-slate-700 p-6 rounded-xl w-full max-w-[460px] flex flex-col space-y-4">
-            <h3 className="text-[18px] font-bold text-white border-b border-slate-700 pb-2">Thêm Thí sinh</h3>
-            
-            <div className="flex flex-col space-y-1">
-              <label className="text-[12px] text-slate-400 font-medium">Họ và Tên</label>
-              <input type="text" className="h-10 px-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-[14px]" value={formName} onChange={e => setFormName(e.target.value)} required />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1">
-                <label className="text-[12px] text-slate-400 font-medium">Số báo danh (SBD)</label>
-                <input type="text" className="h-10 px-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-[14px]" value={formSbd} onChange={e => setFormSbd(e.target.value)} required />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-[12px] text-slate-400 font-medium">Số phiếu ban đầu</label>
-                <input type="number" className="h-10 px-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-[14px]" value={formVotes} onChange={e => setFormVotes(Number(e.target.value))} />
-              </div>
-            </div>
-
-            <div className="flex flex-col space-y-1">
-              <label className="text-[12px] text-slate-400 font-medium">Đường dẫn ảnh đại diện</label>
-              <input type="text" className="h-10 px-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-[14px]" value={formImage} onChange={e => setFormImage(e.target.value)} />
-            </div>
-
-            <div className="flex flex-col space-y-1">
-              <label className="text-[12px] text-slate-400 font-medium">Mô tả ngắn</label>
-              <textarea className="h-20 p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-[14px] resize-none" value={formDesc} onChange={e => setFormDesc(e.target.value)} required />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
-              <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-4 py-2 border border-slate-600 hover:border-slate-500 rounded-lg text-slate-300 text-[14px]">Hủy</button>
-              <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-[14px] font-medium">Lưu</button>
-            </div>
-          </form>
-        </div>
+        <CandidateModal
+          title="Them thi sinh"
+          formName={formName}
+          formSbd={formSbd}
+          formVotes={formVotes}
+          formDesc={formDesc}
+          formImage={formImage}
+          setFormName={setFormName}
+          setFormSbd={setFormSbd}
+          setFormVotes={setFormVotes}
+          setFormDesc={setFormDesc}
+          setFormImage={setFormImage}
+          onClose={() => setIsAddModalOpen(false)}
+          onSubmit={handleAddSubmit}
+        />
       )}
 
-      {/* EDIT CANDIDATE MODAL */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
-          <form onSubmit={handleEditSubmit} className="bg-slate-800 border border-slate-700 p-6 rounded-xl w-full max-w-[460px] flex flex-col space-y-4">
-            <h3 className="text-[18px] font-bold text-white border-b border-slate-700 pb-2">Sửa Thí sinh</h3>
-            
-            <div className="flex flex-col space-y-1">
-              <label className="text-[12px] text-slate-400 font-medium">Họ và Tên</label>
-              <input type="text" className="h-10 px-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-[14px]" value={formName} onChange={e => setFormName(e.target.value)} required />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex flex-col space-y-1">
-                <label className="text-[12px] text-slate-400 font-medium">Số báo danh (SBD)</label>
-                <input type="text" className="h-10 px-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-[14px]" value={formSbd} onChange={e => setFormSbd(e.target.value)} required />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label className="text-[12px] text-slate-400 font-medium">Số phiếu bình chọn</label>
-                <input type="number" className="h-10 px-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-[14px]" value={formVotes} onChange={e => setFormVotes(Number(e.target.value))} />
-              </div>
-            </div>
-
-            <div className="flex flex-col space-y-1">
-              <label className="text-[12px] text-slate-400 font-medium">Đường dẫn ảnh đại diện</label>
-              <input type="text" className="h-10 px-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-[14px]" value={formImage} onChange={e => setFormImage(e.target.value)} />
-            </div>
-
-            <div className="flex flex-col space-y-1">
-              <label className="text-[12px] text-slate-400 font-medium">Mô tả ngắn</label>
-              <textarea className="h-20 p-3 rounded-lg bg-slate-700 border border-slate-600 text-white focus:outline-none focus:border-blue-500 text-[14px] resize-none" value={formDesc} onChange={e => setFormDesc(e.target.value)} required />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-slate-700">
-              <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 border border-slate-600 hover:border-slate-500 rounded-lg text-slate-300 text-[14px]">Hủy</button>
-              <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-white text-[14px] font-medium">Lưu thay đổi</button>
-            </div>
-          </form>
-        </div>
+        <CandidateModal
+          title="Sua thi sinh"
+          formName={formName}
+          formSbd={formSbd}
+          formVotes={formVotes}
+          formDesc={formDesc}
+          formImage={formImage}
+          setFormName={setFormName}
+          setFormSbd={setFormSbd}
+          setFormVotes={setFormVotes}
+          setFormDesc={setFormDesc}
+          setFormImage={setFormImage}
+          onClose={() => setIsEditModalOpen(false)}
+          onSubmit={handleEditSubmit}
+        />
       )}
-
     </div>
   );
 }

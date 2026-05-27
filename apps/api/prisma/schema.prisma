@@ -40,6 +40,7 @@ model Banner {
   title     String
   imageUrl  String
   link      String?
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

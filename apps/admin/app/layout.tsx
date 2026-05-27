@@ -7,6 +7,90 @@ export const metadata = {
   description: "HUIT's Iconic Voting Platform Management Dashboard",
 };
 
+const dashboardIcon = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="3" width="7" height="8" rx="1.5" />
+    <rect x="14" y="3" width="7" height="5" rx="1.5" />
+    <rect x="14" y="12" width="7" height="9" rx="1.5" />
+    <rect x="3" y="15" width="7" height="6" rx="1.5" />
+  </svg>
+);
+
+const candidatesIcon = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9.5" cy="7" r="4" />
+    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+  </svg>
+);
+
+const usersIcon = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+    <circle cx="9" cy="7" r="4" />
+    <path d="M22 11h-6" />
+    <path d="M19 8v6" />
+  </svg>
+);
+
+const sponsorsIcon = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 3 3 8l9 5 9-5-9-5Z" />
+    <path d="m3 14 9 5 9-5" />
+    <path d="m3 11 9 5 9-5" />
+  </svg>
+);
+
+const bannerIcon = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <circle cx="8" cy="10" r="1.5" />
+    <path d="m21 15-5-5L5 19" />
+  </svg>
+);
+
+const timelineIcon = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 8v5l3 2" />
+    <circle cx="12" cy="12" r="9" />
+  </svg>
+);
+
+const settingsIcon = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" />
+    <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.04.04a2 2 0 1 1-2.83 2.83l-.04-.04A1.7 1.7 0 0 0 15 19.4a1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.06a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.88.34l-.04.04a2 2 0 1 1-2.83-2.83l.04-.04A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.06a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.88l-.04-.04a2 2 0 1 1 2.83-2.83l.04.04A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.06a1.7 1.7 0 0 0 1 1.55 1.7 1.7 0 0 0 1.88-.34l.04-.04a2 2 0 1 1 2.83 2.83l-.04.04A1.7 1.7 0 0 0 19.4 9c.15.32.48.64 1 .95H21a2 2 0 1 1 0 4h-.06a1.7 1.7 0 0 0-1.55 1Z" />
+  </svg>
+);
+
+const navGroups = [
+  {
+    title: 'Quan ly',
+    items: [
+      { href: '/', label: 'Tong quan', icon: dashboardIcon },
+      { href: '/candidates', label: 'Thi sinh', icon: candidatesIcon },
+      { href: '/users', label: 'Quan ly nguoi dung', icon: usersIcon },
+      { href: '/sponsors', label: 'Nha tai tro', icon: sponsorsIcon },
+    ],
+  },
+  {
+    title: 'Quan ly giao dien',
+    items: [
+      { href: '/banners', label: 'Banner', icon: bannerIcon },
+      { href: '/timeline', label: 'Lo trinh', icon: timelineIcon },
+    ],
+  },
+  {
+    title: 'Cai dat',
+    items: [
+      { href: '/settings', label: 'Cau hinh', icon: settingsIcon },
+    ],
+  },
+];
+
+const navItems = navGroups.flatMap((group) => group.items);
+
 export default function AdminLayout({
   children,
 }: {
@@ -17,83 +101,92 @@ export default function AdminLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       </head>
-      <body className="bg-slate-900 text-slate-100 flex min-h-screen">
-        
-        {/* Sidebar Container */}
-        <aside className="w-64 bg-slate-800 border-r border-slate-700 flex flex-col justify-between flex-shrink-0">
-          <div className="flex flex-col">
-            {/* Sidebar Logo */}
-            <div className="h-16 flex items-center px-6 border-b border-slate-700">
-              <span className="font-extrabold text-[16px] tracking-wider text-blue-500">
-                HUIT ICONIC ADMIN
-              </span>
+      <body className="h-screen overflow-hidden bg-[#f4f7f6] text-[#18211f]">
+        <div className="flex h-screen overflow-hidden">
+          <aside className="hidden h-screen w-[280px] shrink-0 border-r border-[#dce5e1] bg-[#fbfdfc] lg:flex lg:flex-col">
+            <div className="shrink-0 px-4 py-5">
+              <Link href="/" className="flex items-center gap-3 rounded-lg px-2 py-2">
+                <span className="grid h-11 w-11 place-items-center rounded-lg bg-[#123c34] text-sm font-black text-white shadow-sm">HI</span>
+                <span>
+                  <span className="block text-[13px] font-black uppercase tracking-[0.18em] text-[#123c34]">HUIT Iconic</span>
+                  <span className="block text-xs font-medium text-[#6b7773]">Voting Admin</span>
+                </span>
+              </Link>
             </div>
-            
-            {/* Nav Menu */}
-            <nav className="flex flex-col p-4 space-y-1">
-              <Link href="/" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors text-[14px] font-medium text-slate-200">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><rect x="3" y="3" width="7" height="9" rx="1"></rect><rect x="14" y="3" width="7" height="5" rx="1"></rect><rect x="14" y="12" width="7" height="9" rx="1"></rect><rect x="3" y="16" width="7" height="5" rx="1"></rect></svg>
-                <span>Tổng quan</span>
-              </Link>
-              <Link href="/candidates" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors text-[14px] font-medium text-slate-200">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                <span>Thí sinh</span>
-              </Link>
-              <Link href="/sponsors" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors text-[14px] font-medium text-slate-200">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
-                <span>Nhà tài trợ</span>
-              </Link>
-              <Link href="/banners" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors text-[14px] font-medium text-slate-200">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-                <span>Ảnh Banner</span>
-              </Link>
-              <Link href="/timeline" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors text-[14px] font-medium text-slate-200">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-                <span>Lộ trình</span>
-              </Link>
-              <Link href="/settings" className="flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-slate-700 transition-colors text-[14px] font-medium text-slate-200">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                <span>Cấu hình cổng</span>
-              </Link>
+
+            <nav className="min-h-0 flex-1 space-y-7 overflow-y-auto px-4 pb-5">
+              {navGroups.map((group) => (
+                <div key={group.title}>
+                  <p className="mb-2 px-3 text-[11px] font-black uppercase tracking-[0.16em] text-[#92a39d]">
+                    {group.title}
+                  </p>
+                  <div className="space-y-1">
+                    {group.items.map((item) => (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className="group flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-bold text-[#52605b] transition hover:bg-[#edf4f1] hover:text-[#123c34]"
+                      >
+                        <span className="text-[#8aa098] transition group-hover:text-[#0f766e]">{item.icon}</span>
+                        <span className="font-semibold">{item.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </nav>
+
+            <div className="shrink-0 p-4">
+              <div className="rounded-lg border border-[#dce5e1] bg-[#f3f8f6] p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7a8b85]">Tai khoan</p>
+                <div className="mt-3 flex items-center gap-3">
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#e45136] text-sm font-bold text-white">AD</span>
+                  <span>
+                    <span className="block text-sm font-bold text-[#18211f]">Administrator</span>
+                    <span className="block text-xs text-[#6b7773]">Super Admin</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
+            <header className="z-20 shrink-0 border-b border-[#dce5e1] bg-[#f8fbfa]/90 px-4 py-4 backdrop-blur md:px-8">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#0f766e]">Admin control center</p>
+                  <h1 className="mt-1 text-xl font-black text-[#18211f]">Quan ly cong binh chon</h1>
+                </div>
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="inline-flex items-center gap-2 rounded-full border border-[#b9d8cf] bg-white px-3 py-2 text-xs font-bold text-[#166556]">
+                    <span className="h-2 w-2 rounded-full bg-[#18a058]" />
+                    He thong online
+                  </span>
+                  <Link href="http://localhost:3000" className="rounded-lg border border-[#dce5e1] bg-white px-4 py-2 text-sm font-bold text-[#18211f] shadow-sm transition hover:border-[#0f766e] hover:text-[#0f766e]">
+                    Xem trang web
+                  </Link>
+                </div>
+              </div>
+
+              <nav className="mt-4 flex gap-2 overflow-x-auto lg:hidden">
+                {navItems.map((item) => (
+                  <Link key={item.href} href={item.href} className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-[#52605b] shadow-sm">
+                    {item.icon}
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            </header>
+
+            <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
+              <div className="mx-auto w-full max-w-[1420px]">
+                {children}
+              </div>
+            </main>
           </div>
-          
-          {/* Admin User Info Footer */}
-          <div className="p-4 border-t border-slate-700 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white text-[14px]">
-              AD
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[13px] font-bold text-slate-100">Administrator</span>
-              <span className="text-[11px] text-slate-400">Super Admin</span>
-            </div>
-          </div>
-        </aside>
- 
-        {/* Content Wrapper */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          
-          {/* Header */}
-          <header className="h-16 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-8 flex-shrink-0">
-            <h2 className="text-[14px] sm:text-[16px] font-semibold text-slate-200 uppercase tracking-wider">
-              Hệ thống Quản lý HUIT fest
-            </h2>
-            <div className="flex items-center gap-4">
-              <span className="text-[13px] px-3 py-1 rounded-full bg-green-500/10 text-green-400 border border-green-500/20 font-medium">
-                Hệ thống: ONLINE
-              </span>
-            </div>
-          </header>
- 
-          {/* Main View Area */}
-          <main className="flex-1 overflow-y-auto p-8">
-            {children}
-          </main>
- 
         </div>
- 
       </body>
     </html>
   );

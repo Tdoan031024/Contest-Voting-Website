@@ -103,7 +103,8 @@
       "id": "b1",
       "title": "HUIT's Iconic Banner",
       "imageUrl": "/original_assets/image974c.jpg",
-      "link": "#"
+      "link": "#",
+      "isActive": true
     }
   ],
   "settings": {

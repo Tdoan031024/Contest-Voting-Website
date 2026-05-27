@@ -126,6 +126,7 @@ export class AppService {
       title: 'HUIT\'s Iconic Banner',
       imageUrl: '/original_assets/image974c.jpg',
       link: '#',
+      isActive: true,
     },
   ];
 
@@ -152,7 +153,12 @@ export class AppService {
         if (data.candidates) this.candidates = data.candidates;
         if (data.sponsors) this.sponsors = data.sponsors;
         if (data.timeline) this.timeline = data.timeline;
-        if (data.banners) this.banners = data.banners;
+        if (data.banners) {
+          this.banners = data.banners.map((banner: Banner) => ({
+            ...banner,
+            isActive: banner.isActive ?? true,
+          }));
+        }
         if (data.settings) this.settings = data.settings;
         console.log('✅ Loaded data from database store successfully.');
       } else {
@@ -324,6 +330,7 @@ export class AppService {
       title: newBanner.title || 'Banner mới',
       imageUrl: newBanner.imageUrl || '/original_assets/image974c.jpg',
       link: newBanner.link || '#',
+      isActive: newBanner.isActive ?? true,
     };
     this.banners.push(banner);
     this.saveDb();

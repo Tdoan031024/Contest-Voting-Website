@@ -25,6 +25,7 @@ interface Banner {
   title: string;
   imageUrl: string;
   link: string;
+  isActive?: boolean;
 }
 
 export default function HomePage() {
@@ -32,6 +33,7 @@ export default function HomePage() {
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [banners, setBanners] = useState<Banner[]>([]);
+  const [hasLoadedBanners, setHasLoadedBanners] = useState(false);
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [settings, setSettings] = useState<any>(null);
@@ -52,7 +54,9 @@ export default function HomePage() {
         }
         if (banRes.ok) {
           const banData = await banRes.json();
-          setBanners(banData);
+          setBanners(banData.filter((banner: Banner) => banner.isActive !== false));
+          setHasLoadedBanners(true);
+          setCurrentBannerIndex(0);
         }
         if (sponRes.ok) {
           const sponData = await sponRes.json();
@@ -167,28 +171,30 @@ export default function HomePage() {
       <main className="sc-908a50-0 iUzfqH flex-1">
 
         {/* Banner Section */}
-        <div className="sc-1a037b37-0 fgDcug relative flex flex-col">
-          <div className="relative w-full h-[30vh] sm:h-[80vh] max-h-[1500px] overflow-hidden">
-            <h1 className="text-transparent absolute -z-[1] text-transparent-transparent">
-              {banners[currentBannerIndex]?.title || "HUIT's Iconic"}
-            </h1>
-            {banners.length > 0 ? (
-              <a href={banners[currentBannerIndex].link || "#"} className="w-full h-full block">
-                <img 
-                  alt={banners[currentBannerIndex].title} 
-                  className="w-full h-full object-cover object-center transition-all duration-1000" 
-                  style={{ color: 'transparent' }} 
-                  src={banners[currentBannerIndex].imageUrl} 
-                />
-              </a>
-            ) : (
-              <>
-                <img alt="Banner" className="sm:block hidden w-full h-full object-cover object-center" style={{ color: 'transparent' }} src="/original_assets/image974c.jpg" />
-                <img alt="Banner" className="sm:hidden block w-full h-full object-cover object-center" style={{ color: 'transparent' }} src="/original_assets/image6981.jpg" />
-              </>
-            )}
+        {(!hasLoadedBanners || banners.length > 0) && (
+          <div className="sc-1a037b37-0 fgDcug relative flex flex-col">
+            <div className="relative w-full h-[30vh] sm:h-[80vh] max-h-[1500px] overflow-hidden">
+              <h1 className="text-transparent absolute -z-[1] text-transparent-transparent">
+                {banners[currentBannerIndex]?.title || "HUIT's Iconic"}
+              </h1>
+              {banners.length > 0 ? (
+                <a href={banners[currentBannerIndex].link || "#"} className="w-full h-full block">
+                  <img 
+                    alt={banners[currentBannerIndex].title} 
+                    className="w-full h-full object-cover object-center transition-all duration-1000" 
+                    style={{ color: 'transparent' }} 
+                    src={banners[currentBannerIndex].imageUrl} 
+                  />
+                </a>
+              ) : (
+                <>
+                  <img alt="Banner" className="sm:block hidden w-full h-full object-cover object-center" style={{ color: 'transparent' }} src="/original_assets/image974c.jpg" />
+                  <img alt="Banner" className="sm:hidden block w-full h-full object-cover object-center" style={{ color: 'transparent' }} src="/original_assets/image6981.jpg" />
+                </>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* About Section */}
         <div id="about-section" className="sc-1a037b37-0 ekqPrV relative mt-8 sm:mt-[60px]">
@@ -435,25 +441,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            {sponsors.length > 0 ? (
-              <div className="w-full max-w-[1200px] px-4">
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 justify-center items-center">
-                  {sponsors.map(sponsor => (
-                    <div key={sponsor.id} className="backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 flex flex-col items-center justify-center hover:bg-white/20 transition-all duration-300">
-                      <div className="h-16 w-full flex items-center justify-center">
-                        <img alt={sponsor.name} className="max-h-full max-w-full object-contain filter brightness-95 hover:brightness-100 transition-all" src={sponsor.logoUrl} />
-                      </div>
-                      <span className="mt-3 text-[11px] font-bold tracking-widest text-[#79BCC2] uppercase">{sponsor.tier}</span>
-                      <span className="text-[13px] text-white/80 mt-1 font-semibold text-center truncate w-full">{sponsor.name}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="w-full max-w-[1400px] px-4">
-                <img alt="Sponsors Logo" className="w-full h-auto object-contain rounded-xl" src="/original_assets/image4b12.png" />
-              </div>
-            )}
+            <div className="w-full max-w-[1400px] px-4">
+              <img alt="Sponsors Logo" className="w-full h-auto object-contain rounded-xl" src="/original_assets/image4b12.png" />
+            </div>
           </div>
         </div>
 
