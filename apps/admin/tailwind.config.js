@@ -10,6 +10,10 @@ module.exports = {
         adminBg: "#0F172A",
         adminSidebar: "#1E293B",
         adminPrimary: "#3B82F6",
+      },
+      fontFamily: {
+        heading: ["'Inter'", "sans-serif"],
+        body: ["'Inter'", "sans-serif"],
       }
     },
   },

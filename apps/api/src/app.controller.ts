@@ -8,110 +8,110 @@ export class AppController {
 
   // --- CANDIDATES ---
   @Get('candidates')
-  getCandidates(): Candidate[] {
+  async getCandidates(): Promise<Candidate[]> {
     return this.appService.getCandidates();
   }
 
   @Get('candidates/:sbd')
-  getCandidateBySbd(@Param('sbd') sbd: string): Candidate {
+  async getCandidateBySbd(@Param('sbd') sbd: string): Promise<Candidate> {
     return this.appService.getCandidateBySbd(sbd);
   }
 
   @Post('candidates/:sbd/vote')
-  voteCandidate(
+  async voteCandidate(
     @Param('sbd') sbd: string,
     @Body('phone') phone: string
-  ): Candidate {
+  ): Promise<Candidate> {
     return this.appService.voteCandidate(sbd, phone || '0123456789');
   }
 
   @Post('admin/candidates')
-  addCandidate(@Body() newCandidate: Partial<Candidate>): Candidate {
+  async addCandidate(@Body() newCandidate: Partial<Candidate>): Promise<Candidate> {
     return this.appService.addCandidate(newCandidate);
   }
 
   @Put('admin/candidates/:id')
-  updateCandidate(
+  async updateCandidate(
     @Param('id') id: string,
     @Body() updatedFields: Partial<Candidate>
-  ): Candidate {
+  ): Promise<Candidate> {
     return this.appService.updateCandidate(id, updatedFields);
   }
 
   @Delete('admin/candidates/:id')
-  deleteCandidate(@Param('id') id: string): { success: boolean } {
+  async deleteCandidate(@Param('id') id: string): Promise<{ success: boolean }> {
     return this.appService.deleteCandidate(id);
   }
 
   // --- SPONSORS ---
   @Get('sponsors')
-  getSponsors(): Sponsor[] {
+  async getSponsors(): Promise<Sponsor[]> {
     return this.appService.getSponsors();
   }
 
   @Post('admin/sponsors')
-  addSponsor(@Body() newSponsor: Partial<Sponsor>): Sponsor {
+  async addSponsor(@Body() newSponsor: Partial<Sponsor>): Promise<Sponsor> {
     return this.appService.addSponsor(newSponsor);
   }
 
   @Put('admin/sponsors/:id')
-  updateSponsor(
+  async updateSponsor(
     @Param('id') id: string,
     @Body() updatedFields: Partial<Sponsor>
-  ): Sponsor {
+  ): Promise<Sponsor> {
     return this.appService.updateSponsor(id, updatedFields);
   }
 
   @Delete('admin/sponsors/:id')
-  deleteSponsor(@Param('id') id: string): { success: boolean } {
+  async deleteSponsor(@Param('id') id: string): Promise<{ success: boolean }> {
     return this.appService.deleteSponsor(id);
   }
 
   // --- TIMELINE ---
   @Get('timeline')
-  getTimeline(): TimelineEvent[] {
+  async getTimeline(): Promise<TimelineEvent[]> {
     return this.appService.getTimeline();
   }
 
   @Post('admin/timeline')
-  addTimelineEvent(@Body() newEvent: Partial<TimelineEvent>): TimelineEvent {
+  async addTimelineEvent(@Body() newEvent: Partial<TimelineEvent>): Promise<TimelineEvent> {
     return this.appService.addTimelineEvent(newEvent);
   }
 
   @Put('admin/timeline/:id')
-  updateTimelineEvent(
+  async updateTimelineEvent(
     @Param('id') id: string,
     @Body() updatedFields: Partial<TimelineEvent>
-  ): TimelineEvent {
+  ): Promise<TimelineEvent> {
     return this.appService.updateTimelineEvent(id, updatedFields);
   }
 
   @Delete('admin/timeline/:id')
-  deleteTimelineEvent(@Param('id') id: string): { success: boolean } {
+  async deleteTimelineEvent(@Param('id') id: string): Promise<{ success: boolean }> {
     return this.appService.deleteTimelineEvent(id);
   }
 
   // --- BANNERS ---
   @Get('banners')
-  getBanners(): Banner[] {
+  async getBanners(): Promise<Banner[]> {
     return this.appService.getBanners();
   }
 
   @Post('admin/banners')
-  addBanner(@Body() newBanner: Partial<Banner>): Banner {
+  async addBanner(@Body() newBanner: Partial<Banner>): Promise<Banner> {
     return this.appService.addBanner(newBanner);
   }
 
   @Put('admin/banners/:id')
-  updateBanner(
+  async updateBanner(
     @Param('id') id: string,
     @Body() updatedFields: Partial<Banner>
-  ): Banner {
+  ): Promise<Banner> {
     return this.appService.updateBanner(id, updatedFields);
   }
 
   @Delete('admin/banners/:id')
-  deleteBanner(@Param('id') id: string): { success: boolean } {
+  async deleteBanner(@Param('id') id: string): Promise<{ success: boolean }> {
     return this.appService.deleteBanner(id);
   }
 
@@ -127,7 +127,7 @@ export class AppController {
   }
 
   @Post('admin/settings/reset-votes')
-  resetVotes(): { success: boolean } {
+  async resetVotes(): Promise<{ success: boolean }> {
     return this.appService.resetVotes();
   }
 }

@@ -93,7 +93,17 @@ export default function TheLePage() {
 
   return (
     <>
-      <main className="bg-radial-gradient flex-1 min-h-screen py-12 sm:py-20 relative overflow-hidden">
+      <style>{`
+        .iUzfqH {
+          background-image: url(/media-platform.1vote.vn/uploads/tAtj0/1727187460437.jpg);
+          background-color: #030612;
+          background-attachment: fixed;
+          background-size: cover;
+          background-repeat: no-repeat;
+          background-position: center;
+        }
+      `}</style>
+      <main className="sc-908a50-0 iUzfqH flex-1 min-h-screen pb-16 mt-[-80px] pt-[128px] sm:pt-[160px] relative overflow-hidden">
         
         {/* Decorative ambient neon background glows */}
         <div className="absolute top-[5%] left-[-15%] w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-[#0A2FFF]/8 rounded-full blur-[110px] sm:blur-[140px] pointer-events-none"></div>

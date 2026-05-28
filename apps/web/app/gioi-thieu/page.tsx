@@ -1,10 +1,47 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+
+function useInView(threshold = 0.05) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.IntersectionObserver) {
+      setVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setVisible(true);
+        observer.disconnect();
+      }
+    }, { threshold });
+
+    const currentRef = ref.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [threshold]);
+
+  return { ref, visible };
+}
 
 export default function GioiThieuPage() {
   const [timeline, setTimeline] = useState<any[]>([]);
+
+  // Intersection observer triggers for smooth animations
+  const titleSection = useInView(0.05);
+  const gridSection = useInView(0.05);
+  const theLeSection = useInView(0.05);
+  const timelineSection = useInView(0.05);
+  const backBtnSection = useInView(0.05);
 
   useEffect(() => {
     async function loadTimeline() {
@@ -96,23 +133,78 @@ export default function GioiThieuPage() {
   return (
     <>
       <style>{`
-        @media (min-width: 812px) {
-          .iUzfqH {
-            background-image: url(/media-platform.1vote.vn/uploads/tAtj0/1727187460437.jpg);
-            background-color: white;
-            background-attachment: fixed;
-            background-size: cover;
-            background-repeat: no-repeat;
-          }
+        .iUzfqH {
+          background-image: url(/media-platform.1vote.vn/uploads/tAtj0/1727187460437.jpg);
+          background-color: #030612;
+          background-attachment: fixed;
+          background-size: cover;
+          background-repeat: no-repeat;
+          background-position: center;
+        }
+        .hfAPBN {
+          padding: 0px 128px;
+          width: calc(1311px + 128px * 2);
+          margin-left: auto;
+          margin-right: auto;
+        }
+        @media (max-width: 1504px) {
+          .hfAPBN { width: 1312px; padding: 0px 0px; }
+        }
+        @media (max-width: 1312px) {
+          .hfAPBN { width: 1110px; padding: 0px 0px; }
+        }
+        @media (max-width: 1199px) {
+          .hfAPBN { width: calc(984px + 69px * 2); padding: 0px 0px; }
+        }
+        @media (max-width: 1121px) {
+          .hfAPBN { width: calc(744px + 37px * 2); padding: 0px 37px; }
+        }
+        @media (max-width: 812px) {
+          .hfAPBN { width: 100%; padding: 0px 16px; margin-left: 0; margin-right: 0; }
+        }
+
+        /* Viewport entry transition classes */
+        .animate-on-scroll {
+          opacity: 0;
+          transform: translateY(30px);
+          transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .animate-on-scroll.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        
+        .animate-slide-left {
+          opacity: 0;
+          transform: translateX(-40px);
+          transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .animate-slide-left.visible {
+          opacity: 1;
+          transform: translateX(0);
+        }
+
+        .animate-slide-right {
+          opacity: 0;
+          transform: translateX(40px);
+          transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .animate-slide-right.visible {
+          opacity: 1;
+          transform: translateX(0);
         }
       `}</style>
 
-      <main className="sc-908a50-0 iUzfqH flex-1 pb-16">
+      {/* mt-[-80px] pt-[80px] pulls the background image behind the translucent header */}
+      <main className="sc-908a50-0 iUzfqH flex-1 pb-16 mt-[-80px] pt-[80px]">
         <div className="sc-1a037b37-0 hfAPBN relative px-4 sm:px-0">
           <div className="mt-8 sm:mt-[64px] flex flex-col items-center">
             
             {/* Title Block */}
-            <div className="flex flex-col space-y-2 text-center mb-10 sm:mb-16">
+            <div 
+              ref={titleSection.ref} 
+              className={`flex flex-col space-y-2 text-center mb-10 sm:mb-16 animate-on-scroll ${titleSection.visible ? 'visible' : ''}`}
+            >
               <h2 className="text-[24px] sm:text-[42px] tracking-[-1px] leading-[30px] sm:leading-[52px] font-normal uppercase text-black dark:text-neutral-white">
                 Giới thiệu cuộc thi
               </h2>
@@ -123,10 +215,10 @@ export default function GioiThieuPage() {
             </div>
 
             {/* Grid 2 Columns: Đối tượng & Quy chế */}
-            <div className="w-full max-w-[1200px] grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <div ref={gridSection.ref} className="w-full max-w-[1200px] grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 overflow-hidden">
               
               {/* Left Column: Đối tượng */}
-              <div className="backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-6 shadow-lg">
+              <div className={`backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-6 shadow-lg animate-slide-left ${gridSection.visible ? 'visible' : ''}`}>
                 <div className="flex items-center space-x-3 pb-3 border-b border-white/5">
                   <div className="p-2.5 bg-primary/10 rounded-lg text-primary dark:text-[#79BCC2]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -162,7 +254,10 @@ export default function GioiThieuPage() {
               </div>
 
               {/* Right Column: Quy chế */}
-              <div className="backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-6 shadow-lg">
+              <div 
+                className={`backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-6 shadow-lg animate-slide-right ${gridSection.visible ? 'visible' : ''}`}
+                style={{ transitionDelay: '150ms' }}
+              >
                 <div className="flex items-center space-x-3 pb-3 border-b border-white/5">
                   <div className="p-2.5 bg-primary/10 rounded-lg text-primary dark:text-[#79BCC2]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -193,7 +288,10 @@ export default function GioiThieuPage() {
             </div>
 
             {/* Thể lệ Section */}
-            <div className="w-full max-w-[1200px] mb-12 backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-6 shadow-lg">
+            <div 
+              ref={theLeSection.ref}
+              className={`w-full max-w-[1200px] mb-12 backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-6 shadow-lg animate-on-scroll ${theLeSection.visible ? 'visible' : ''}`}
+            >
               <div className="flex items-center space-x-3 pb-3 border-b border-white/5">
                 <div className="p-2.5 bg-primary/10 rounded-lg text-primary dark:text-[#79BCC2]">
                   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -219,7 +317,10 @@ export default function GioiThieuPage() {
             </div>
 
             {/* Timeline Section */}
-            <div className="w-full max-w-[1200px] backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-8 shadow-lg">
+            <div 
+              ref={timelineSection.ref}
+              className={`w-full max-w-[1200px] backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-8 shadow-lg animate-on-scroll ${timelineSection.visible ? 'visible' : ''}`}
+            >
               <div className="flex items-center space-x-3 pb-3 border-b border-white/5">
                 <div className="p-2.5 bg-primary/10 rounded-lg text-primary dark:text-[#79BCC2]">
                   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -237,7 +338,11 @@ export default function GioiThieuPage() {
               {/* Timeline Layout */}
               <div className="relative border-l border-white/10 ml-4 sm:ml-8 pl-6 sm:pl-10 space-y-8">
                 {displayTimeline.map((event, idx) => (
-                  <div key={idx} className="relative flex flex-col space-y-2">
+                  <div 
+                    key={idx} 
+                    className={`relative flex flex-col space-y-2 animate-on-scroll ${timelineSection.visible ? 'visible' : ''}`}
+                    style={{ transitionDelay: `${idx * 150}ms` }}
+                  >
                     
                     {/* Circle Node */}
                     <div className="absolute -left-[35px] sm:-left-[51px] top-1 w-6 h-6 sm:w-8 sm:h-8 rounded-full border-2 border-primary bg-[#272B34] flex items-center justify-center shadow-lg">
@@ -259,7 +364,10 @@ export default function GioiThieuPage() {
             </div>
 
             {/* Back Button */}
-            <div className="mt-12 flex justify-center">
+            <div 
+              ref={backBtnSection.ref}
+              className={`mt-12 flex justify-center animate-on-scroll ${backBtnSection.visible ? 'visible' : ''}`}
+            >
               <Link 
                 href="/" 
                 className="flex items-center justify-center gap-2 bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] text-white font-bold rounded-full px-8 py-3.5 shadow-[0_4px_20px_rgba(10,47,255,0.25)] hover:shadow-[0_6px_24px_rgba(10,47,255,0.45)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 text-[14px] uppercase tracking-wider"

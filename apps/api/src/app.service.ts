@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { Candidate, Sponsor, TimelineEvent, Banner } from '@huitfest/shared';
+import { PrismaService } from './prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -15,345 +16,340 @@ export interface SystemSettings {
 }
 
 @Injectable()
-export class AppService {
+export class AppService implements OnModuleInit {
   private dbFilePath = path.join(process.cwd(), 'contest_voting_db.json');
-
-  private candidates: Candidate[] = [
-    {
-      id: '1',
-      sbd: '085',
-      name: 'Nguyễn Thanh Tân',
-      votes: 106100,
-      imageUrl: '/original_assets/image389b.png',
-      description: 'Thí sinh tài năng của HUIT\'s Iconic 2024.',
-      biography: 'Nguyễn Thanh Tân là sinh viên khoa Công nghệ thông tin của HUIT. Anh đam mê lập trình và hoạt động nghệ thuật, mong muốn mang lại nguồn năng lượng tích cực.',
-    },
-    {
-      id: '2',
-      sbd: '089',
-      name: 'Nguyễn Đình Tú',
-      votes: 62215,
-      imageUrl: '/original_assets/image725f.png',
-      description: 'Chiến binh bản lĩnh mang màu sắc nhiệt huyết.',
-      biography: 'Nguyễn Đình Tú hiện là sinh viên khoa Quản trị kinh doanh. Với vẻ ngoài điển trai và năng lực giao tiếp xuất sắc, Tú muốn chinh phục thử thách.',
-    },
-    {
-      id: '3',
-      sbd: '024',
-      name: 'Lê Ngọc Yến Vy',
-      votes: 22800,
-      imageUrl: '/original_assets/image940e.jpg',
-      description: 'Đại diện cho vẻ đẹp tri thức và sự duyên dáng.',
-      biography: 'Lê Ngọc Yến Vy, sinh viên khoa Ngoại ngữ. Cô thông thạo 2 ngoại ngữ và tích cực tham gia các phong trào sinh viên của trường.',
-    },
-    {
-      id: '4',
-      sbd: '096',
-      name: 'Võ Bá Thiện',
-      votes: 20590,
-      imageUrl: '/original_assets/image8681.png',
-      description: 'Nụ cười tỏa nắng cùng trái tim ấm áp.',
-      biography: 'Võ Bá Thiện đại diện khoa Công nghệ thực phẩm. Thiện yêu thích thể thao, đặc biệt là bóng rổ, luôn hướng tới phong cách năng động.',
-    },
-    {
-      id: '5',
-      sbd: '018',
-      name: 'Trần Tuyết Ngân',
-      votes: 16070,
-      imageUrl: '/original_assets/imageada2.png',
-      description: 'Gương mặt cá tính đầy bứt phá.',
-      biography: 'Trần Tuyết Ngân là sinh viên khoa Tài chính ngân hàng. Ngân có năng khiếu nhảy hiện đại và khả năng lãnh đạo nhóm xuất sắc.',
-    },
-    {
-      id: '6',
-      sbd: '095',
-      name: 'Nguyễn Thị Cẩm Thanh',
-      votes: 8410,
-      imageUrl: '/original_assets/image4706.png',
-      description: 'Sự kết hợp hoàn hảo giữa năng động và dịu dàng.',
-      biography: 'Nguyễn Thị Cẩm Thanh đến từ khoa Luật. Thanh mong muốn dùng tri thức pháp luật để đóng góp cho cộng đồng sinh viên.',
-    },
-  ];
-
-  private sponsors: Sponsor[] = [
-    {
-      id: 's1',
-      name: 'Eventista',
-      logoUrl: '/images/eventista.7a1126d5.svg',
-      tier: 'PLATINUM',
-    },
-    {
-      id: 's2',
-      name: 'HUIT Media',
-      logoUrl: '/images/imageb821.png',
-      tier: 'GOLD',
-    },
-    {
-      id: 's3',
-      name: 'Sen Vàng Entertainment',
-      logoUrl: '/images/image5999.jpg',
-      tier: 'SILVER',
-    },
-  ];
-
-  private timeline: TimelineEvent[] = [
-    {
-      id: 't1',
-      date: '20/10/2024 - 30/10/2024',
-      title: 'VÒNG SƠ KHẢO',
-      description: 'Xét duyệt hồ sơ trực tuyến, đánh giá các chỉ số nhân trắc học và phỏng vấn trực tiếp.',
-      isActive: false,
-    },
-    {
-      id: 't2',
-      date: '03/11/2024 - 15/11/2024',
-      title: 'VÒNG BÁN KẾT (BÌNH CHỌN ONLINE)',
-      description: 'Cổng bình chọn trực tuyến mở công khai. Khán giả và hội đồng tiến hành bầu chọn trực tiếp.',
-      isActive: true,
-    },
-    {
-      id: 't3',
-      date: '20/11/2024 - 24/11/2024',
-      title: 'ĐÊM CHUNG KẾT & VINH QUANG',
-      description: 'Gala trình diễn nghệ thuật, kiểm tra kiến thức và trao giải cho các ngôi vị cao nhất.',
-      isActive: false,
-    }
-  ];
-
-  private banners: Banner[] = [
-    {
-      id: 'b1',
-      title: 'HUIT\'s Iconic Banner',
-      imageUrl: '/original_assets/image974c.jpg',
-      link: '#',
-      isActive: true,
-    },
-  ];
-
   private settings: SystemSettings = {
     isGateOpen: true,
     startDate: '2024-10-20T00:00',
     endDate: '2024-11-24T23:59',
     maxVotesPerPhone: 5,
-    eventTitle: "HUIT's Iconic 2024",
+    eventTitle: "Cổng bình chọn HUIT's Iconic",
     organizer: "Trường Đại học Công Thương TP.HCM (HUIT)",
-    contactEmail: "support@voting.vn",
+    contactEmail: "support@eventista.vn",
     isMaintenanceMode: false
   };
 
-  constructor() {
-    this.loadDb();
+  constructor(private readonly prisma: PrismaService) {
+    this.loadSettings();
   }
 
-  private loadDb() {
+  async onModuleInit() {
+    await this.seedDataIfNeeded();
+  }
+
+  private loadSettings() {
     try {
       if (fs.existsSync(this.dbFilePath)) {
         const fileContent = fs.readFileSync(this.dbFilePath, 'utf8');
         const data = JSON.parse(fileContent);
-        if (data.candidates) this.candidates = data.candidates;
-        if (data.sponsors) this.sponsors = data.sponsors;
-        if (data.timeline) this.timeline = data.timeline;
-        if (data.banners) {
-          this.banners = data.banners.map((banner: Banner) => ({
-            ...banner,
-            isActive: banner.isActive ?? true,
-          }));
+        if (data.settings) {
+          this.settings = data.settings;
         }
-        if (data.settings) this.settings = data.settings;
-        console.log('✅ Loaded data from database store successfully.');
+        console.log('✅ Loaded system settings from file successfully.');
       } else {
-        this.saveDb();
+        this.saveSettings();
       }
     } catch (e) {
-      console.error('❌ Failed to load local database store:', e);
+      console.error('❌ Failed to load local system settings:', e);
     }
   }
 
-  private saveDb() {
+  private saveSettings() {
     try {
-      const data = {
-        candidates: this.candidates,
-        sponsors: this.sponsors,
-        timeline: this.timeline,
-        banners: this.banners,
-        settings: this.settings
-      };
+      let data: any = {};
+      if (fs.existsSync(this.dbFilePath)) {
+        try {
+          const fileContent = fs.readFileSync(this.dbFilePath, 'utf8');
+          data = JSON.parse(fileContent);
+        } catch (e) {}
+      }
+      data.settings = this.settings;
       fs.writeFileSync(this.dbFilePath, JSON.stringify(data, null, 2), 'utf8');
+      console.log('✅ Saved system settings to file successfully.');
     } catch (e) {
-      console.error('❌ Failed to save data to database store:', e);
+      console.error('❌ Failed to save system settings to file:', e);
+    }
+  }
+
+  private async seedDataIfNeeded() {
+    try {
+      const candidatesCount = await this.prisma.candidate.count();
+      if (candidatesCount > 0) {
+        console.log('ℹ️ Database already has data. Skipping migration/seeding.');
+        return;
+      }
+
+      if (!fs.existsSync(this.dbFilePath)) {
+        console.log('⚠️ contest_voting_db.json not found. No seeding data available.');
+        return;
+      }
+
+      console.log('🚀 Database empty. Migrating/Seeding data from contest_voting_db.json into MySQL...');
+      const fileContent = fs.readFileSync(this.dbFilePath, 'utf8');
+      const data = JSON.parse(fileContent);
+
+      // Seed Candidates
+      if (data.candidates && Array.isArray(data.candidates)) {
+        for (const c of data.candidates) {
+          await this.prisma.candidate.create({
+            data: {
+              id: c.id,
+              sbd: c.sbd,
+              name: c.name,
+              votes: c.votes || 0,
+              imageUrl: c.imageUrl,
+              description: c.description || '',
+              biography: c.biography || '',
+            }
+          });
+        }
+        console.log(`✅ Seeded ${data.candidates.length} candidates.`);
+      }
+
+      // Seed Sponsors
+      if (data.sponsors && Array.isArray(data.sponsors)) {
+        for (const s of data.sponsors) {
+          const validTiers = ['PLATINUM', 'GOLD', 'SILVER', 'PARTNER'];
+          const tier = validTiers.includes(s.tier) ? s.tier : 'PARTNER';
+          await this.prisma.sponsor.create({
+            data: {
+              id: s.id,
+              name: s.name,
+              logoUrl: s.logoUrl,
+              tier: tier as any,
+            }
+          });
+        }
+        console.log(`✅ Seeded ${data.sponsors.length} sponsors.`);
+      }
+
+      // Seed Timeline
+      if (data.timeline && Array.isArray(data.timeline)) {
+        for (const t of data.timeline) {
+          await this.prisma.timelineEvent.create({
+            data: {
+              id: t.id,
+              date: t.date,
+              title: t.title,
+              description: t.description || '',
+              isActive: t.isActive ?? false,
+            }
+          });
+        }
+        console.log(`✅ Seeded ${data.timeline.length} timeline events.`);
+      }
+
+      // Seed Banners
+      if (data.banners && Array.isArray(data.banners)) {
+        for (const b of data.banners) {
+          await this.prisma.banner.create({
+            data: {
+              id: b.id,
+              title: b.title,
+              imageUrl: b.imageUrl,
+              link: b.link || '#',
+              isActive: b.isActive ?? true,
+            }
+          });
+        }
+        console.log(`✅ Seeded ${data.banners.length} banners.`);
+      }
+
+      console.log('🎉 Seeding migration to MySQL completed successfully!');
+    } catch (e) {
+      console.error('❌ Failed to seed database from JSON file:', e);
     }
   }
 
   // --- CANDIDATES ---
-  getCandidates(): Candidate[] {
-    return [...this.candidates].sort((a, b) => b.votes - a.votes);
+  async getCandidates(): Promise<Candidate[]> {
+    return this.prisma.candidate.findMany({
+      orderBy: { votes: 'desc' },
+    }) as any;
   }
 
-  getCandidateBySbd(sbd: string): Candidate {
-    const candidate = this.candidates.find(c => c.sbd === sbd);
+  async getCandidateBySbd(sbd: string): Promise<Candidate> {
+    const candidate = await this.prisma.candidate.findUnique({
+      where: { sbd },
+    });
     if (!candidate) {
       throw new NotFoundException(`Không tìm thấy thí sinh với SBD ${sbd}`);
     }
-    return candidate;
+    return candidate as any;
   }
 
-  voteCandidate(sbd: string, phone: string): Candidate {
-    const candidate = this.candidates.find(c => c.sbd === sbd);
+  async voteCandidate(sbd: string, phone: string): Promise<Candidate> {
+    const candidate = await this.prisma.candidate.findUnique({
+      where: { sbd },
+    });
     if (!candidate) {
       throw new NotFoundException(`Không tìm thấy thí sinh với SBD ${sbd}`);
     }
-    candidate.votes += 1;
-    console.log(`[VOTE] 1 vote received for SBD ${sbd} (phone: ${phone}). New total: ${candidate.votes}`);
-    this.saveDb();
-    return candidate;
+
+    const updatedCandidate = await this.prisma.candidate.update({
+      where: { sbd },
+      data: { votes: { increment: 1 } },
+    });
+
+    try {
+      await this.prisma.voteRecord.create({
+        data: {
+          candidateId: candidate.id,
+          voterPhone: phone,
+        },
+      });
+    } catch (err) {
+      console.error('⚠️ Failed to save VoteRecord:', err);
+    }
+
+    console.log(`[VOTE] 1 vote received for SBD ${sbd} (phone: ${phone}). New total: ${updatedCandidate.votes}`);
+    return updatedCandidate as any;
   }
 
-  addCandidate(newCandidate: Partial<Candidate>): Candidate {
+  async addCandidate(newCandidate: Partial<Candidate>): Promise<Candidate> {
     const sbd = newCandidate.sbd || Math.floor(Math.random() * 100).toString().padStart(3, '0');
-    const candidate: Candidate = {
-      id: Date.now().toString(),
-      sbd,
-      name: newCandidate.name || 'Thí sinh mới',
-      votes: newCandidate.votes || 0,
-      imageUrl: newCandidate.imageUrl || '/original_assets/image389b.png',
-      description: newCandidate.description || 'Thí sinh mới của HUIT\'s Iconic.',
-      biography: newCandidate.biography || 'Thông tin tiểu sử đang được cập nhật.',
-    };
-    this.candidates.push(candidate);
-    this.saveDb();
-    return candidate;
+    return this.prisma.candidate.create({
+      data: {
+        sbd,
+        name: newCandidate.name || 'Thí sinh mới',
+        votes: newCandidate.votes || 0,
+        imageUrl: newCandidate.imageUrl || '/original_assets/image389b.png',
+        description: newCandidate.description || 'Thí sinh mới của HUIT\'s Iconic.',
+        biography: newCandidate.biography || 'Thông tin tiểu sử đang được cập nhật.',
+      },
+    }) as any;
   }
 
-  updateCandidate(id: string, updatedFields: Partial<Candidate>): Candidate {
-    const candidate = this.candidates.find(c => c.id === id);
-    if (!candidate) {
-      throw new NotFoundException(`Không tìm thấy thí sinh với ID ${id}`);
-    }
-    Object.assign(candidate, updatedFields);
-    this.saveDb();
-    return candidate;
+  async updateCandidate(id: string, updatedFields: Partial<Candidate>): Promise<Candidate> {
+    const cleanFields = { ...updatedFields };
+    delete cleanFields.id;
+    delete (cleanFields as any).createdAt;
+    delete (cleanFields as any).updatedAt;
+
+    return this.prisma.candidate.update({
+      where: { id },
+      data: cleanFields,
+    }) as any;
   }
 
-  deleteCandidate(id: string): { success: boolean } {
-    const index = this.candidates.findIndex(c => c.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Không tìm thấy thí sinh với ID ${id}`);
-    }
-    this.candidates.splice(index, 1);
-    this.saveDb();
+  async deleteCandidate(id: string): Promise<{ success: boolean }> {
+    await this.prisma.candidate.delete({
+      where: { id },
+    });
     return { success: true };
   }
 
   // --- SPONSORS ---
-  getSponsors(): Sponsor[] {
-    return this.sponsors;
+  async getSponsors(): Promise<Sponsor[]> {
+    return this.prisma.sponsor.findMany() as any;
   }
 
-  addSponsor(newSponsor: Partial<Sponsor>): Sponsor {
-    const sponsor: Sponsor = {
-      id: 's' + Date.now(),
-      name: newSponsor.name || 'Nhà tài trợ mới',
-      logoUrl: newSponsor.logoUrl || '/images/eventista.7a1126d5.svg',
-      tier: newSponsor.tier || 'PARTNER',
-    };
-    this.sponsors.push(sponsor);
-    this.saveDb();
-    return sponsor;
+  async addSponsor(newSponsor: Partial<Sponsor>): Promise<Sponsor> {
+    const validTiers = ['PLATINUM', 'GOLD', 'SILVER', 'PARTNER'];
+    const tier = validTiers.includes(newSponsor.tier || '') ? newSponsor.tier : 'PARTNER';
+
+    return this.prisma.sponsor.create({
+      data: {
+        name: newSponsor.name || 'Nhà tài trợ mới',
+        logoUrl: newSponsor.logoUrl || '/images/eventista.7a1126d5.svg',
+        tier: tier as any,
+      },
+    }) as any;
   }
 
-  updateSponsor(id: string, updatedFields: Partial<Sponsor>): Sponsor {
-    const sponsor = this.sponsors.find(s => s.id === id);
-    if (!sponsor) {
-      throw new NotFoundException(`Không tìm thấy nhà tài trợ với ID ${id}`);
+  async updateSponsor(id: string, updatedFields: Partial<Sponsor>): Promise<Sponsor> {
+    const cleanFields = { ...updatedFields };
+    delete cleanFields.id;
+    delete (cleanFields as any).createdAt;
+    delete (cleanFields as any).updatedAt;
+
+    if (cleanFields.tier) {
+      const validTiers = ['PLATINUM', 'GOLD', 'SILVER', 'PARTNER'];
+      if (!validTiers.includes(cleanFields.tier)) {
+        cleanFields.tier = 'PARTNER';
+      }
     }
-    Object.assign(sponsor, updatedFields);
-    this.saveDb();
-    return sponsor;
+
+    return this.prisma.sponsor.update({
+      where: { id },
+      data: cleanFields as any,
+    }) as any;
   }
 
-  deleteSponsor(id: string): { success: boolean } {
-    const index = this.sponsors.findIndex(s => s.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Không tìm thấy nhà tài trợ với ID ${id}`);
-    }
-    this.sponsors.splice(index, 1);
-    this.saveDb();
+  async deleteSponsor(id: string): Promise<{ success: boolean }> {
+    await this.prisma.sponsor.delete({
+      where: { id },
+    });
     return { success: true };
   }
 
   // --- TIMELINE ---
-  getTimeline(): TimelineEvent[] {
-    return this.timeline;
+  async getTimeline(): Promise<TimelineEvent[]> {
+    return this.prisma.timelineEvent.findMany() as any;
   }
 
-  addTimelineEvent(newEvent: Partial<TimelineEvent>): TimelineEvent {
-    const event: TimelineEvent = {
-      id: 't' + Date.now(),
-      date: newEvent.date || '2024-11-01',
-      title: newEvent.title || 'Sự kiện mới',
-      description: newEvent.description || 'Chi tiết nội dung sự kiện...',
-      isActive: newEvent.isActive ?? false,
-    };
-    this.timeline.push(event);
-    this.saveDb();
-    return event;
+  async addTimelineEvent(newEvent: Partial<TimelineEvent>): Promise<TimelineEvent> {
+    return this.prisma.timelineEvent.create({
+      data: {
+        date: newEvent.date || '2024-11-01',
+        title: newEvent.title || 'Sự kiện mới',
+        description: newEvent.description || 'Chi tiết nội dung sự kiện...',
+        isActive: newEvent.isActive ?? false,
+      },
+    }) as any;
   }
 
-  updateTimelineEvent(id: string, updatedFields: Partial<TimelineEvent>): TimelineEvent {
-    const event = this.timeline.find(t => t.id === id);
-    if (!event) {
-      throw new NotFoundException(`Không tìm thấy lộ trình với ID ${id}`);
-    }
-    Object.assign(event, updatedFields);
-    this.saveDb();
-    return event;
+  async updateTimelineEvent(id: string, updatedFields: Partial<TimelineEvent>): Promise<TimelineEvent> {
+    const cleanFields = { ...updatedFields };
+    delete cleanFields.id;
+    delete (cleanFields as any).createdAt;
+    delete (cleanFields as any).updatedAt;
+
+    return this.prisma.timelineEvent.update({
+      where: { id },
+      data: cleanFields,
+    }) as any;
   }
 
-  deleteTimelineEvent(id: string): { success: boolean } {
-    const index = this.timeline.findIndex(t => t.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Không tìm thấy lộ trình với ID ${id}`);
-    }
-    this.timeline.splice(index, 1);
-    this.saveDb();
+  async deleteTimelineEvent(id: string): Promise<{ success: boolean }> {
+    await this.prisma.timelineEvent.delete({
+      where: { id },
+    });
     return { success: true };
   }
 
   // --- BANNERS ---
-  getBanners(): Banner[] {
-    return this.banners;
+  async getBanners(): Promise<Banner[]> {
+    return this.prisma.banner.findMany() as any;
   }
 
-  addBanner(newBanner: Partial<Banner>): Banner {
-    const banner: Banner = {
-      id: 'b' + Date.now(),
-      title: newBanner.title || 'Banner mới',
-      imageUrl: newBanner.imageUrl || '/original_assets/image974c.jpg',
-      link: newBanner.link || '#',
-      isActive: newBanner.isActive ?? true,
-    };
-    this.banners.push(banner);
-    this.saveDb();
-    return banner;
+  async addBanner(newBanner: Partial<Banner>): Promise<Banner> {
+    return this.prisma.banner.create({
+      data: {
+        title: newBanner.title || 'Banner mới',
+        imageUrl: newBanner.imageUrl || '/original_assets/image974c.jpg',
+        link: newBanner.link || '#',
+        isActive: newBanner.isActive ?? true,
+      },
+    }) as any;
   }
 
-  updateBanner(id: string, updatedFields: Partial<Banner>): Banner {
-    const banner = this.banners.find(b => b.id === id);
-    if (!banner) {
-      throw new NotFoundException(`Không tìm thấy banner với ID ${id}`);
-    }
-    Object.assign(banner, updatedFields);
-    this.saveDb();
-    return banner;
+  async updateBanner(id: string, updatedFields: Partial<Banner>): Promise<Banner> {
+    const cleanFields = { ...updatedFields };
+    delete cleanFields.id;
+    delete (cleanFields as any).createdAt;
+    delete (cleanFields as any).updatedAt;
+
+    return this.prisma.banner.update({
+      where: { id },
+      data: cleanFields,
+    }) as any;
   }
 
-  deleteBanner(id: string): { success: boolean } {
-    const index = this.banners.findIndex(b => b.id === id);
-    if (index === -1) {
-      throw new NotFoundException(`Không tìm thấy banner với ID ${id}`);
-    }
-    this.banners.splice(index, 1);
-    this.saveDb();
+  async deleteBanner(id: string): Promise<{ success: boolean }> {
+    await this.prisma.banner.delete({
+      where: { id },
+    });
     return { success: true };
   }
 
@@ -364,16 +360,15 @@ export class AppService {
 
   updateSettings(updatedFields: Partial<SystemSettings>): SystemSettings {
     Object.assign(this.settings, updatedFields);
-    this.saveDb();
+    this.saveSettings();
     return this.settings;
   }
 
-  resetVotes(): { success: boolean } {
-    this.candidates.forEach(c => {
-      c.votes = 0;
+  async resetVotes(): Promise<{ success: boolean }> {
+    await this.prisma.candidate.updateMany({
+      data: { votes: 0 },
     });
-    this.saveDb();
-    console.log('[RESET] All candidate votes have been reset to 0.');
+    console.log('[RESET] All candidate votes in MySQL have been reset to 0.');
     return { success: true };
   }
 }

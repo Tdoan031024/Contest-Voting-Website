@@ -147,6 +147,11 @@ export default function RootLayout({
         <title>{settings?.eventTitle ? `Cổng bình chọn - ${settings.eventTitle}` : "Cổng bình chọn HUIT's Iconic"}</title>
         <meta name="description" content={settings?.eventTitle ? `Bình chọn ${settings.eventTitle}` : "Bình chọn HUIT's Warrior"} />
         <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16" />
+        
+        {/* Load Google Fonts Inter */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
         {/* Load original CSS files copied from Binhchon mirror */}
         <link rel="stylesheet" href="/css/82aef30d151230ac.css" />
@@ -324,39 +329,6 @@ export default function RootLayout({
           <div className="relative bg-footer-gradient border-t border-white/5">
             <div className="sc-1a037b37-0 ekqPrV">
               <div className="flex flex-col space-y-6 py-8 items-center">
-                <div className="w-full grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  <div className="text-left sm:text-center">
-                    <a className="focus:outline-none" target="_blank" rel="noopener noreferrer" href="https://eventistax.com/huong-dan-thanh-toan">
-                      <p className="text-title-1 text-neutral-grey text-[13px] hover:underline">Hướng dẫn thanh toán</p>
-                    </a>
-                  </div>
-                  <div className="text-left sm:text-center">
-                    <a className="focus:outline-none" target="_blank" rel="noopener noreferrer" href="https://eventistax.com/chinh-sach-rieng-tu">
-                      <p className="text-title-1 text-neutral-grey text-[13px] hover:underline">Chính sách quyền riêng tư</p>
-                    </a>
-                  </div>
-                  <div className="text-left sm:text-center">
-                    <a className="focus:outline-none" target="_blank" rel="noopener noreferrer" href="https://eventistax.com/dieu-khoan-su-dung">
-                      <p className="text-title-1 text-neutral-grey text-[13px] hover:underline">Điều khoản sử dụng</p>
-                    </a>
-                  </div>
-                  <div className="text-left sm:text-center">
-                    <a className="focus:outline-none" target="_blank" rel="noopener noreferrer" href="https://eventistax.com/dieu-kien-van-chuyen">
-                      <p className="text-title-1 text-neutral-grey text-[13px] hover:underline">Điều kiện vận chuyển và giao nhận</p>
-                    </a>
-                  </div>
-                  <div className="text-left sm:text-center">
-                    <a className="focus:outline-none" target="_blank" rel="noopener noreferrer" href="https://eventistax.com/doi-tra">
-                      <p className="text-title-1 text-neutral-grey text-[13px] hover:underline">Chính sách đổi trả và hoàn tiền</p>
-                    </a>
-                  </div>
-                  <div className="text-left sm:text-center">
-                    <a className="focus:outline-none" target="_blank" rel="noopener noreferrer" href="https://eventistax.com/cau-hoi-thuong-gap">
-                      <p className="text-title-1 text-neutral-grey text-[13px] hover:underline">Câu hỏi thường gặp</p>
-                    </a>
-                  </div>
-                </div>
-
                 <div className="flex flex-col items-start sm:items-center space-y-1 sm:space-y-0 justify-center">
                   <img alt="Provider" width="176" height="20" className="object-contain my-[10px]" src="/images/eventista.7a1126d5.svg" />
                   <div className="max-w-[884px] pt-1.5">

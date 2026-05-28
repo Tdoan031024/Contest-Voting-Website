@@ -66,25 +66,25 @@ const settingsIcon = (
 
 const navGroups = [
   {
-    title: 'Quan ly',
+    title: 'Quản lý',
     items: [
-      { href: '/', label: 'Tong quan', icon: dashboardIcon },
-      { href: '/candidates', label: 'Thi sinh', icon: candidatesIcon },
-      { href: '/users', label: 'Quan ly nguoi dung', icon: usersIcon },
-      { href: '/sponsors', label: 'Nha tai tro', icon: sponsorsIcon },
+      { href: '/', label: 'Tổng quan', icon: dashboardIcon },
+      { href: '/candidates', label: 'Thí sinh', icon: candidatesIcon },
+      { href: '/users', label: 'Quản lý người dùng', icon: usersIcon },
+      { href: '/sponsors', label: 'Nhà tài trợ', icon: sponsorsIcon },
     ],
   },
   {
-    title: 'Quan ly giao dien',
+    title: 'Quản lý giao diện',
     items: [
-      { href: '/banners', label: 'Banner', icon: bannerIcon },
-      { href: '/timeline', label: 'Lo trinh', icon: timelineIcon },
+      { href: '/banners', label: 'Banner quảng cáo', icon: bannerIcon },
+      { href: '/timeline', label: 'Lộ trình cuộc thi', icon: timelineIcon },
     ],
   },
   {
-    title: 'Cai dat',
+    title: 'Cài đặt',
     items: [
-      { href: '/settings', label: 'Cau hinh', icon: settingsIcon },
+      { href: '/settings', label: 'Cấu hình hệ thống', icon: settingsIcon },
     ],
   },
 ];
@@ -101,35 +101,35 @@ export default function AdminLayout({
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </head>
       <body className="h-screen overflow-hidden bg-[#f4f7f6] text-[#18211f]">
         <div className="flex h-screen overflow-hidden">
-          <aside className="hidden h-screen w-[280px] shrink-0 border-r border-[#dce5e1] bg-[#fbfdfc] lg:flex lg:flex-col">
-            <div className="shrink-0 px-4 py-5">
-              <Link href="/" className="flex items-center gap-3 rounded-lg px-2 py-2">
-                <span className="grid h-11 w-11 place-items-center rounded-lg bg-[#123c34] text-sm font-black text-white shadow-sm">HI</span>
+          <aside className="hidden h-screen w-[240px] shrink-0 border-r border-[#dce5e1] bg-[#fbfdfc] lg:flex lg:flex-col">
+            <div className="shrink-0 px-4 py-4">
+              <Link href="/" className="flex items-center gap-2 rounded-lg px-1 py-1">
+                <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#123c34] text-xs font-black text-white shadow-sm font-heading">HI</span>
                 <span>
-                  <span className="block text-[13px] font-black uppercase tracking-[0.18em] text-[#123c34]">HUIT Iconic</span>
-                  <span className="block text-xs font-medium text-[#6b7773]">Voting Admin</span>
+                  <span className="block text-[12px] font-black uppercase tracking-[0.18em] text-[#123c34] font-heading">HUIT Iconic</span>
+                  <span className="block text-[10px] font-semibold text-[#6b7773]">Hệ Thống Quản Trị</span>
                 </span>
               </Link>
             </div>
 
-            <nav className="min-h-0 flex-1 space-y-7 overflow-y-auto px-4 pb-5">
+            <nav className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-4">
               {navGroups.map((group) => (
                 <div key={group.title}>
-                  <p className="mb-2 px-3 text-[11px] font-black uppercase tracking-[0.16em] text-[#92a39d]">
+                  <p className="mb-1.5 px-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#92a39d] font-heading">
                     {group.title}
                   </p>
-                  <div className="space-y-1">
+                  <div className="space-y-0.5">
                     {group.items.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="group flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-bold text-[#52605b] transition hover:bg-[#edf4f1] hover:text-[#123c34]"
+                        className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-bold text-[#52605b] transition hover:bg-[#edf4f1] hover:text-[#123c34]"
                       >
-                        <span className="text-[#8aa098] transition group-hover:text-[#0f766e]">{item.icon}</span>
+                        <span className="text-[#8aa098] transition group-hover:text-[#0f766e] h-4 w-4 flex items-center justify-center">{item.icon}</span>
                         <span className="font-semibold">{item.label}</span>
                       </Link>
                     ))}
@@ -138,14 +138,14 @@ export default function AdminLayout({
               ))}
             </nav>
 
-            <div className="shrink-0 p-4">
-              <div className="rounded-lg border border-[#dce5e1] bg-[#f3f8f6] p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-[#7a8b85]">Tai khoan</p>
-                <div className="mt-3 flex items-center gap-3">
-                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#e45136] text-sm font-bold text-white">AD</span>
+            <div className="shrink-0 p-3">
+              <div className="rounded-xl border border-[#dce5e1] bg-[#edf4f1] p-3">
+                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#0f766e] font-heading">Tài khoản</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="grid h-8 w-8 place-items-center rounded-full bg-[#e45136] text-xs font-bold text-white shadow-sm font-heading">AD</span>
                   <span>
-                    <span className="block text-sm font-bold text-[#18211f]">Administrator</span>
-                    <span className="block text-xs text-[#6b7773]">Super Admin</span>
+                    <span className="block text-xs font-bold text-[#123c34] font-heading">Administrator</span>
+                    <span className="block text-[10px] font-semibold text-[#0f766e]">Q.Trị Viên Cấp Cao</span>
                   </span>
                 </div>
               </div>
@@ -153,34 +153,33 @@ export default function AdminLayout({
           </aside>
 
           <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-            <header className="z-20 shrink-0 border-b border-[#dce5e1] bg-[#f8fbfa]/90 px-4 py-4 backdrop-blur md:px-8">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <header className="z-20 shrink-0 border-b border-[#dce5e1] bg-[#f8fbfa]/90 px-4 py-3 backdrop-blur md:px-6">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#0f766e]">Admin control center</p>
-                  <h1 className="mt-1 text-xl font-black text-[#18211f]">Quan ly cong binh chon</h1>
+                  <h1 className="text-base md:text-lg font-black text-[#123c34] font-heading">HỆ THỐNG QUẢN LÝ CỔNG BÌNH CHỌN</h1>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <span className="inline-flex items-center gap-2 rounded-full border border-[#b9d8cf] bg-white px-3 py-2 text-xs font-bold text-[#166556]">
-                    <span className="h-2 w-2 rounded-full bg-[#18a058]" />
-                    He thong online
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-[#b9d8cf] bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-[#166556] shadow-sm">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#18a058] animate-pulse" />
+                    Hệ thống trực tuyến
                   </span>
-                  <Link href="http://localhost:3000" className="rounded-lg border border-[#dce5e1] bg-white px-4 py-2 text-sm font-bold text-[#18211f] shadow-sm transition hover:border-[#0f766e] hover:text-[#0f766e]">
-                    Xem trang web
+                  <Link href="http://localhost:3000" target="_blank" className="rounded-lg border border-[#dce5e1] bg-white px-3 py-1.5 text-xs font-bold text-[#123c34] shadow-sm transition hover:border-[#0f766e] hover:text-[#0f766e] hover:bg-[#edf4f1]">
+                    Xem trang chủ
                   </Link>
                 </div>
               </div>
 
-              <nav className="mt-4 flex gap-2 overflow-x-auto lg:hidden">
+              <nav className="mt-3 flex gap-2 overflow-x-auto lg:hidden">
                 {navItems.map((item) => (
-                  <Link key={item.href} href={item.href} className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-white px-3 py-2 text-sm font-semibold text-[#52605b] shadow-sm">
-                    {item.icon}
+                  <Link key={item.href} href={item.href} className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-white px-2.5 py-1.5 text-xs font-semibold text-[#52605b] shadow-sm">
+                    <span className="h-4 w-4">{item.icon}</span>
                     {item.label}
                   </Link>
                 ))}
               </nav>
             </header>
 
-            <main className="min-h-0 flex-1 overflow-y-auto px-4 py-6 md:px-8 md:py-8">
+            <main className="min-h-0 flex-1 overflow-y-auto px-4 py-5 md:px-6 md:py-6">
               <div className="mx-auto w-full max-w-[1420px]">
                 {children}
               </div>

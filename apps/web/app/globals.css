@@ -17,3 +17,51 @@ body {
 .box-shadow-12 {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
+
+@keyframes shine {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.hover-shine-effect {
+  position: relative;
+  overflow: hidden;
+}
+
+.hover-shine-effect::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  transform: skewX(-25deg);
+  pointer-events: none;
+}
+
+.hover-shine-effect:hover::after {
+  animation: shine 1.2s ease-in-out;
+}
+
+@keyframes float-slow {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(10px, -15px) scale(1.05);
+  }
+}
+
+.animate-float-slow {
+  animation: float-slow 12s ease-in-out infinite;
+}
