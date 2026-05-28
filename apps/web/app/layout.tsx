@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import './globals.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { AlertProvider } from './AlertProvider';
 
 export interface SystemSettings {
   isGateOpen: boolean;
@@ -213,7 +214,8 @@ export default function RootLayout({
         `}</style>
       </head>
       <body className="dark">
-        <main>
+        <AlertProvider>
+          <main suppressHydrationWarning>
           {/* Header section identical to sample website */}
           <div className="sticky-outer-wrapper" style={{ height: '80px' }}>
             <div 
@@ -387,7 +389,8 @@ export default function RootLayout({
               </div>
             </div>
           </div>
-        </main>
+          </main>
+        </AlertProvider>
       </body>
     </html>
   );

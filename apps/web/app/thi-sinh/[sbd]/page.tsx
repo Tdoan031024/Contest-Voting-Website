@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Candidate } from '@huitfest/shared';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAlert } from '../../AlertProvider';
 
 interface CandidateExtendedDetails {
   birthYear: string;
@@ -33,6 +34,7 @@ const LOCAL_MOCK_CANDIDATES: Candidate[] = [
 ];
 
 export default function CandidateDetailPage() {
+  const { showAlert } = useAlert();
   const params = useParams();
   const sbd = params.sbd as string;
 
@@ -118,7 +120,7 @@ export default function CandidateDetailPage() {
   const handleVote = async () => {
     if (!candidate) return;
     if (!isGateCurrentlyOpen()) {
-      alert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!");
+      showAlert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!", "warning", "Cổng bình chọn");
       return;
     }
     try {
@@ -130,7 +132,7 @@ export default function CandidateDetailPage() {
       if (res.ok) {
         const updated = await res.json();
         setCandidate(updated);
-        alert(`Bình chọn thành công cho ${updated.name}!`);
+        showAlert(`Bình chọn thành công cho ${updated.name}!`, "success", "Bình chọn thành công");
         return;
       }
     } catch (err) {
@@ -138,7 +140,7 @@ export default function CandidateDetailPage() {
     }
 
     setCandidate(prev => prev ? { ...prev, votes: prev.votes + 1 } : null);
-    alert(`Bình chọn offline thành công cho ${candidate.name}!`);
+    showAlert(`Bình chọn offline thành công cho ${candidate.name}!`, "success", "Bình chọn thành công");
   };
 
   const handleCopyLink = () => {

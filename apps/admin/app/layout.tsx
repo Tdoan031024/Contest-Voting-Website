@@ -1,6 +1,7 @@
 import React from 'react';
 import Link from 'next/link';
 import './globals.css';
+import { AlertProvider } from './AlertProvider';
 
 export const metadata = {
   title: "Admin Dashboard - HUIT's Iconic",
@@ -64,6 +65,23 @@ const settingsIcon = (
   </svg>
 );
 
+const introIcon = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+    <polyline points="10 9 9 9 8 9" />
+  </svg>
+);
+
+const guidesIcon = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
+
 const navGroups = [
   {
     title: 'Quản lý',
@@ -79,6 +97,8 @@ const navGroups = [
     items: [
       { href: '/banners', label: 'Banner quảng cáo', icon: bannerIcon },
       { href: '/timeline', label: 'Lộ trình cuộc thi', icon: timelineIcon },
+      { href: '/introduction', label: 'Thông tin giới thiệu', icon: introIcon },
+      { href: '/guides', label: 'Thông tin Hướng dẫn', icon: guidesIcon },
     ],
   },
   {
@@ -104,32 +124,33 @@ export default function AdminLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
       </head>
       <body className="h-screen overflow-hidden bg-[#f4f7f6] text-[#18211f]">
-        <div className="flex h-screen overflow-hidden">
-          <aside className="hidden h-screen w-[240px] shrink-0 border-r border-[#dce5e1] bg-[#fbfdfc] lg:flex lg:flex-col">
-            <div className="shrink-0 px-4 py-4">
-              <Link href="/" className="flex items-center gap-2 rounded-lg px-1 py-1">
-                <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#123c34] text-xs font-black text-white shadow-sm font-heading">HI</span>
+        <AlertProvider>
+          <div className="flex h-screen overflow-hidden">
+          <aside className="hidden h-screen w-[270px] shrink-0 border-r border-[#dce5e1] bg-[#fbfdfc] lg:flex lg:flex-col">
+            <div className="shrink-0 px-5 py-5">
+              <Link href="/" className="flex items-center gap-3 rounded-lg px-1 py-1">
+                <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#123c34] text-sm font-black text-white shadow-sm font-heading">HI</span>
                 <span>
-                  <span className="block text-[12px] font-black uppercase tracking-[0.18em] text-[#123c34] font-heading">HUIT Iconic</span>
-                  <span className="block text-[10px] font-semibold text-[#6b7773]">Hệ Thống Quản Trị</span>
+                  <span className="block text-[13px] font-black uppercase tracking-[0.18em] text-[#123c34] font-heading">HUIT Iconic</span>
+                  <span className="block text-[11px] font-semibold text-[#6b7773]">Hệ Thống Quản Trị</span>
                 </span>
               </Link>
             </div>
 
-            <nav className="min-h-0 flex-1 space-y-5 overflow-y-auto px-4 pb-4">
+            <nav className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 pb-5">
               {navGroups.map((group) => (
                 <div key={group.title}>
-                  <p className="mb-1.5 px-2 text-[10px] font-black uppercase tracking-[0.16em] text-[#92a39d] font-heading">
+                  <p className="mb-2 px-2 text-[11px] font-black uppercase tracking-[0.16em] text-[#92a39d] font-heading">
                     {group.title}
                   </p>
-                  <div className="space-y-0.5">
+                  <div className="space-y-1">
                     {group.items.map((item) => (
                       <Link
                         key={item.href}
                         href={item.href}
-                        className="group flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-xs font-bold text-[#52605b] transition hover:bg-[#edf4f1] hover:text-[#123c34]"
+                        className="group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-bold text-[#52605b] transition hover:bg-[#edf4f1] hover:text-[#123c34]"
                       >
-                        <span className="text-[#8aa098] transition group-hover:text-[#0f766e] h-4 w-4 flex items-center justify-center">{item.icon}</span>
+                        <span className="text-[#8aa098] transition group-hover:text-[#0f766e] h-5 w-5 flex items-center justify-center">{item.icon}</span>
                         <span className="font-semibold">{item.label}</span>
                       </Link>
                     ))}
@@ -138,14 +159,14 @@ export default function AdminLayout({
               ))}
             </nav>
 
-            <div className="shrink-0 p-3">
-              <div className="rounded-xl border border-[#dce5e1] bg-[#edf4f1] p-3">
-                <p className="text-[9px] font-bold uppercase tracking-[0.16em] text-[#0f766e] font-heading">Tài khoản</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="grid h-8 w-8 place-items-center rounded-full bg-[#e45136] text-xs font-bold text-white shadow-sm font-heading">AD</span>
+            <div className="shrink-0 p-4">
+              <div className="rounded-xl border border-[#dce5e1] bg-[#edf4f1] p-4">
+                <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e] font-heading">Tài khoản</p>
+                <div className="mt-2.5 flex items-center gap-3">
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-[#e45136] text-xs font-bold text-white shadow-sm font-heading">AD</span>
                   <span>
-                    <span className="block text-xs font-bold text-[#123c34] font-heading">Administrator</span>
-                    <span className="block text-[10px] font-semibold text-[#0f766e]">Q.Trị Viên Cấp Cao</span>
+                    <span className="block text-sm font-bold text-[#123c34] font-heading">Administrator</span>
+                    <span className="block text-[11px] font-semibold text-[#0f766e]">Q.Trị Viên Cấp Cao</span>
                   </span>
                 </div>
               </div>
@@ -186,6 +207,7 @@ export default function AdminLayout({
             </main>
           </div>
         </div>
+        </AlertProvider>
       </body>
     </html>
   );

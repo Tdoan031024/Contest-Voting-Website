@@ -36,7 +36,7 @@ function BannerModal({
 }: BannerFormProps) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-[#10211d]/60 p-4 backdrop-blur-sm transition-all duration-300">
-      <form onSubmit={onSubmit} className="w-full max-w-[500px] rounded-xl border border-[#dce5e1] bg-white p-5 shadow-2xl animate-in fade-in zoom-in duration-200">
+      <form onSubmit={onSubmit} className="w-full max-w-[850px] rounded-xl border border-[#dce5e1] bg-white p-5 shadow-2xl animate-in fade-in zoom-in duration-200">
         <div className="flex items-start justify-between gap-3 border-b border-[#edf2f0] pb-3">
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Quản lý giao diện</p>
@@ -47,40 +47,82 @@ function BannerModal({
           </button>
         </div>
 
-        <div className="mt-4 space-y-3.5">
-          <label className="block space-y-1.5">
-            <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Tiêu đề banner</span>
-            <input className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formTitle} onChange={(event) => setFormTitle(event.target.value)} required />
-          </label>
-
-          <label className="block space-y-1.5">
-            <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Đường dẫn hình ảnh</span>
-            <input className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formImageUrl} onChange={(event) => setFormImageUrl(event.target.value)} required />
-          </label>
-
-          <label className="block space-y-1.5">
-            <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Liên kết điều hướng khi bấm</span>
-            <input className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formLink} onChange={(event) => setFormLink(event.target.value)} />
-          </label>
-
-          <div className="flex items-center justify-between rounded-lg border border-[#dce5e1] bg-[#fbfdfc] p-3 shadow-sm">
-            <div>
-              <p className="text-xs font-bold text-[#123c34]">Trạng thái hiển thị banner</p>
-              <p className="mt-0.5 text-[10px] font-semibold text-[#6b7773]">Tắt để ẩn khỏi trang chủ nhưng vẫn lưu trong admin.</p>
+        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Left Column: Preview Area */}
+          <div className="flex flex-col space-y-2">
+            <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider block">Xem trước hiển thị</span>
+            <div className="overflow-hidden rounded-lg border border-[#dce5e1] bg-[#f4f7f6] flex-1 flex items-center justify-center min-h-[220px] md:min-h-[280px]">
+              {formImageUrl && formImageUrl.toLowerCase().endsWith('.mp4') ? (
+                <video src={formImageUrl} controls className="max-h-[280px] w-full object-contain rounded-md shadow-sm" />
+              ) : (
+                <img src={formImageUrl || '/original_assets/image974c.jpg'} alt="Xem trước" className="max-h-[280px] w-full object-contain rounded-md shadow-sm" />
+              )}
             </div>
-            <button
-              type="button"
-              onClick={() => setFormActive(!formActive)}
-              className={`relative h-6 w-12 rounded-full transition-colors duration-200 ${formActive ? 'bg-[#0f766e]' : 'bg-[#c9d6d1]'}`}
-              aria-pressed={formActive}
-            >
-              <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200 ${formActive ? 'left-7' : 'left-1'}`} />
-            </button>
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-[#dce5e1] bg-[#f4f7f6]">
-            <div className="aspect-[16/9] w-full p-2 flex items-center justify-center">
-              <img src={formImageUrl || '/original_assets/image974c.jpg'} alt="Xem trước" className="h-full w-full object-contain rounded-md shadow-sm" />
+          {/* Right Column: Fields */}
+          <div className="space-y-3.5">
+            <label className="block space-y-1.5">
+              <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Tiêu đề banner</span>
+              <input className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formTitle} onChange={(event) => setFormTitle(event.target.value)} required />
+            </label>
+
+            <div className="space-y-1.5">
+              <label className="block space-y-1.5">
+                <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Đường dẫn hình ảnh</span>
+                <input className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formImageUrl} onChange={(event) => setFormImageUrl(event.target.value)} required />
+              </label>
+              <div className="block space-y-1.5">
+                <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider block">Hoặc tải file từ máy tính</span>
+                <input
+                  type="file"
+                  accept="image/*,video/mp4"
+                  className="w-full text-xs text-[#52605b] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-[#123c34] file:text-white hover:file:bg-[#0f766e] cursor-pointer"
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    try {
+                      const res = await fetch('http://localhost:5000/api/admin/upload', {
+                        method: 'POST',
+                        body: formData,
+                      });
+                      if (res.ok) {
+                        const data = await res.json();
+                        setFormImageUrl(data.url);
+                      } else {
+                        alert('Tải ảnh/video lên thất bại.');
+                      }
+                    } catch (err) {
+                      console.error(err);
+                      alert('Có lỗi xảy ra khi kết nối server tải ảnh.');
+                    }
+                  }}
+                />
+              </div>
+            </div>
+
+            <label className="block space-y-1.5">
+              <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Liên kết điều hướng khi bấm</span>
+              <input className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formLink} onChange={(event) => setFormLink(event.target.value)} />
+            </label>
+   
+            <div className="flex items-center justify-between rounded-lg border border-[#dce5e1] bg-[#fbfdfc] p-3 shadow-sm">
+              <div>
+                <p className="text-xs font-bold text-[#123c34]">Trạng thái hiển thị banner</p>
+                <p className="mt-0.5 text-[9px] font-semibold text-[#6b7773]">Tắt để ẩn khỏi trang chủ nhưng vẫn lưu trong admin.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setFormActive(!formActive)}
+                className={`relative h-6 w-12 rounded-full transition-colors duration-200 ${formActive ? 'bg-[#0f766e]' : 'bg-[#c9d6d1]'}`}
+                aria-pressed={formActive}
+              >
+                <span className={`absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm transition-all duration-200 ${formActive ? 'left-7' : 'left-1'}`} />
+              </button>
             </div>
           </div>
         </div>
@@ -201,9 +243,15 @@ export default function BannersAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: nextActive }),
       });
-      if (!res.ok) loadBanners();
+      if (res.ok) {
+        alert(nextActive ? 'Hiển thị banner thành công!' : 'Ẩn banner thành công!');
+      } else {
+        alert('Thay đổi trạng thái banner thất bại!');
+        loadBanners();
+      }
     } catch (err) {
       console.error(err);
+      alert('Thay đổi trạng thái banner thất bại!');
       loadBanners();
     }
   };
@@ -261,58 +309,65 @@ export default function BannersAdminPage() {
           <p className="text-[10px] font-bold text-[#6b7773] uppercase tracking-wider">{filteredBanners.length} banner tìm thấy</p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[980px] border-collapse text-left">
-            <thead>
-              <tr className="border-b border-[#edf2f0] bg-[#fbfdfc] text-[10px] font-black uppercase tracking-[0.12em] text-[#7a8b85]">
-                <th className="px-5 py-3">Hình ảnh xem trước</th>
-                <th className="px-5 py-3">Tiêu đề</th>
-                <th className="px-5 py-3">Đường dẫn liên kết</th>
-                <th className="px-5 py-3">Trạng thái</th>
-                <th className="px-5 py-3 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#edf2f0] text-xs">
-              {filteredBanners.map((banner) => (
-                <tr key={banner.id} className="transition hover:bg-[#edf4f1]/20">
-                  <td className="px-5 py-2.5">
-                    <div className="h-10 w-20 overflow-hidden rounded-lg border border-[#dce5e1] bg-[#f4f7f6] p-1 flex items-center justify-center shadow-sm">
-                      <img src={banner.imageUrl} className="h-full w-full object-contain rounded-md" alt={banner.title} />
-                    </div>
-                  </td>
-                  <td className="px-5 py-2.5">
-                    <p className="text-xs font-bold text-[#123c34]">{banner.title}</p>
-                    <p className="mt-0.5 max-w-[360px] truncate text-[10px] font-semibold text-[#7a8b85]">{banner.imageUrl}</p>
-                  </td>
-                  <td className="max-w-[260px] truncate px-5 py-2.5 text-[10px] font-bold text-[#0f766e]">{banner.link || '#'}</td>
-                  <td className="px-5 py-2.5">
-                    <button
-                      type="button"
-                      onClick={() => handleToggleActive(banner)}
-                      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold transition-all ${
-                        banner.isActive !== false
-                          ? 'border-[#b9d8cf] bg-[#edf8f4] text-[#0f766e]'
-                          : 'border-[#d8dedc] bg-[#f4f7f6] text-[#7a8b85]'
-                      }`}
-                    >
-                      <span className={`h-1.5 w-1.5 rounded-full ${banner.isActive !== false ? 'bg-[#18a058] animate-pulse' : 'bg-[#9aa9a4]'}`} />
-                      {banner.isActive !== false ? 'Đang hiện' : 'Đang ẩn'}
-                    </button>
-                  </td>
-                  <td className="px-5 py-2.5">
-                    <div className="flex justify-end gap-1.5">
-                      <button onClick={() => openEditModal(banner)} className="rounded-lg border border-[#dce5e1] bg-white px-2.5 py-1 text-[11px] font-bold text-[#0f766e] transition hover:bg-[#edf4f1] hover:border-[#0f766e]">
-                        Sửa
-                      </button>
-                      <button onClick={() => handleDelete(banner.id)} className="rounded-lg border border-[#f0c9bd] bg-[#fff5f2] px-2.5 py-1 text-[11px] font-bold text-[#c83f28] transition hover:bg-[#e45136]/10 hover:border-[#e45136]">
-                        Xóa
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 p-5 bg-[#fbfdfc]">
+          {filteredBanners.map((banner) => (
+            <div key={banner.id} className="group relative rounded-xl border border-[#dce5e1] bg-white overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 flex flex-col justify-between">
+              
+              {/* Image Preview Block */}
+              <div className="relative aspect-[16/9] w-full bg-[#f4f7f6] border-b border-[#edf2f0] overflow-hidden flex items-center justify-center">
+                {banner.imageUrl && banner.imageUrl.toLowerCase().endsWith('.mp4') ? (
+                  <video src={banner.imageUrl} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" muted loop playsInline autoPlay />
+                ) : (
+                  <img src={banner.imageUrl} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" alt={banner.title} />
+                )}
+              </div>
+
+              {/* Banner Details */}
+              <div className="p-4 flex-grow flex flex-col justify-between space-y-3">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-black text-[#123c34] line-clamp-1 group-hover:text-[#0f766e] transition-colors">{banner.title}</h4>
+                  <p className="text-[10px] text-[#7a8b85] font-semibold truncate" title={banner.imageUrl}>Tệp: {banner.imageUrl}</p>
+                  <p className="text-[10px] text-[#0f766e] font-bold truncate">Liên kết: {banner.link || '#'}</p>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-1.5 pt-3 border-t border-[#edf2f0]">
+                  <button
+                    type="button"
+                    onClick={() => handleToggleActive(banner)}
+                    title={banner.isActive !== false ? 'Bấm để ẩn banner khỏi trang chủ' : 'Bấm để hiển thị banner lên trang chủ'}
+                    className={`rounded-lg px-2 py-1.5 text-[10px] font-bold transition flex-1 flex items-center justify-center gap-1.5 shadow-sm hover:shadow-md active:scale-[0.97] text-white ${
+                      banner.isActive !== false
+                        ? 'bg-emerald-600 hover:bg-emerald-700'
+                        : 'bg-slate-400 hover:bg-slate-500'
+                    }`}
+                  >
+                    <span className={`h-1.5 w-1.5 rounded-full ${banner.isActive !== false ? 'bg-emerald-200 animate-pulse' : 'bg-slate-200'}`} />
+                    {banner.isActive !== false ? 'Hiện' : 'Ẩn'}
+                  </button>
+                  <button
+                    onClick={() => openEditModal(banner)}
+                    className="rounded-lg bg-blue-600 hover:bg-blue-700 px-2 py-1.5 text-[10px] font-bold text-white transition shadow-sm hover:shadow-md active:scale-[0.97] flex-1 flex items-center justify-center gap-1"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                    </svg>
+                    Sửa
+                  </button>
+                  <button
+                    onClick={() => handleDelete(banner.id)}
+                    className="rounded-lg bg-rose-500 hover:bg-rose-600 px-2.5 py-1.5 text-[10px] font-bold text-white transition shadow-sm hover:shadow-md active:scale-[0.97] flex-1 flex items-center justify-center gap-1"
+                  >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                    </svg>
+                    Xóa
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          ))}
         </div>
       </section>
 

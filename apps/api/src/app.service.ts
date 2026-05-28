@@ -73,23 +73,19 @@ export class AppService implements OnModuleInit {
 
   private async seedDataIfNeeded() {
     try {
-      const candidatesCount = await this.prisma.candidate.count();
-      if (candidatesCount > 0) {
-        console.log('ℹ️ Database already has data. Skipping migration/seeding.');
-        return;
-      }
-
       if (!fs.existsSync(this.dbFilePath)) {
         console.log('⚠️ contest_voting_db.json not found. No seeding data available.');
         return;
       }
 
-      console.log('🚀 Database empty. Migrating/Seeding data from contest_voting_db.json into MySQL...');
+      console.log('🚀 Checking database tables for seeding...');
       const fileContent = fs.readFileSync(this.dbFilePath, 'utf8');
       const data = JSON.parse(fileContent);
 
       // Seed Candidates
-      if (data.candidates && Array.isArray(data.candidates)) {
+      const candidatesCount = await this.prisma.candidate.count();
+      if (candidatesCount === 0 && data.candidates && Array.isArray(data.candidates)) {
+        console.log('Seeding candidates...');
         for (const c of data.candidates) {
           await this.prisma.candidate.create({
             data: {
@@ -107,7 +103,9 @@ export class AppService implements OnModuleInit {
       }
 
       // Seed Sponsors
-      if (data.sponsors && Array.isArray(data.sponsors)) {
+      const sponsorsCount = await this.prisma.sponsor.count();
+      if (sponsorsCount === 0 && data.sponsors && Array.isArray(data.sponsors)) {
+        console.log('Seeding sponsors...');
         for (const s of data.sponsors) {
           const validTiers = ['PLATINUM', 'GOLD', 'SILVER', 'PARTNER'];
           const tier = validTiers.includes(s.tier) ? s.tier : 'PARTNER';
@@ -124,7 +122,9 @@ export class AppService implements OnModuleInit {
       }
 
       // Seed Timeline
-      if (data.timeline && Array.isArray(data.timeline)) {
+      const timelineCount = await this.prisma.timelineEvent.count();
+      if (timelineCount === 0 && data.timeline && Array.isArray(data.timeline)) {
+        console.log('Seeding timeline events...');
         for (const t of data.timeline) {
           await this.prisma.timelineEvent.create({
             data: {
@@ -140,7 +140,9 @@ export class AppService implements OnModuleInit {
       }
 
       // Seed Banners
-      if (data.banners && Array.isArray(data.banners)) {
+      const bannersCount = await this.prisma.banner.count();
+      if (bannersCount === 0 && data.banners && Array.isArray(data.banners)) {
+        console.log('Seeding banners...');
         for (const b of data.banners) {
           await this.prisma.banner.create({
             data: {
@@ -155,7 +157,7 @@ export class AppService implements OnModuleInit {
         console.log(`✅ Seeded ${data.banners.length} banners.`);
       }
 
-      console.log('🎉 Seeding migration to MySQL completed successfully!');
+      console.log('🎉 Database check & seeding completed!');
     } catch (e) {
       console.error('❌ Failed to seed database from JSON file:', e);
     }

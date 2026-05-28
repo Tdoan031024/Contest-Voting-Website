@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Candidate } from '@huitfest/shared';
 import Link from 'next/link';
+import { useAlert } from '../AlertProvider';
 
 // once=true: stays visible after first intersection, never hides again
 function useInView(threshold = 0.15) {
@@ -34,6 +35,7 @@ const LOCAL_MOCK_CANDIDATES: Candidate[] = [
 ];
 
 export default function RankingPage() {
+  const { showAlert } = useAlert();
   const [candidates, setCandidates] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -107,7 +109,7 @@ export default function RankingPage() {
 
   const handleVote = async (sbd: string, name: string) => {
     if (!isGateCurrentlyOpen()) {
-      alert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!");
+      showAlert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!", "warning", "Cổng bình chọn");
       return;
     }
     try {
@@ -119,7 +121,7 @@ export default function RankingPage() {
       if (res.ok) {
         const updated = await res.json();
         setCandidates(prev => prev.map(c => c.sbd === sbd ? updated : c));
-        alert(`Bình chọn thành công cho ${name}!`);
+        showAlert(`Bình chọn thành công cho ${name}!`, "success", "Bình chọn thành công");
         return;
       }
     } catch (err) {
@@ -129,7 +131,7 @@ export default function RankingPage() {
     setCandidates(prev =>
       prev.map(c => c.sbd === sbd ? { ...c, votes: c.votes + 1 } : c)
     );
-    alert(`Bình chọn offline thành công cho ${name}!`);
+    showAlert(`Bình chọn offline thành công cho ${name}!`, "success", "Bình chọn thành công");
   };
 
   const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes);

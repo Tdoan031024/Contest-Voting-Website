@@ -1,10 +1,54 @@
-import { Controller, Get, Post, Put, Delete, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { AppService, SystemSettings } from './app.service';
 import { Candidate, Sponsor, TimelineEvent, Banner } from '@huitfest/shared';
+import { FileInterceptor } from '@nestjs/platform-express';
+// @ts-ignore
+import { diskStorage } from 'multer';
+import * as path from 'path';
+import * as fs from 'fs';
 
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
+
+  // --- FILE UPLOAD ---
+  @Post('admin/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (req: any, file: any, cb: any) => {
+          const uploadDirWeb = path.join(process.cwd(), '../web/public/uploads');
+          if (!fs.existsSync(uploadDirWeb)) {
+            fs.mkdirSync(uploadDirWeb, { recursive: true });
+          }
+          cb(null, uploadDirWeb);
+        },
+        filename: (req: any, file: any, cb: any) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
+        },
+      }),
+    }),
+  )
+  async uploadFile(@UploadedFile() file: any): Promise<{ url: string }> {
+    if (!file) {
+      throw new Error('File upload failed');
+    }
+    
+    // Copy file to admin public uploads so it displays correctly on localhost:3001
+    try {
+      const adminUploadDir = path.join(process.cwd(), '../admin/public/uploads');
+      if (!fs.existsSync(adminUploadDir)) {
+        fs.mkdirSync(adminUploadDir, { recursive: true });
+      }
+      fs.copyFileSync(file.path, path.join(adminUploadDir, file.filename));
+      console.log(`✅ Uploaded file copied to admin static folder: /uploads/${file.filename}`);
+    } catch (e) {
+      console.error('⚠️ Failed to copy uploaded file to admin public:', e);
+    }
+    
+    return { url: `/uploads/${file.filename}` };
+  }
 
   // --- CANDIDATES ---
   @Get('candidates')

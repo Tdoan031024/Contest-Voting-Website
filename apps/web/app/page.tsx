@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Candidate } from '@huitfest/shared';
 import Link from 'next/link';
+import { useAlert } from './AlertProvider';
 
 const LOCAL_MOCK_CANDIDATES: Candidate[] = [
   { id: '1', sbd: '085', name: 'Nguyễn Thanh Tân', votes: 106100, imageUrl: '/original_assets/image389b.png', description: 'Thí sinh tài năng của HUIT\'s Iconic 2024.' },
@@ -29,6 +30,7 @@ interface Banner {
 }
 
 export default function HomePage() {
+  const { showAlert } = useAlert();
   const [candidates, setCandidates] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -86,19 +88,16 @@ export default function HomePage() {
           const banData = await banRes.json();
           const activeBanners = banData.filter((banner: Banner) => banner.isActive !== false);
           if (activeBanners.length > 0) {
-            const apiSlides = activeBanners.map((b: Banner) => ({
-              type: 'image',
-              url: b.imageUrl,
-              title: b.title,
-              link: b.link || '#'
-            }));
-            
-            // Filter out apiSlides that have the same url as defaultSlides to avoid duplicates
-            const uniqueApiSlides = apiSlides.filter(
-              (apiSlide: any) => !defaultSlides.some((defSlide) => defSlide.url === apiSlide.url)
-            );
-            
-            setSlides([...defaultSlides, ...uniqueApiSlides]);
+            const apiSlides = activeBanners.map((b: Banner) => {
+              const isVideo = b.imageUrl.toLowerCase().endsWith('.mp4');
+              return {
+                type: isVideo ? 'video' : 'image',
+                url: b.imageUrl,
+                title: b.title,
+                link: b.link || '#'
+              };
+            });
+            setSlides(apiSlides);
           } else {
             setSlides(defaultSlides);
           }
@@ -169,10 +168,10 @@ export default function HomePage() {
   // Scroll animation states and refs
   const aboutRef = useRef<HTMLDivElement>(null);
   const [aboutVisible, setAboutVisible] = useState(false);
-  
+
   const candidatesRef = useRef<HTMLDivElement>(null);
   const [candidatesVisible, setCandidatesVisible] = useState(false);
-  
+
   const sponsorsRef = useRef<HTMLDivElement>(null);
   const [sponsorsVisible, setSponsorsVisible] = useState(false);
 
@@ -183,7 +182,7 @@ export default function HomePage() {
           setAboutVisible(entry.isIntersecting);
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0.15 }
     );
 
     const candidatesObserver = new IntersectionObserver(
@@ -192,7 +191,7 @@ export default function HomePage() {
           setCandidatesVisible(entry.isIntersecting);
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0.15 }
     );
 
     const sponsorsObserver = new IntersectionObserver(
@@ -201,7 +200,7 @@ export default function HomePage() {
           setSponsorsVisible(entry.isIntersecting);
         });
       },
-      { threshold: 0.5 }
+      { threshold: 0 }
     );
 
     if (aboutRef.current) {
@@ -271,7 +270,7 @@ export default function HomePage() {
     } else if (dragOffset > threshold && currentBannerIndex > 0) {
       prevSlide();
     }
-    
+
     // Delayed reset so onClick handler can check hasMoved
     setTimeout(() => {
       setDragOffset(0);
@@ -289,7 +288,7 @@ export default function HomePage() {
   const isGateCurrentlyOpen = () => {
     if (!settings) return true;
     if (!settings.isGateOpen) return false;
-    
+
     const now = new Date();
     const start = new Date(settings.startDate);
     const end = new Date(settings.endDate);
@@ -298,7 +297,7 @@ export default function HomePage() {
 
   const handleVote = async (sbd: string, name: string) => {
     if (!isGateCurrentlyOpen()) {
-      alert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!");
+      showAlert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!", "warning", "Cổng bình chọn");
       return;
     }
     try {
@@ -310,7 +309,7 @@ export default function HomePage() {
       if (res.ok) {
         const updated = await res.json();
         setCandidates(prev => prev.map(c => c.sbd === sbd ? updated : c));
-        alert(`Bình chọn thành công cho ${name}!`);
+        showAlert(`Bình chọn thành công cho ${name}!`, "success", "Bình chọn thành công");
         return;
       }
     } catch (err) {
@@ -320,7 +319,7 @@ export default function HomePage() {
     setCandidates(prev =>
       prev.map(c => c.sbd === sbd ? { ...c, votes: c.votes + 1 } : c)
     );
-    alert(`Bình chọn offline thành công cho ${name}!`);
+    showAlert(`Bình chọn offline thành công cho ${name}!`, "success", "Bình chọn thành công");
   };
 
   // Sort candidates by votes descending
@@ -349,7 +348,7 @@ export default function HomePage() {
         {/* Banner Section with Slider & Video support */}
         {slides.length > 0 && (
           <div className="sc-1a037b37-0 fgDcug relative flex flex-col group select-none">
-            <div 
+            <div
               className="relative w-full h-[35vh] sm:h-[80vh] max-h-[1500px] overflow-hidden cursor-grab active:cursor-grabbing"
               onMouseDown={handleDragStart}
               onMouseMove={handleDragMove}
@@ -362,11 +361,11 @@ export default function HomePage() {
               <h1 className="text-transparent absolute -z-[1] text-transparent-transparent">
                 {slides[currentBannerIndex]?.title || "HUIT's Iconic"}
               </h1>
-              
+
               {/* Slider track */}
-              <div 
+              <div
                 className="flex h-full w-full"
-                style={{ 
+                style={{
                   transform: `translateX(calc(-${currentBannerIndex * 100}% + ${dragOffset}px))`,
                   transition: isDragging ? 'none' : 'transform 700ms cubic-bezier(0.16, 1, 0.3, 1)'
                 }}
@@ -386,10 +385,10 @@ export default function HomePage() {
                             poster="/original_assets/image5999.jpg"
                           />
                         ) : (
-                          <img 
-                            alt={slide.title} 
-                            className="w-full h-full object-cover object-center pointer-events-none" 
-                            src={slide.url} 
+                          <img
+                            alt={slide.title}
+                            className="w-full h-full object-cover object-center pointer-events-none"
+                            src={slide.url}
                             onDragStart={e => e.preventDefault()}
                           />
                         )}
@@ -406,10 +405,10 @@ export default function HomePage() {
                           poster="/original_assets/image5999.jpg"
                         />
                       ) : (
-                        <img 
-                          alt={slide.title} 
-                          className="w-full h-full object-cover object-center" 
-                          src={slide.url} 
+                        <img
+                          alt={slide.title}
+                          className="w-full h-full object-cover object-center"
+                          src={slide.url}
                           onDragStart={e => e.preventDefault()}
                         />
                       )
@@ -440,15 +439,15 @@ export default function HomePage() {
           {/* Ambient Glowing Orbs */}
           <div className={`absolute top-1/2 left-1/4 -translate-y-1/2 -translate-x-1/2 w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-[#0A2FFF]/10 to-[#79BCC2]/10 blur-[90px] pointer-events-none transition-opacity duration-[2800ms] ${aboutVisible ? 'opacity-100' : 'opacity-0'}`} />
           <div className={`absolute bottom-10 right-10 w-[250px] h-[250px] rounded-full bg-gradient-to-br from-[#79BCC2]/5 to-[#0A2FFF]/5 blur-[80px] pointer-events-none transition-opacity duration-[2800ms] ${aboutVisible ? 'opacity-100' : 'opacity-0'}`} />
-          
+
           <div className="pt-8 sm:pt-[40px] flex flex-col items-center relative z-10">
-            
+
             {/* Section Main Header Căn Giữa */}
             <div className={`flex flex-col space-y-2 text-center mb-8 sm:mb-16 transform transition-all duration-[2800ms] ease-out ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
               <h2 className="text-[24px] sm:text-[45px] tracking-[-1px] leading-[30px] sm:leading-[55px] font-extrabold uppercase bg-clip-text text-transparent bg-gradient-to-r from-black to-black/70 dark:from-white dark:to-white/70">
                 Giới thiệu cuộc thi
               </h2>
-              <div 
+              <div
                 className="h-[3.5px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-2 transition-all duration-[3200ms] ease-out"
                 style={{ width: aboutVisible ? '100px' : '0px' }}
               />
@@ -456,16 +455,16 @@ export default function HomePage() {
 
             {/* 2 Columns Content */}
             <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16 w-full px-4 sm:px-0">
-              
+
               {/* Left Column: Information */}
-              <div 
+              <div
                 style={{
                   transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                   transitionDelay: '400ms'
                 }}
                 className={`flex-1 flex flex-col space-y-5 sm:space-y-8 text-left transform transition-all duration-[2800ms] ${aboutVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}
               >
-                <h3 
+                <h3
                   className="uppercase leading-tight"
                   style={{
                     fontSize: 'clamp(26px, 4vw, 38px)',
@@ -478,53 +477,48 @@ export default function HomePage() {
                     display: 'inline-block'
                   }}
                 >
-                  Về HUIT's Iconic 2024
+                  {settings?.aboutTitle || "Về HUIT's Iconic 2024"}
                 </h3>
-                
-                <p className="text-[14px] sm:text-[16px] text-neutral-neutral1/80 dark:text-neutral-white/80 leading-relaxed font-light">
-                  HUIT's Iconic là cuộc thi tìm kiếm gương mặt đại diện và tài năng sinh viên Trường Đại học Công Thương TP. Hồ Chí Minh (HUIT). 
-                  Cuộc thi nhằm <strong className="font-semibold text-black dark:text-white">tôn vinh nét đẹp tri thức</strong>, phong cách tự tin, tài năng nổi bật cùng tinh thần trách nhiệm với cộng đồng của thế hệ trẻ HUIT. 
-                  Đây là <strong className="font-semibold text-[#79BCC2]">bệ phóng giúp các bạn sinh viên tỏa sáng</strong>, khẳng định bản thân và phát triển kỹ năng toàn diện trong thời đại mới.
+
+                <p className="text-[14px] sm:text-[16px] text-neutral-neutral1/80 dark:text-neutral-white/80 leading-relaxed font-light whitespace-pre-line">
+                  {settings?.aboutDescription || "HUIT's Iconic là cuộc thi tìm kiếm gương mặt đại diện và tài năng sinh viên Trường Đại học Công Thương TP. Hồ Chí Minh (HUIT). Cuộc thi nhằm tôn vinh nét đẹp tri thức, phong cách tự tin, tài năng nổi bật cùng tinh thần trách nhiệm với cộng đồng của thế hệ trẻ HUIT. Đây là bệ phóng giúp các bạn sinh viên tỏa sáng, khẳng định bản thân và phát triển kỹ năng toàn diện trong thời đại mới."}
                 </p>
 
                 {/* Staggered Stats Counters */}
                 <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-2">
-                  <div 
+                  <div
                     style={{
                       transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
                       transitionDelay: '800ms'
                     }}
-                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${
-                      aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}
+                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                      }`}
                   >
-                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">20+</p>
+                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">{settings?.statsCandidates || "20+"}</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Thí sinh</p>
                   </div>
-                  
-                  <div 
+
+                  <div
                     style={{
                       transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
                       transitionDelay: '1300ms'
                     }}
-                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${
-                      aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}
+                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                      }`}
                   >
-                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">100K+</p>
+                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">{settings?.statsVotes || "100K+"}</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Bình chọn</p>
                   </div>
 
-                  <div 
+                  <div
                     style={{
                       transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
                       transitionDelay: '1800ms'
                     }}
-                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${
-                      aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}
+                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                      }`}
                   >
-                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">30M+</p>
+                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">{settings?.statsViews || "30M+"}</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Lượt xem</p>
                   </div>
                 </div>
@@ -537,21 +531,21 @@ export default function HomePage() {
                   }}
                   className={`transform transition-all duration-[2800ms] ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
                 >
-                  <Link 
-                    href="/the-le" 
+                  <Link
+                    href="/the-le"
                     className="group hover-shine-effect inline-flex items-center justify-center bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] text-white font-bold rounded-full px-8 py-3.5 shadow-[0_4px_20px_rgba(10,47,255,0.25)] hover:shadow-[0_6px_24px_rgba(10,47,255,0.45)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 text-[14px] sm:text-[15px] uppercase tracking-wider"
                   >
                     <span>Đọc thêm</span>
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      width="16" 
-                      height="16" 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2.5" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round" 
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
                       className="ml-2 w-4 h-4 transform group-hover:translate-x-1.5 transition-transform duration-300"
                     >
                       <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -560,9 +554,9 @@ export default function HomePage() {
                   </Link>
                 </div>
               </div>
-              
+
               {/* Right Column: Image with Glowing Floating Background & Shine Effect */}
-              <div 
+              <div
                 style={{
                   transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                   transitionDelay: '600ms'
@@ -572,15 +566,15 @@ export default function HomePage() {
                 {/* Glowing Aura Behind Image */}
                 <div className={`absolute -inset-3 bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] rounded-[28px] blur-2xl opacity-0 transition-opacity duration-[3500ms] delay-[1000ms] pointer-events-none ${aboutVisible ? 'opacity-25' : 'opacity-0'}`} />
                 <div className="absolute -inset-1 bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] rounded-[26px] opacity-15 blur-sm pointer-events-none" />
-                
+
                 <div className="relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-[24px] border border-white/10 shadow-2xl group hover-shine-effect bg-black/40">
-                  <img 
-                    alt="About HUIT's Iconic" 
-                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out" 
-                    src="/original_assets/image17ae.png"
+                  <img
+                    alt="About HUIT's Iconic"
+                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
+                    src={settings?.aboutImageUrl || "/original_assets/image17ae.png"}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-70 group-hover:opacity-40 transition-opacity duration-500"></div>
-                  
+
                   {/* Decorative Badge on Image */}
                   <div className={`absolute top-4 right-4 bg-black/60 backdrop-blur-md border border-white/15 px-4 py-1.5 rounded-full text-[12px] font-bold tracking-wider text-[#79BCC2] uppercase shadow-md transition-all duration-[2800ms] delay-[1600ms] ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
                     HUIT's Iconic 2024
@@ -611,14 +605,14 @@ export default function HomePage() {
                     HUIT's Iconic
                   </h3>
                 </div>
-                <div 
+                <div
                   className="h-[3.5px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-1.5 transition-all duration-[3200ms] ease-out"
                   style={{ width: candidatesVisible ? '80px' : '0px' }}
                 />
               </div>
 
               {/* Search Bar matching sample web */}
-              <div 
+              <div
                 style={{
                   transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                   transitionDelay: '400ms'
@@ -659,15 +653,14 @@ export default function HomePage() {
                     const rank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
 
                     return (
-                      <div 
-                        key={c.id} 
+                      <div
+                        key={c.id}
                         style={{
                           transitionDelay: `${Math.min(idx * 250, 1500)}ms`,
                           transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
                         }}
-                        className={`h-full group w-full mobile:max-w-[286px] sm:max-w-[280px] transform transition-all duration-[2500ms] ${
-                          candidatesVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
-                        }`}
+                        className={`h-full group w-full mobile:max-w-[286px] sm:max-w-[280px] transform transition-all duration-[2500ms] ${candidatesVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
+                          }`}
                       >
                         <div className="relative backdrop-blur-[8px] rounded-[24px] border border-transparent bg-[rgba(222,222,222,0.15)] group-hover:bg-[rgb(222,222,222)]/40 group-hover:dark:bg-[rgb(222,222,222)]/20 group-hover:shadow-2xl group-hover:shadow-black/20 group-hover:dark:shadow-[#79BCC2]/15 cursor-pointer transition-all duration-300 hover-shine-effect">
 
@@ -718,17 +711,15 @@ export default function HomePage() {
                             <div className="flex items-end gap-3 h-[72px] sm:gap-4 sm:h-[80px] mt-2">
                               <button
                                 onClick={() => handleVote(c.sbd, c.name)}
-                                className={`sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-lg py-[10px] w-full border-0 cursor-pointer transition-all hover-shine-effect ${
-                                  isGateCurrentlyOpen() 
-                                    ? 'bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]' 
+                                className={`sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-lg py-[10px] w-full border-0 cursor-pointer transition-all hover-shine-effect ${isGateCurrentlyOpen()
+                                    ? 'bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]'
                                     : 'bg-slate-700/50 cursor-not-allowed opacity-50'
-                                }`}
+                                  }`}
                               >
-                                <p className={`text-[16px] leading-[20px] font-bold uppercase tracking-wider ${
-                                  isGateCurrentlyOpen() 
-                                    ? 'text-neutral-white dark:text-primary' 
+                                <p className={`text-[16px] leading-[20px] font-bold uppercase tracking-wider ${isGateCurrentlyOpen()
+                                    ? 'text-neutral-white dark:text-primary'
                                     : 'text-slate-400'
-                                }`}>
+                                  }`}>
                                   {isGateCurrentlyOpen() ? 'Bình chọn' : 'Đã đóng'}
                                 </p>
                               </button>
@@ -761,23 +752,22 @@ export default function HomePage() {
               )}
 
               {/* 2 Buttons: Toàn bộ xếp hạng & Danh sách thí sinh */}
-              <div 
+              <div
                 style={{
                   transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                   transitionDelay: '800ms'
                 }}
-                className={`flex flex-row justify-center items-center gap-4 sm:gap-6 mt-8 sm:mt-[56px] w-full transform transition-all duration-[2800ms] ${
-                  candidatesVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-                }`}
+                className={`flex flex-row justify-center items-center gap-4 sm:gap-6 mt-8 sm:mt-[56px] w-full transform transition-all duration-[2800ms] ${candidatesVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
+                  }`}
               >
-                <Link 
-                  href="/bang-xep-hang" 
+                <Link
+                  href="/bang-xep-hang"
                   className="flex items-center justify-center border border-white/20 hover:border-[#79BCC2] bg-white/5 hover:bg-white/10 text-white font-bold rounded-full px-6 py-3 sm:px-8 sm:py-3.5 transition-all duration-300 text-[12px] sm:text-[14px] uppercase tracking-wider shadow-lg hover:shadow-[#79BCC2]/10 hover-shine-effect hover:scale-105 active:scale-95"
                 >
                   Toàn bộ xếp hạng
                 </Link>
-                <Link 
-                  href="#candidates-section" 
+                <Link
+                  href="#candidates-section"
                   className="flex items-center justify-center border border-white/20 hover:border-[#79BCC2] bg-white/5 hover:bg-white/10 text-white font-bold rounded-full px-6 py-3 sm:px-8 sm:py-3.5 transition-all duration-300 text-[12px] sm:text-[14px] uppercase tracking-wider shadow-lg hover:shadow-[#79BCC2]/10 hover-shine-effect hover:scale-105 active:scale-95"
                 >
                   Danh sách thí sinh
@@ -803,20 +793,19 @@ export default function HomePage() {
                   {settings?.eventTitle || "HUIT's Iconic"}
                 </h3>
               </div>
-              <div 
+              <div
                 className="h-[3.5px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-2 transition-all duration-[3200ms] ease-out"
                 style={{ width: sponsorsVisible ? '80px' : '0px' }}
               />
             </div>
 
-            <div 
+            <div
               style={{
                 transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                 transitionDelay: '600ms'
               }}
-              className={`w-full max-w-[1400px] px-4 transform transition-all duration-[2800ms] ${
-                sponsorsVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8'
-              }`}
+              className={`w-full max-w-[1400px] px-4 transform transition-all duration-[2800ms] ${sponsorsVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8'
+                }`}
             >
               <div className="relative group hover-shine-effect rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-white/[0.01]">
                 <div className="absolute -inset-1 bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] rounded-2xl opacity-10 blur-sm pointer-events-none group-hover:opacity-20 transition-opacity duration-500" />

@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useAlert } from '../AlertProvider';
 
 export default function LoginPage() {
+  const { showAlert } = useAlert();
   const [email, setEmail] = useState('abcxyz@mail.com');
   const [password, setPassword] = useState('Mật khẩu');
   const [showPassword, setShowPassword] = useState(false);
@@ -14,20 +16,20 @@ export default function LoginPage() {
     return () => clearTimeout(t);
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    alert(`Đăng nhập thành công với tài khoản: ${email}\nChuyển hướng về trang chủ.`);
+    await showAlert(`Đăng nhập thành công với tài khoản: ${email}\nChuyển hướng về trang chủ.`, 'success', 'Đăng nhập thành công');
     window.location.href = '/';
   };
 
-  const handleGoogleLogin = () => {
-    alert('Kết nối dịch vụ Google thành công! Đăng nhập offline thành công.\nChuyển hướng về trang chủ.');
+  const handleGoogleLogin = async () => {
+    await showAlert('Kết nối dịch vụ Google thành công! Đăng nhập offline thành công.\nChuyển hướng về trang chủ.', 'success', 'Đăng nhập thành công');
     window.location.href = '/';
   };
 
   const handleOfflineAlert = (e: React.MouseEvent) => {
     e.preventDefault();
-    alert('Tính năng đang được phát triển ở chế độ offline!');
+    showAlert('Tính năng đang được phát triển ở chế độ offline!', 'info', 'Thông báo');
   };
 
   return (
