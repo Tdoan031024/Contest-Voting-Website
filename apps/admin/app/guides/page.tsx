@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { apiUrl } from '../api';
 
 type Step = {
   number: string;
@@ -90,7 +91,7 @@ export default function GuidesAdminPage() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('http://localhost:5000/api/admin/upload', {
+      const res = await fetch(apiUrl('/api/admin/upload'), {
         method: 'POST',
         body: formData,
       });

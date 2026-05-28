@@ -110,6 +110,7 @@ const navGroups = [
 ];
 
 const navItems = navGroups.flatMap((group) => group.items);
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 export default function AdminLayout({
   children,
@@ -184,7 +185,7 @@ export default function AdminLayout({
                     <span className="h-1.5 w-1.5 rounded-full bg-[#18a058] animate-pulse" />
                     Hệ thống trực tuyến
                   </span>
-                  <Link href="http://localhost:3000" target="_blank" className="rounded-lg border border-[#dce5e1] bg-white px-3 py-1.5 text-xs font-bold text-[#123c34] shadow-sm transition hover:border-[#0f766e] hover:text-[#0f766e] hover:bg-[#edf4f1]">
+                  <Link href={SITE_URL} target="_blank" className="rounded-lg border border-[#dce5e1] bg-white px-3 py-1.5 text-xs font-bold text-[#123c34] shadow-sm transition hover:border-[#0f766e] hover:text-[#0f766e] hover:bg-[#edf4f1]">
                     Xem trang chủ
                   </Link>
                 </div>

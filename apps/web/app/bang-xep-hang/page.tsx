@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Candidate } from '@huitfest/shared';
 import Link from 'next/link';
 import { useAlert } from '../AlertProvider';
+import { apiUrl } from '../api';
 
 // once=true: stays visible after first intersection, never hides again
 function useInView(threshold = 0.15) {
@@ -53,7 +54,7 @@ export default function RankingPage() {
     async function loadCandidates() {
       setIsLoading(true);
       try {
-        const res = await fetch('http://localhost:5000/api/candidates');
+        const res = await fetch(apiUrl('/api/candidates'));
         if (res.ok) {
           const data = await res.json();
           setCandidates(data);
@@ -68,7 +69,7 @@ export default function RankingPage() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/candidates');
+        const res = await fetch(apiUrl('/api/candidates'));
         if (res.ok) {
           const data = await res.json();
           setCandidates(data);
@@ -83,7 +84,7 @@ export default function RankingPage() {
   useEffect(() => {
     async function loadSettings() {
       try {
-        const res = await fetch('http://localhost:5000/api/settings');
+        const res = await fetch(apiUrl('/api/settings'));
         if (res.ok) {
           const data = await res.json();
           setSettings(data);
@@ -113,7 +114,7 @@ export default function RankingPage() {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:5000/api/candidates/${sbd}/vote`, {
+      const res = await fetch(apiUrl(`/api/candidates/${sbd}/vote`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: '0987654321' }),

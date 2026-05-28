@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Banner } from '@huitfest/shared';
+import { apiUrl } from '../api';
 
 type AdminBanner = Banner & {
   isActive?: boolean;
@@ -86,7 +87,7 @@ function BannerModal({
                     formData.append('file', file);
                     
                     try {
-                      const res = await fetch('http://localhost:5000/api/admin/upload', {
+                      const res = await fetch(apiUrl('/api/admin/upload'), {
                         method: 'POST',
                         body: formData,
                       });
@@ -153,7 +154,7 @@ export default function BannersAdminPage() {
 
   async function loadBanners() {
     try {
-      const res = await fetch('http://localhost:5000/api/banners');
+      const res = await fetch(apiUrl('/api/banners'));
       if (res.ok) setBanners(await res.json());
     } catch (err) {
       console.error('Failed to load banners from backend API.', err);
@@ -184,7 +185,7 @@ export default function BannersAdminPage() {
   const handleAddSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/admin/banners', {
+      const res = await fetch(apiUrl('/api/admin/banners'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: formTitle, imageUrl: formImageUrl, link: formLink, isActive: formActive }),
@@ -203,7 +204,7 @@ export default function BannersAdminPage() {
     event.preventDefault();
     if (!selectedBanner) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/banners/${selectedBanner.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/banners/${selectedBanner.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title: formTitle, imageUrl: formImageUrl, link: formLink, isActive: formActive }),
@@ -221,7 +222,7 @@ export default function BannersAdminPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Bạn có chắc chắn muốn xóa banner này không?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/banners/${id}`, { method: 'DELETE' });
+      const res = await fetch(apiUrl(`/api/admin/banners/${id}`), { method: 'DELETE' });
       if (res.ok) {
         alert('Xóa banner thành công!');
         loadBanners();
@@ -238,7 +239,7 @@ export default function BannersAdminPage() {
     );
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/banners/${banner.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/banners/${banner.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isActive: nextActive }),

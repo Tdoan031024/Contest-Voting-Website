@@ -5,6 +5,7 @@ import { Candidate } from '@huitfest/shared';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAlert } from '../../AlertProvider';
+import { apiUrl } from '../../api';
 
 interface CandidateExtendedDetails {
   birthYear: string;
@@ -50,7 +51,7 @@ export default function CandidateDetailPage() {
     async function loadData() {
       setIsLoading(true);
       try {
-        const res = await fetch(`http://localhost:5000/api/candidates`);
+        const res = await fetch(apiUrl(`/api/candidates`));
         if (res.ok) {
           const list = await res.json();
           setCandidatesList(list);
@@ -74,7 +75,7 @@ export default function CandidateDetailPage() {
     // Poll candidate scores and list
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/candidates`);
+        const res = await fetch(apiUrl(`/api/candidates`));
         if (res.ok) {
           const list = await res.json();
           setCandidatesList(list);
@@ -93,7 +94,7 @@ export default function CandidateDetailPage() {
   useEffect(() => {
     async function loadSettings() {
       try {
-        const res = await fetch('http://localhost:5000/api/settings');
+        const res = await fetch(apiUrl('/api/settings'));
         if (res.ok) {
           const data = await res.json();
           setSettings(data);
@@ -124,7 +125,7 @@ export default function CandidateDetailPage() {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:5000/api/candidates/${candidate.sbd}/vote`, {
+      const res = await fetch(apiUrl(`/api/candidates/${candidate.sbd}/vote`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: '0987654321' }),

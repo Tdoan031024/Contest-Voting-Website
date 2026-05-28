@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Candidate, Sponsor } from '@huitfest/shared';
+import { apiUrl } from './api';
 
 function StatIcon({ type }: { type: 'votes' | 'users' | 'leader' | 'gate' }) {
   const paths = {
@@ -29,9 +30,9 @@ export default function OverviewPage() {
     async function loadStats() {
       try {
         const [candRes, sponRes, setRes] = await Promise.all([
-          fetch('http://localhost:5000/api/candidates'),
-          fetch('http://localhost:5000/api/sponsors'),
-          fetch('http://localhost:5000/api/settings'),
+          fetch(apiUrl('/api/candidates')),
+          fetch(apiUrl('/api/sponsors')),
+          fetch(apiUrl('/api/settings')),
         ]);
 
         if (candRes.ok) setCandidates(await candRes.json());

@@ -5,6 +5,7 @@ import './globals.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AlertProvider } from './AlertProvider';
+import { apiUrl } from './api';
 
 export interface SystemSettings {
   isGateOpen: boolean;
@@ -32,7 +33,7 @@ export default function RootLayout({
   useEffect(() => {
     async function fetchSettings() {
       try {
-        const res = await fetch('http://localhost:5000/api/settings');
+        const res = await fetch(apiUrl('/api/settings'));
         if (res.ok) {
           const data = await res.json();
           setSettings(data);

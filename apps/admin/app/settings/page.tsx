@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { apiUrl } from '../api';
 
 export default function SettingsAdminPage() {
   // Gate settings state
@@ -20,7 +21,7 @@ export default function SettingsAdminPage() {
   useEffect(() => {
     async function loadSettings() {
       try {
-        const res = await fetch('http://localhost:5000/api/settings');
+        const res = await fetch(apiUrl('/api/settings'));
         if (res.ok) {
           const data = await res.json();
           setIsGateOpen(data.isGateOpen);
@@ -53,7 +54,7 @@ export default function SettingsAdminPage() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/admin/settings', {
+      const res = await fetch(apiUrl('/api/admin/settings'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updatedSettings)
@@ -75,7 +76,7 @@ export default function SettingsAdminPage() {
     if (!confirm2) return;
 
     try {
-      const res = await fetch('http://localhost:5000/api/admin/settings/reset-votes', {
+      const res = await fetch(apiUrl('/api/admin/settings/reset-votes'), {
         method: 'POST'
       });
       if (res.ok) {

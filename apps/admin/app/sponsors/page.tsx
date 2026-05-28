@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sponsor } from '@huitfest/shared';
+import { apiUrl } from '../api';
 
 const INITIAL_MOCK_SPONSORS: Sponsor[] = [
   {
@@ -48,7 +49,7 @@ export default function SponsorsAdminPage() {
   useEffect(() => {
     async function loadFromApi() {
       try {
-        const res = await fetch('http://localhost:5000/api/sponsors');
+        const res = await fetch(apiUrl('/api/sponsors'));
         if (res.ok) {
           const data = await res.json();
           setSponsors(data);
@@ -85,7 +86,7 @@ export default function SponsorsAdminPage() {
 
     // Try posting to NestJS
     try {
-      const res = await fetch('http://localhost:5000/api/admin/sponsors', {
+      const res = await fetch(apiUrl('/api/admin/sponsors'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newSponsor),
@@ -123,7 +124,7 @@ export default function SponsorsAdminPage() {
 
     // Try put request to NestJS
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/sponsors/${selectedSponsor.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/sponsors/${selectedSponsor.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fieldsToUpdate),
@@ -150,7 +151,7 @@ export default function SponsorsAdminPage() {
 
     // Try delete request to NestJS
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/sponsors/${id}`, {
+      const res = await fetch(apiUrl(`/api/admin/sponsors/${id}`), {
         method: 'DELETE',
       });
       if (res.ok) {

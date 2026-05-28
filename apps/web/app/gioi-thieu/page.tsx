@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { apiUrl } from '../api';
 
 function useInView(threshold = 0.05) {
   const ref = useRef<HTMLDivElement>(null);
@@ -46,7 +47,7 @@ export default function GioiThieuPage() {
   useEffect(() => {
     async function loadTimeline() {
       try {
-        const res = await fetch('http://localhost:5000/api/timeline');
+        const res = await fetch(apiUrl('/api/timeline'));
         if (res.ok) {
           const data = await res.json();
           setTimeline(data);

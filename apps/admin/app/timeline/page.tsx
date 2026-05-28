@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { TimelineEvent } from '@huitfest/shared';
+import { apiUrl } from '../api';
 
 export default function TimelineAdminPage() {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
@@ -20,7 +21,7 @@ export default function TimelineAdminPage() {
 
   async function loadTimeline() {
     try {
-      const res = await fetch('http://localhost:5000/api/timeline');
+      const res = await fetch(apiUrl('/api/timeline'));
       if (res.ok) {
         const data = await res.json();
         setEvents(data);
@@ -61,7 +62,7 @@ export default function TimelineAdminPage() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/admin/timeline', {
+      const res = await fetch(apiUrl('/api/admin/timeline'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newEvent)
@@ -90,7 +91,7 @@ export default function TimelineAdminPage() {
     };
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/timeline/${selectedEvent.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/timeline/${selectedEvent.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fieldsToUpdate)
@@ -111,7 +112,7 @@ export default function TimelineAdminPage() {
     if (!confirm('Bạn có chắc chắn muốn xóa mốc thời gian này không?')) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/timeline/${id}`, {
+      const res = await fetch(apiUrl(`/api/admin/timeline/${id}`), {
         method: 'DELETE'
       });
       if (res.ok) {

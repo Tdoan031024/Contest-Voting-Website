@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { Candidate } from '@huitfest/shared';
+import { apiUrl } from '../api';
 
 const INITIAL_MOCK_CANDIDATES: Candidate[] = [
   { id: '1', sbd: '085', name: 'Nguyễn Thanh Tân', votes: 106100, imageUrl: '/original_assets/image389b.png', description: "Thí sinh tài năng của HUIT's Iconic 2024." },
@@ -106,7 +107,7 @@ export default function CandidatesAdminPage() {
   useEffect(() => {
     async function loadFromApi() {
       try {
-        const res = await fetch('http://localhost:5000/api/candidates');
+        const res = await fetch(apiUrl('/api/candidates'));
         if (res.ok) setCandidates(await res.json());
       } catch (e) {
         console.log('Backend API offline, showing local mock admin candidates.');
@@ -152,7 +153,7 @@ export default function CandidatesAdminPage() {
     };
 
     try {
-      const res = await fetch('http://localhost:5000/api/admin/candidates', {
+      const res = await fetch(apiUrl('/api/admin/candidates'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newCandidate),
@@ -184,7 +185,7 @@ export default function CandidatesAdminPage() {
     };
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/candidates/${selectedCandidate.id}`, {
+      const res = await fetch(apiUrl(`/api/admin/candidates/${selectedCandidate.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(fieldsToUpdate),
@@ -207,7 +208,7 @@ export default function CandidatesAdminPage() {
     if (!confirm('Bạn có chắc chắn muốn xóa thí sinh này khỏi hệ thống bình chọn không?')) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/candidates/${id}`, { method: 'DELETE' });
+      const res = await fetch(apiUrl(`/api/admin/candidates/${id}`), { method: 'DELETE' });
       if (res.ok) {
         setCandidates((prev) => prev.filter((candidate) => candidate.id !== id));
         alert('Xóa thí sinh thành công!');

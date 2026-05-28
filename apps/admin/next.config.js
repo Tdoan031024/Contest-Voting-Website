@@ -2,6 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@huitfest/shared'],
+  basePath: '/admin',
 };
 
 module.exports = nextConfig;

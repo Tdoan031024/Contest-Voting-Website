@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { apiUrl } from '../api';
 
 export default function IntroductionAdminPage() {
   const [aboutTitle, setAboutTitle] = useState('Về HUIT\'s Iconic 2024');
@@ -16,7 +17,7 @@ export default function IntroductionAdminPage() {
   useEffect(() => {
     async function loadSettings() {
       try {
-        const res = await fetch('http://localhost:5000/api/settings');
+        const res = await fetch(apiUrl('/api/settings'));
         if (res.ok) {
           const data = await res.json();
           if (data.aboutTitle) setAboutTitle(data.aboutTitle);
@@ -37,7 +38,7 @@ export default function IntroductionAdminPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const res = await fetch('http://localhost:5000/api/admin/settings', {
+      const res = await fetch(apiUrl('/api/admin/settings'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -70,7 +71,7 @@ export default function IntroductionAdminPage() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('http://localhost:5000/api/admin/upload', {
+      const res = await fetch(apiUrl('/api/admin/upload'), {
         method: 'POST',
         body: formData,
       });

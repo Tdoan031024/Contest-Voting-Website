@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Candidate } from '@huitfest/shared';
 import Link from 'next/link';
 import { useAlert } from './AlertProvider';
+import { apiUrl } from './api';
 
 const LOCAL_MOCK_CANDIDATES: Candidate[] = [
   { id: '1', sbd: '085', name: 'Nguyễn Thanh Tân', votes: 106100, imageUrl: '/original_assets/image389b.png', description: 'Thí sinh tài năng của HUIT\'s Iconic 2024.' },
@@ -75,9 +76,9 @@ export default function HomePage() {
       setIsLoading(true);
       try {
         const [candRes, banRes, sponRes] = await Promise.all([
-          fetch('http://localhost:5000/api/candidates'),
-          fetch('http://localhost:5000/api/banners'),
-          fetch('http://localhost:5000/api/sponsors')
+          fetch(apiUrl('/api/candidates')),
+          fetch(apiUrl('/api/banners')),
+          fetch(apiUrl('/api/sponsors'))
         ]);
 
         if (candRes.ok) {
@@ -119,7 +120,7 @@ export default function HomePage() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/candidates');
+        const res = await fetch(apiUrl('/api/candidates'));
         if (res.ok) {
           const candData = await res.json();
           setCandidates(candData);
@@ -134,7 +135,7 @@ export default function HomePage() {
   useEffect(() => {
     async function loadSettings() {
       try {
-        const res = await fetch('http://localhost:5000/api/settings');
+        const res = await fetch(apiUrl('/api/settings'));
         if (res.ok) {
           const data = await res.json();
           setSettings(data);
@@ -301,7 +302,7 @@ export default function HomePage() {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:5000/api/candidates/${sbd}/vote`, {
+      const res = await fetch(apiUrl(`/api/candidates/${sbd}/vote`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: '0987654321' }),
