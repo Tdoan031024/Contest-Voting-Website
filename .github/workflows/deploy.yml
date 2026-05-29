@@ -21,23 +21,34 @@ jobs:
           script: |
             set -e
 
-            cd /home/uqqwmiabhosting/public_html/startup.huitmedia.edu.vn
+            PROJECT_DIR=/home/uqqwmiabhosting/public_html/startup.huitmedia.edu.vn
+            NODE_ENV_PATH=/home/uqqwmiabhosting/nodevenv/public_html/startup.huitmedia.edu.vn/apps/web/22/bin/activate
+
+            source "$NODE_ENV_PATH"
+            unset NPM_CONFIG_PREFIX
+            unset npm_config_prefix
+            unset NPM_CONFIG_PRODUCTION
+            unset npm_config_production
+
+            cd "$PROJECT_DIR"
             git fetch --all
             git reset --hard origin/main
 
-            npm install
-            npm run build --workspace apps/admin
-            npm run build --workspace apps/api
-            npm run build --workspace apps/web
+            env -u NODE_ENV -u NPM_CONFIG_PRODUCTION -u npm_config_production -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" install --include=dev
+            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=packages/shared
+            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/api
+            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/web
+            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/admin
+            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run prisma:generate --workspace=apps/api
 
-            cd /home/uqqwmiabhosting/public_html/startup.huitmedia.edu.vn/apps/admin
+            cd "$PROJECT_DIR/apps/admin"
             mkdir -p tmp
             touch tmp/restart.txt
 
-            cd /home/uqqwmiabhosting/public_html/startup.huitmedia.edu.vn/apps/api
+            cd "$PROJECT_DIR/apps/api"
             mkdir -p tmp
             touch tmp/restart.txt
 
-            cd /home/uqqwmiabhosting/public_html/startup.huitmedia.edu.vn/apps/web
+            cd "$PROJECT_DIR/apps/web"
             mkdir -p tmp
             touch tmp/restart.txt
