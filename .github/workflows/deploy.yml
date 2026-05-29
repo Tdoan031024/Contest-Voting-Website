@@ -41,14 +41,6 @@ jobs:
             env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/admin
             env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run prisma:generate --workspace=apps/api
 
-            cd "$PROJECT_DIR/apps/admin"
-            mkdir -p tmp
-            touch tmp/restart.txt
-
-            cd "$PROJECT_DIR/apps/api"
-            mkdir -p tmp
-            touch tmp/restart.txt
-
-            cd "$PROJECT_DIR/apps/web"
-            mkdir -p tmp
-            touch tmp/restart.txt
+            cloudlinux-selector restart --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/admin
+            cloudlinux-selector restart --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/api
+            cloudlinux-selector restart --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/web
