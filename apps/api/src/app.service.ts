@@ -17,7 +17,7 @@ export interface SystemSettings {
 
 @Injectable()
 export class AppService implements OnModuleInit {
-  private dbFilePath = path.join(process.cwd(), 'contest_voting_db.json');
+  private dbFilePath = path.resolve(__dirname, '..', 'contest_voting_db.json');
   private settings: SystemSettings = {
     isGateOpen: true,
     startDate: '2024-10-20T00:00',
