@@ -478,7 +478,7 @@ export default function HomePage() {
                     display: 'inline-block'
                   }}
                 >
-                  {settings?.aboutTitle || "Về HUIT's Iconic 2024"}
+                  {settings?.aboutTitle || "Về HUIT's Iconic 2026"}
                 </h3>
 
                 <p className="text-[14px] sm:text-[16px] text-neutral-neutral1/80 dark:text-neutral-white/80 leading-relaxed font-light whitespace-pre-line">

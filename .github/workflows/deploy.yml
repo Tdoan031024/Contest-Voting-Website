@@ -1,0 +1,43 @@
+name: Deploy to iNET
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.HOSTING_HOST }}
+          username: ${{ secrets.HOSTING_USER }}
+          key: ${{ secrets.HOSTING_SSH_KEY }}
+          port: ${{ secrets.HOSTING_PORT }}
+          script: |
+            set -e
+
+            cd /home/uqqwmiabhosting/public_html/startup.huitmedia.edu.vn
+            git fetch --all
+            git reset --hard origin/main
+
+            npm install
+            npm run build --workspace apps/admin
+            npm run build --workspace apps/api
+            npm run build --workspace apps/web
+
+            cd /home/uqqwmiabhosting/public_html/startup.huitmedia.edu.vn/apps/admin
+            mkdir -p tmp
+            touch tmp/restart.txt
+
+            cd /home/uqqwmiabhosting/public_html/startup.huitmedia.edu.vn/apps/api
+            mkdir -p tmp
+            touch tmp/restart.txt
+
+            cd /home/uqqwmiabhosting/public_html/startup.huitmedia.edu.vn/apps/web
+            mkdir -p tmp
+            touch tmp/restart.txt
