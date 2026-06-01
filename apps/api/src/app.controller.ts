@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseInterceptors, UploadedFile, UnauthorizedException } from '@nestjs/common';
 import { AppService, SystemSettings } from './app.service';
 import { Candidate, Sponsor, TimelineEvent, Banner } from '@huitfest/shared';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -7,9 +7,39 @@ import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 
+function normalizeUploadFilename(originalName: string) {
+  const basename = path.basename(originalName).replace(/[\\/]/g, '');
+  return basename || `upload${path.extname(originalName)}`;
+}
+
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) {}
+
+  // --- ADMIN AUTH ---
+  @Post('admin/login')
+  async adminLogin(
+    @Body('username') username: string,
+    @Body('password') password: string
+  ) {
+    if (!username || !password) {
+      throw new UnauthorizedException('Thiếu thông tin đăng nhập.');
+    }
+
+    const adminUser = await this.appService.validateAdminCredentials(username, password);
+    if (!adminUser) {
+      throw new UnauthorizedException('Tên đăng nhập hoặc mật khẩu không chính xác.');
+    }
+
+    return {
+      ok: true,
+      admin: {
+        id: adminUser.id,
+        username: adminUser.username,
+        role: adminUser.role,
+      },
+    };
+  }
 
   // --- FILE UPLOAD ---
   @Post('admin/upload')
@@ -24,8 +54,7 @@ export class AppController {
           cb(null, uploadDirWeb);
         },
         filename: (req: any, file: any, cb: any) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-          cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
+          cb(null, normalizeUploadFilename(file.originalname));
         },
       }),
     }),

@@ -95,7 +95,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((toast) => (
           <div 
             key={toast.id}
-            className="toast-item pointer-events-auto relative overflow-hidden flex items-start gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-lg transition-all duration-300 w-full"
+            className="toast-item pointer-events-auto relative overflow-hidden flex items-start gap-3 rounded-xl border border-[#DDE5EC] bg-white p-4 shadow-lg transition-all duration-300 w-full"
           >
             {/* Icon */}
             <div className="flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-xl bg-[#f4f7f6]">
@@ -115,7 +115,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
                 </svg>
               )}
               {toast.type === 'info' && (
-                <svg className="h-5 w-5 text-teal-600" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                <svg className="h-5 w-5 text-[#005BAA]" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 1 1 1.083.985l-.5 1.5a.75.75 0 0 0 .902.952l.05-.01a.75.75 0 1 0-.215-1.482l.092-.276a1.5 1.5 0 0 0-2.183-1.78l-.04.02a.75.75 0 1 0 .74 1.307Z" />
                   <circle cx="12" cy="7.5" r="1.5" fill="currentColor" />
                 </svg>
@@ -124,14 +124,14 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
             {/* Text details */}
             <div className="flex-1 min-w-0 pr-4">
-              <h4 className="text-[13px] font-bold text-[#123c34] tracking-wide uppercase font-heading">{toast.title}</h4>
-              <p className="text-[11px] text-[#52605b] mt-1 leading-normal font-semibold whitespace-pre-line">{toast.message}</p>
+              <h4 className="text-[13px] font-bold text-[#102A43] tracking-wide uppercase font-heading">{toast.title}</h4>
+              <p className="text-[11px] text-[#64748B] mt-1 leading-normal font-semibold whitespace-pre-line">{toast.message}</p>
             </div>
 
             {/* Close button */}
             <button
               onClick={() => removeToast(toast.id)}
-              className="flex-shrink-0 text-[#8aa098] hover:text-[#123c34] transition-colors"
+              className="flex-shrink-0 text-[#64748B] hover:text-[#102A43] transition-colors"
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -140,7 +140,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
             {/* Animated Bottom Timer Bar */}
             <div 
-              className="absolute bottom-0 left-0 h-[2.5px] bg-gradient-to-r from-[#123c34] to-[#0f766e]" 
+              className="absolute bottom-0 left-0 h-[2.5px] bg-gradient-to-r from-[#003F7D] to-[#005BAA]" 
               style={{ animation: 'shrinkWidth 4s linear forwards' }} 
             />
           </div>

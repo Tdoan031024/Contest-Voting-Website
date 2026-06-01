@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { apiUrl } from '../api';
 
 function useInView(threshold = 0.05) {
   const ref = useRef<HTMLDivElement>(null);
@@ -35,7 +34,7 @@ function useInView(threshold = 0.05) {
 }
 
 export default function GioiThieuPage() {
-  const [timeline, setTimeline] = useState<any[]>([]);
+  const registerUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSdlRmaBRgPAl_rbLjDOY__ROcyZsCOnoxec2izDhRVJTcHBfA/viewform';
 
   // Intersection observer triggers for smooth animations
   const titleSection = useInView(0.05);
@@ -44,26 +43,11 @@ export default function GioiThieuPage() {
   const timelineSection = useInView(0.05);
   const backBtnSection = useInView(0.05);
 
-  useEffect(() => {
-    async function loadTimeline() {
-      try {
-        const res = await fetch(apiUrl('/api/timeline'));
-        if (res.ok) {
-          const data = await res.json();
-          setTimeline(data);
-        }
-      } catch (err) {
-        console.error("Failed to load timeline from API", err);
-      }
-    }
-    loadTimeline();
-  }, []);
-
   const timelineEvents = [
     {
-      phase: "VÒNG SƠ KHẢO",
-      date: "20/10/2024 - 30/10/2024",
-      desc: "Xét duyệt hồ sơ trực tuyến, đánh giá các chỉ số nhân trắc học và phỏng vấn trực tiếp với Hội đồng tuyển chọn.",
+      phase: "Nhận hồ sơ đăng ký",
+      date: "15/5 - 15/6/2026",
+      desc: "Các đội thi hoàn thiện hồ sơ, thông tin ý tưởng hoặc dự án khởi nghiệp sáng tạo để đăng ký tham gia cuộc thi.",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
           <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -75,9 +59,9 @@ export default function GioiThieuPage() {
       )
     },
     {
-      phase: "VÒNG BÁN KẾT (BÌNH CHỌN ONLINE)",
-      date: "03/11/2024 - 15/11/2024",
-      desc: "Cổng bình chọn trực tuyến mở công khai. Khán giả và hội đồng tiến hành bầu chọn trực tiếp để tìm ra TOP 11 thí sinh xuất sắc nhất.",
+      phase: "Định hướng & tập huấn",
+      date: "17/6/2026",
+      desc: "Các đội thi được định hướng, tập huấn kỹ năng khởi nghiệp và chuẩn bị cho quá trình phát triển dự án.",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
           <circle cx="12" cy="12" r="10"></circle>
@@ -86,9 +70,9 @@ export default function GioiThieuPage() {
       )
     },
     {
-      phase: "ĐÊM CHUNG KẾT & VINH QUANG",
-      date: "20/11/2024 - 24/11/2024",
-      desc: "Gala trình diễn nghệ thuật, kiểm tra kiến thức và trao giải cho các ngôi vị cao nhất của cuộc thi HUIT's Iconic.",
+      phase: "Vòng loại",
+      date: "27-28/6/2026",
+      desc: "Hội đồng chuyên môn đánh giá, chọn lọc các ý tưởng và dự án phù hợp để tiếp tục bước vào vòng tiếp theo.",
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
           <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
@@ -124,12 +108,23 @@ export default function GioiThieuPage() {
     );
   };
 
-  const displayTimeline = timeline.length > 0 ? timeline.map((t, idx) => ({
-    phase: t.title,
-    date: t.date,
-    desc: t.description,
-    icon: getTimelineIcon(idx)
-  })) : timelineEvents;
+  const extendedTimelineEvents = [
+    ...timelineEvents,
+    {
+      phase: "Vòng bán kết",
+      date: "25/7/2026",
+      desc: "Các đội thi trình bày, phản biện và hoàn thiện mô hình dự án dưới sự đánh giá của hội đồng chuyên môn.",
+      icon: getTimelineIcon(1),
+    },
+    {
+      phase: "Vòng chung kết",
+      date: "03/10/2026",
+      desc: "Các dự án xuất sắc nhất tranh tài, kết nối chuyên gia, nhà đầu tư và cơ hội ươm tạo sau cuộc thi.",
+      icon: getTimelineIcon(2),
+    },
+  ];
+
+  const displayTimeline = extendedTimelineEvents;
 
   return (
     <>
@@ -207,18 +202,21 @@ export default function GioiThieuPage() {
               className={`flex flex-col space-y-2 text-center mb-10 sm:mb-16 animate-on-scroll ${titleSection.visible ? 'visible' : ''}`}
             >
               <h2 className="text-[24px] sm:text-[42px] tracking-[-1px] leading-[30px] sm:leading-[52px] font-normal uppercase text-black dark:text-neutral-white">
-                Giới thiệu cuộc thi
+                Thông tin cuộc thi HUIT Startup 2026
               </h2>
               <h3 className="text-[16px] sm:text-[24px] py-1 uppercase font-normal text-[#79BCC2] dark:text-[#79BCC2] tracking-wider">
-                HUIT's Iconic
+                Cuộc thi HUIT Startup lần VII - Cấp Thành phố năm 2026
               </h3>
+              <p className="mx-auto max-w-[900px] text-[14px] sm:text-[16px] leading-relaxed text-white/78">
+                Chủ đề: Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững
+              </p>
               <div className="h-[3px] w-[60px] bg-primary mx-auto rounded-full mt-2"></div>
             </div>
 
-            {/* Grid 2 Columns: Đối tượng & Quy chế */}
+            {/* Grid 2 Columns: Tổng quan & Đơn vị đồng hành */}
             <div ref={gridSection.ref} className="w-full max-w-[1200px] grid grid-cols-1 md:grid-cols-2 gap-8 mb-12 overflow-hidden">
               
-              {/* Left Column: Đối tượng */}
+              {/* Left Column: Tổng quan */}
               <div className={`backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-6 shadow-lg animate-slide-left ${gridSection.visible ? 'visible' : ''}`}>
                 <div className="flex items-center space-x-3 pb-3 border-b border-white/5">
                   <div className="p-2.5 bg-primary/10 rounded-lg text-primary dark:text-[#79BCC2]">
@@ -230,31 +228,31 @@ export default function GioiThieuPage() {
                     </svg>
                   </div>
                   <h4 className="text-[18px] sm:text-[22px] font-bold text-black dark:text-neutral-white uppercase">
-                    Đối tượng tham gia
+                    Thông tin tổng quan
                   </h4>
                 </div>
                 
                 <ul className="space-y-4 text-[14px] sm:text-[15px] text-neutral-neutral1/90 dark:text-neutral-white/90 leading-relaxed list-none">
                   <li className="flex items-start">
                     <span className="inline-block text-[#79BCC2] mr-2 mt-1">•</span>
-                    <span>Nam, nữ sinh viên đang theo học hệ chính quy tại <b>Trường Đại học Công Thương TP.HCM (HUIT)</b>.</span>
+                    <span>Cuộc thi HUIT Startup lần thứ 7 năm 2026 cấp Thành phố với chủ đề <b>“Đổi mới sáng tạo hướng tới phát triển bền vững”</b>.</span>
                   </li>
                   <li className="flex items-start">
                     <span className="inline-block text-[#79BCC2] mr-2 mt-1">•</span>
-                    <span>Có kết quả học tập tốt, lối sống lành mạnh, tích cực tham gia các hoạt động phong trào Đoàn - Hội sinh viên.</span>
+                    <span>Tìm kiếm và ươm tạo các ý tưởng, dự án sáng tạo của học sinh, sinh viên, học viên và doanh nghiệp.</span>
                   </li>
                   <li className="flex items-start">
                     <span className="inline-block text-[#79BCC2] mr-2 mt-1">•</span>
-                    <span>Nữ sinh có chiều cao từ <b>1m60</b> trở lên; Nam sinh có chiều cao từ <b>1m70</b> trở lên.</span>
+                    <span>Góp phần giải quyết các vấn đề xã hội và thúc đẩy phát triển bền vững.</span>
                   </li>
                   <li className="flex items-start">
                     <span className="inline-block text-[#79BCC2] mr-2 mt-1">•</span>
-                    <span>Chấp hành đầy đủ pháp luật của Nhà nước và quy chế học đường, không chịu bất kỳ hình thức kỷ luật nào.</span>
+                    <span><b>03 bảng thi:</b> Học sinh - Sinh viên - Doanh nghiệp với ý tưởng, dự án khởi nghiệp sáng tạo.</span>
                   </li>
                 </ul>
               </div>
 
-              {/* Right Column: Quy chế */}
+              {/* Right Column: Đơn vị đồng hành */}
               <div 
                 className={`backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-6 shadow-lg animate-slide-right ${gridSection.visible ? 'visible' : ''}`}
                 style={{ transitionDelay: '150ms' }}
@@ -266,29 +264,33 @@ export default function GioiThieuPage() {
                     </svg>
                   </div>
                   <h4 className="text-[18px] sm:text-[22px] font-bold text-black dark:text-neutral-white uppercase">
-                    Quy chế cuộc thi
+                    Đơn vị tổ chức và đồng hành
                   </h4>
                 </div>
                 
                 <ul className="space-y-4 text-[14px] sm:text-[15px] text-neutral-neutral1/90 dark:text-neutral-white/90 leading-relaxed list-none">
                   <li className="flex items-start">
                     <span className="inline-block text-[#79BCC2] mr-2 mt-1">•</span>
-                    <span><b>Hệ thống bình chọn:</b> Người dùng xác thực thông qua tài khoản Google. Mỗi ngày, mỗi tài khoản được cấp 01 lượt bình chọn miễn phí (tương đương 5 điểm).</span>
+                    <span><b>Đơn vị tổ chức:</b> Trường Đại học Công Thương TP. HCM (HUIT) và IEC.</span>
                   </li>
                   <li className="flex items-start">
                     <span className="inline-block text-[#79BCC2] mr-2 mt-1">•</span>
-                    <span><b>Cơ chế điểm:</b> Điểm bình chọn tổng hợp của thí sinh dựa trên điểm bình chọn trực tuyến (60%) và điểm thẩm định của Hội đồng giám khảo chuyên môn (40%).</span>
+                    <span><b>Tài trợ kim cương:</b> Sài Gòn Thăng Long; Quỹ đầu tư VinaTech.</span>
                   </li>
                   <li className="flex items-start">
                     <span className="inline-block text-[#79BCC2] mr-2 mt-1">•</span>
-                    <span><b>Nghiêm cấm gian lận:</b> Mọi hành vi can thiệp hệ thống, sử dụng clone, bot hoặc công cụ tăng điểm bất thường sẽ bị hủy bỏ toàn bộ số phiếu và tước quyền thi đấu.</span>
+                    <span><b>Đơn vị phối hợp:</b> Diễn đàn Doanh nghiệp; Khởi nghiệp Quốc gia phía Nam; VNEI.</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="inline-block text-[#79BCC2] mr-2 mt-1">•</span>
+                    <span><b>Đơn vị bảo trợ:</b> Các đơn vị/biểu trưng bảo trợ theo poster cuộc thi.</span>
                   </li>
                 </ul>
               </div>
 
             </div>
 
-            {/* Thể lệ Section */}
+            {/* Lĩnh vực, quyền lợi, giải thưởng */}
             <div 
               ref={theLeSection.ref}
               className={`w-full max-w-[1200px] mb-12 backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-6 shadow-lg animate-on-scroll ${theLeSection.visible ? 'visible' : ''}`}
@@ -301,24 +303,40 @@ export default function GioiThieuPage() {
                   </svg>
                 </div>
                 <h4 className="text-[18px] sm:text-[22px] font-bold text-black dark:text-neutral-white uppercase">
-                  Thể lệ cuộc thi
+                  Lĩnh vực dự thi, quyền lợi và giải thưởng
                 </h4>
               </div>
               
               <div className="space-y-4 text-[14px] sm:text-[15px] text-neutral-neutral1/90 dark:text-neutral-white/90 leading-relaxed">
                 <div className="p-4 rounded-xl bg-primary/5 border border-primary/10 space-y-2">
-                  <p className="font-bold text-primary dark:text-[#79BCC2] text-[15px] sm:text-[16px]">Giai đoạn 1: Bình chọn TOP 11</p>
-                  <p>Thí sinh có điểm bình chọn trực tuyến cao nhất tính đến <b>18:00 ngày 03/11/2024</b> sẽ nhận danh hiệu <b>“HUIT’s Warrior”</b> và được đặc cách vào thẳng <b>TOP 11 Chung cuộc</b>.</p>
+                  <p className="font-bold text-primary dark:text-[#79BCC2] text-[15px] sm:text-[16px]">Lĩnh vực dự thi</p>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 list-none">
+                    <li>• Công nghiệp, AI, chuyển đổi số và an ninh mạng</li>
+                    <li>• Công nghệ thực phẩm, nông nghiệp, môi trường và năng lượng</li>
+                    <li>• Giáo dục, văn hóa, du lịch, logistics, tài chính, thương mại điện tử và luật</li>
+                    <li>• Y tế, sức khỏe và đời sống</li>
+                    <li>• Phát triển bền vững và kinh doanh tạo tác động xã hội</li>
+                  </ul>
                 </div>
                 <div className="p-4 rounded-xl bg-[#79BCC2]/5 border border-[#79BCC2]/10 space-y-2">
-                  <p className="font-bold text-[#79BCC2] text-[15px] sm:text-[16px]">Giai đoạn 2: Thí sinh được yêu thích nhất</p>
-                  <p>Cổng bình chọn trực tuyến tiếp tục mở từ <b>18:30 ngày 03/11/2024</b> đến <b>18:00 ngày 24/11/2024</b>. Thí sinh dẫn đầu bình chọn ở giai đoạn này sẽ giành giải thưởng phụ <b>“Thí sinh được yêu thích nhất”</b> và vinh danh trong đêm Gala Chung kết.</p>
+                  <p className="font-bold text-[#79BCC2] text-[15px] sm:text-[16px]">Quyền lợi khi tham gia</p>
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 list-none">
+                    <li>• Đào tạo kỹ năng khởi nghiệp</li>
+                    <li>• Mentor/cố vấn chuyên sâu</li>
+                    <li>• Startup Tour & kiểm chứng thị trường</li>
+                    <li>• Kết nối quỹ đầu tư, nhà đầu tư và cơ hội ươm tạo</li>
+                  </ul>
+                </div>
+                <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
+                  <p className="font-bold text-white text-[15px] sm:text-[16px]">Giải thưởng</p>
+                  <p>Tổng giá trị giải thưởng <b>05 TỶ ĐỒNG</b> và các gói hỗ trợ hấp dẫn, gồm tiền mặt, gói mentor/cố vấn chuyên sâu, gói sở hữu trí tuệ, nền tảng ERP Platform và nhiều cơ hội nhận các gói ươm tạo, kết nối đầu tư, phát triển dự án sau cuộc thi.</p>
                 </div>
               </div>
             </div>
 
             {/* Timeline Section */}
             <div 
+              id="timeline-section"
               ref={timelineSection.ref}
               className={`w-full max-w-[1200px] backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 sm:p-8 flex flex-col space-y-8 shadow-lg animate-on-scroll ${timelineSection.visible ? 'visible' : ''}`}
             >
@@ -361,6 +379,78 @@ export default function GioiThieuPage() {
                     </p>
                   </div>
                 ))}
+              </div>
+            </div>
+
+            {/* Scale, participants and contact */}
+            <div className="w-full max-w-[1200px] grid grid-cols-1 lg:grid-cols-3 gap-6 mt-12">
+              <div className="backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 shadow-lg">
+                <h4 className="text-[18px] font-bold text-black dark:text-neutral-white uppercase mb-4">Quy mô năm 2025</h4>
+                <div className="space-y-3 text-[14px] text-neutral-neutral1/90 dark:text-neutral-white/90">
+                  {[
+                    ['153+', 'Dự án đăng ký'],
+                    ['300+', 'Chuyên gia, Mentor, Ban giám khảo đồng hành'],
+                    ['650', 'Sinh viên tham gia'],
+                    ['3.7 triệu', 'Lượt tiếp cận trên mạng xã hội'],
+                    ['20+', 'Đơn vị truyền thông, đưa tin'],
+                    ['45+', 'Trường đại học, cao đẳng, THPT, TT GDTX tham gia'],
+                  ].map(([number, label]) => (
+                    <div key={label} className="flex items-start gap-3 rounded-xl bg-white/5 p-3 border border-white/5">
+                      <span className="min-w-[72px] font-extrabold text-[#79BCC2]">{number}</span>
+                      <span>{label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 shadow-lg">
+                <h4 className="text-[18px] font-bold text-black dark:text-neutral-white uppercase mb-4">Đối tượng tham gia</h4>
+                <div className="space-y-3 text-[14px] text-neutral-neutral1/90 dark:text-neutral-white/90">
+                  {[
+                    ['Học sinh', 'THPT, GDTX, trung cấp có ý tưởng khởi nghiệp sáng tạo.'],
+                    ['Sinh viên, học viên', 'Đang học tại các trường đại học, cao đẳng và cơ sở giáo dục.'],
+                    ['Cá nhân, tổ chức', 'Yêu thích hoạt động khởi nghiệp, có ý tưởng hoặc dự án sáng tạo.'],
+                    ['Doanh nghiệp', 'HTX, hộ kinh doanh, doanh nghiệp vừa và nhỏ tại TP. Hồ Chí Minh và các tỉnh lân cận.'],
+                  ].map(([title, desc]) => (
+                    <div key={title} className="rounded-xl border border-white/10 bg-white/[0.04] p-3 transition hover:border-[#79BCC2]/40 hover:bg-white/[0.07]">
+                      <div className="flex items-start gap-3">
+                        <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#79BCC2] shadow-[0_0_12px_rgba(121,188,194,0.65)]"></span>
+                        <div>
+                          <p className="font-bold text-white">{title}</p>
+                          <p className="mt-1 text-[13px] leading-relaxed text-white/70">{desc}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="backdrop-blur-[8px] rounded-[24px] border border-white/5 bg-[rgba(222,222,222,0.15)] p-6 shadow-lg">
+                <h4 className="text-[18px] font-bold text-black dark:text-neutral-white uppercase mb-4">Thông tin liên hệ</h4>
+                <div className="space-y-3 text-[14px] text-neutral-neutral1/90 dark:text-neutral-white/90">
+                  <p><b>Người liên hệ:</b> Nguyễn Thị Bích Nguyên</p>
+                  <p><b>Chức vụ:</b> Chuyên viên - TT Đổi mới sáng tạo và Khởi nghiệp</p>
+                  <p><b>Đơn vị:</b> Trường Đại học Công Thương TP. HCM</p>
+                  <p><b>Điện thoại:</b> <a href="tel:0975702463" className="text-[#79BCC2] hover:underline">0975702463</a></p>
+                  <p><b>Email:</b> <a href="mailto:nguyenntb@huit.edu.vn" className="text-[#79BCC2] hover:underline">nguyenntb@huit.edu.vn</a></p>
+                  <p><b>Website:</b> <a href="https://khoinghiep.huit.edu.vn" target="_blank" rel="noopener noreferrer" className="text-[#79BCC2] hover:underline">https://khoinghiep.huit.edu.vn</a></p>
+                </div>
+                <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-center">
+                  <p className="mb-3 text-[12px] font-bold uppercase tracking-[0.18em] text-[#79BCC2]">Quét mã để đăng ký</p>
+                  <img
+                    alt="QR đăng ký HUIT Startup 2026"
+                    src="/images/qrdangky.png"
+                    className="mx-auto h-auto w-full max-w-[190px] rounded-xl bg-white p-2 shadow-lg"
+                  />
+                  <a
+                    href={registerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-4 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] px-6 py-3 text-[13px] font-bold uppercase tracking-wider text-white shadow-[0_4px_20px_rgba(10,47,255,0.25)] transition hover:scale-[1.02]"
+                  >
+                    Đăng ký ngay
+                  </a>
+                </div>
               </div>
             </div>
 

@@ -3,6 +3,7 @@ import { Candidate, Sponsor, TimelineEvent, Banner } from '@huitfest/shared';
 import { PrismaService } from './prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as bcrypt from 'bcryptjs';
 
 export interface SystemSettings {
   isGateOpen: boolean;
@@ -14,6 +15,12 @@ export interface SystemSettings {
   contactEmail: string;
   isMaintenanceMode: boolean;
 }
+
+type AuthAdminUser = {
+  id: string;
+  username: string;
+  role: string;
+};
 
 @Injectable()
 export class AppService implements OnModuleInit {
@@ -372,5 +379,28 @@ export class AppService implements OnModuleInit {
     });
     console.log('[RESET] All candidate votes in MySQL have been reset to 0.');
     return { success: true };
+  }
+
+  async validateAdminCredentials(username: string, password: string): Promise<AuthAdminUser | null> {
+    const adminUser = await this.prisma.adminUser.findUnique({
+      where: { username },
+    });
+
+    if (!adminUser || !adminUser.isActive) {
+      return null;
+    }
+
+    const isPasswordMatched = await bcrypt.compare(password, adminUser.passwordHash);
+    const isLegacyPlainPassword = adminUser.passwordHash === password;
+
+    if (!isPasswordMatched && !isLegacyPlainPassword) {
+      return null;
+    }
+
+    return {
+      id: adminUser.id,
+      username: adminUser.username,
+      role: adminUser.role,
+    };
   }
 }

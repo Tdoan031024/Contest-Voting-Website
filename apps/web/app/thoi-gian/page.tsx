@@ -1,0 +1,210 @@
+import Link from 'next/link';
+
+const registerUrl =
+  'https://docs.google.com/forms/d/e/1FAIpQLSdlRmaBRgPAl_rbLjDOY__ROcyZsCOnoxec2izDhRVJTcHBfA/viewform';
+
+const rounds = [
+  {
+    title: 'Vòng loại',
+    eyebrow: 'Giai đoạn 01',
+    summary: 'Hoàn tất hồ sơ đăng ký, tập huấn định hướng và công bố kết quả vòng loại.',
+    color: '#FDE047',
+    bg: 'from-[#FDE047]/14 to-[#0A2FFF]/8',
+    steps: [
+      ['01', '15/5 - 15/6/2026', 'Nhận hồ sơ đăng ký dự thi', true],
+      ['02', '17/06/2026', 'Tập huấn định hướng', false],
+      ['03', '20/6/2026', 'Hạn chót nộp hồ sơ vòng loại', true],
+      ['04', '27/6 - 28/6/2026', 'Chấm hồ sơ vòng loại', false],
+      ['05', '30/6/2026', 'Công bố kết quả vòng loại', true],
+    ],
+  },
+  {
+    title: 'Vòng bán kết',
+    eyebrow: 'Giai đoạn 02',
+    summary: 'Đào tạo chuyên sâu, hoàn thiện thuyết minh và thi bán kết tại HUIT Startup Open Day.',
+    color: '#79BCC2',
+    bg: 'from-[#79BCC2]/16 to-[#0A2FFF]/8',
+    steps: [
+      ['01', '04/7 - 05/7/2026', 'Đào tạo, huấn luyện kỹ năng khởi nghiệp đổi mới sáng tạo', false],
+      ['02', '19/7/2026', 'Hạn chót nộp bản thuyết minh dự án hoàn chỉnh', true],
+      ['03', '25/7/2026', 'Thi bán kết, trưng bày sản phẩm hoặc dịch vụ', true],
+      ['04', '25/7/2026', 'Chọn Top 10 đội mỗi bảng vào vòng chung kết', true],
+    ],
+  },
+  {
+    title: 'Vòng chung kết',
+    eyebrow: 'Giai đoạn 03',
+    summary: 'Kiểm chứng thị trường, kết nối nguồn lực, bình chọn online và thuyết trình chung kết.',
+    color: '#F97316',
+    bg: 'from-[#F97316]/14 to-[#79BCC2]/8',
+    steps: [
+      ['01', '01/8 - 16/8/2026', 'HUIT Startup Tour và kiểm chứng thực tế dự án', false],
+      ['02', '17/8 - 17/9/2026', 'Kết nối nhà đầu tư, cố vấn và hoàn thiện định hướng phát triển', false],
+      ['03', '20/9/2026', 'Hỗ trợ hoàn thiện thuyết minh dự án và kế hoạch kinh doanh', false],
+      ['04', '21/9 - 28/9/2026', 'Vòng chung kết online', true],
+      ['05', '03/10/2026', 'Trưng bày sản phẩm, dịch vụ và thuyết trình chung kết', true],
+    ],
+  },
+];
+
+const keyMilestones = [
+  ['15/5', 'Mở nhận hồ sơ'],
+  ['20/6', 'Hạn nộp vòng loại'],
+  ['25/7', 'Bán kết'],
+  ['03/10', 'Chung kết'],
+];
+
+export default function TimelinePage() {
+  return (
+    <>
+      <style>{`
+        .iUzfqH {
+          background-image: url(/media-platform.1vote.vn/uploads/tAtj0/1727187460437.jpg);
+          background-color: #030612;
+          background-attachment: fixed;
+          background-size: cover;
+          background-repeat: no-repeat;
+          background-position: center;
+        }
+        @keyframes fadeUpTimeline {
+          from { opacity: 0; transform: translateY(26px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulseNode {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(121,188,194,0.0); }
+          50% { box-shadow: 0 0 0 10px rgba(121,188,194,0.12); }
+        }
+        .timeline-enter {
+          animation: fadeUpTimeline 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+        .timeline-node {
+          animation: pulseNode 2.8s ease-in-out infinite;
+        }
+      `}</style>
+
+      <main className="sc-908a50-0 iUzfqH flex-1 min-h-screen mt-[-80px] pt-[128px] sm:pt-[160px] pb-16 sm:pb-24 relative overflow-hidden">
+        <div className="absolute top-[8%] left-[-16%] h-[520px] w-[520px] rounded-full bg-[#0A2FFF]/10 blur-[130px] pointer-events-none" />
+        <div className="absolute top-[42%] right-[-14%] h-[620px] w-[620px] rounded-full bg-[#79BCC2]/10 blur-[150px] pointer-events-none" />
+        <div className="absolute bottom-[4%] left-[15%] h-[360px] w-[360px] rounded-full bg-[#F97316]/8 blur-[120px] pointer-events-none" />
+
+        <div className="relative z-10 mx-auto w-full max-w-[1180px] px-4 sm:px-6">
+          <section className="timeline-enter text-center">
+            <span className="inline-flex rounded-full border border-[#79BCC2]/25 bg-[#79BCC2]/10 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.28em] text-[#79BCC2]">
+              HUIT STARTUP LẦN THỨ VII 2026
+            </span>
+            <h1 className="mx-auto mt-5 max-w-[900px] text-[32px] sm:text-[54px] font-black uppercase leading-[1.05] text-white">
+              Thời gian các vòng thi
+            </h1>
+            <p className="mx-auto mt-5 max-w-[780px] text-[15px] sm:text-[17px] leading-relaxed text-white/72">
+              Theo dõi toàn bộ lộ trình từ vòng loại, bán kết đến chung kết để chuẩn bị hồ sơ, hoàn thiện dự án và tham gia đúng hạn.
+            </p>
+            <div className="mx-auto mt-6 h-[3.5px] w-[82px] rounded-full bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]" />
+
+            <div className="mt-8 flex flex-wrap justify-center gap-3">
+              <a
+                href={registerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="rounded-full bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] px-8 py-3.5 text-[14px] font-extrabold uppercase tracking-wider text-white shadow-[0_10px_30px_rgba(10,47,255,0.35)] transition hover:scale-[1.03]"
+              >
+                Đăng ký ngay
+              </a>
+              <Link
+                href="/gioi-thieu"
+                className="rounded-full border border-white/20 bg-white/8 px-8 py-3.5 text-[14px] font-bold uppercase tracking-wider text-white transition hover:border-[#79BCC2]/60 hover:bg-white/12"
+              >
+                Thông tin cuộc thi
+              </Link>
+            </div>
+          </section>
+
+          <section className="timeline-enter mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4" style={{ animationDelay: '120ms' }}>
+            {keyMilestones.map(([date, label]) => (
+              <div key={date} className="rounded-[20px] border border-white/10 bg-white/[0.07] p-4 text-center backdrop-blur-md">
+                <p className="text-[24px] sm:text-[30px] font-black text-[#FDE047]">{date}</p>
+                <p className="mt-1 text-[11px] sm:text-[12px] font-bold uppercase tracking-wider text-white/64">{label}</p>
+              </div>
+            ))}
+          </section>
+
+          <section className="mt-14 space-y-14">
+            {rounds.map((round, roundIndex) => (
+              <div key={round.title} className="timeline-enter" style={{ animationDelay: `${roundIndex * 130 + 220}ms` }}>
+                <div className={`relative overflow-hidden rounded-[30px] border border-white/10 bg-gradient-to-br ${round.bg} p-5 sm:p-7 shadow-[0_26px_90px_rgba(0,0,0,0.26)] backdrop-blur-[12px]`}>
+                  <div className="absolute inset-x-0 top-0 h-[4px]" style={{ backgroundColor: round.color }} />
+
+                  <div className="flex flex-col items-center gap-3 border-b border-white/10 pb-6 text-center">
+                    <div>
+                      <p className="text-[12px] font-black uppercase tracking-[0.28em]" style={{ color: round.color }}>
+                        {round.eyebrow}
+                      </p>
+                      <h2 className="mt-2 text-[28px] sm:text-[40px] font-black uppercase text-white">{round.title}</h2>
+                    </div>
+                    <p className="max-w-[640px] text-[14px] sm:text-[15px] leading-relaxed text-white/70">
+                      {round.summary}
+                    </p>
+                  </div>
+
+                  <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    {round.steps.map(([step, date, title, important], index) => (
+                      <article
+                        key={`${round.title}-${step}`}
+                        className="group relative min-h-[210px] overflow-hidden rounded-[24px] border border-white/12 bg-white/[0.08] shadow-[0_18px_48px_rgba(0,0,0,0.2)] backdrop-blur-md transition duration-300 hover:-translate-y-1.5 hover:border-white/24 hover:bg-white/[0.12]"
+                      >
+                        <div className="absolute inset-y-0 left-0 w-1.5" style={{ backgroundColor: round.color }} />
+                        <div className="absolute right-[-42px] top-[-44px] h-[132px] w-[132px] rounded-full opacity-15 transition group-hover:scale-110 group-hover:opacity-25" style={{ backgroundColor: round.color }} />
+                        <div className="relative flex h-full flex-col p-5">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <p className="text-[11px] font-black uppercase tracking-[0.22em] text-white/48">Step {step}</p>
+                              <p className="mt-2 text-[24px] font-black leading-tight text-white">{date}</p>
+                            </div>
+                            <div
+                              className="timeline-node flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-[18px] font-black text-[#071034] shadow-[0_10px_24px_rgba(0,0,0,0.25)]"
+                              style={{ backgroundColor: round.color, animationDelay: `${index * 160}ms` }}
+                            >
+                              {step}
+                            </div>
+                          </div>
+
+                          <div className="mt-6 flex flex-1 flex-col justify-between">
+                            <h3 className="text-[17px] font-extrabold leading-snug text-white">{title}</h3>
+                            <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/10 pt-4">
+                              {important ? (
+                                <span className="inline-flex rounded-full border border-[#FDE047]/35 bg-[#FDE047]/12 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-[#FDE047]">
+                                  Mốc quan trọng
+                                </span>
+                              ) : (
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-white/38">Theo lộ trình</span>
+                              )}
+                              <span className="h-2 w-2 rounded-full" style={{ backgroundColor: round.color }} />
+                            </div>
+                          </div>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </section>
+
+          <section className="timeline-enter mt-14 rounded-[30px] border border-white/10 bg-white/[0.07] p-6 text-center shadow-[0_24px_80px_rgba(0,0,0,0.25)] backdrop-blur-md sm:p-8" style={{ animationDelay: '520ms' }}>
+            <p className="text-[22px] sm:text-[32px] font-black uppercase text-white">Đừng bỏ lỡ mốc đăng ký</p>
+            <p className="mx-auto mt-3 max-w-[680px] text-[14px] sm:text-[16px] leading-relaxed text-white/70">
+              Hãy chuẩn bị hồ sơ sớm để đội thi có đủ thời gian hoàn thiện ý tưởng, sản phẩm và kế hoạch triển khai.
+            </p>
+            <a
+              href={registerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-flex rounded-full bg-gradient-to-r from-[#FDE047] to-[#79BCC2] px-9 py-3.5 text-[14px] font-black uppercase tracking-wider text-[#071034] shadow-[0_14px_34px_rgba(253,224,71,0.22)] transition hover:scale-[1.03]"
+            >
+              Đăng ký ngay
+            </a>
+          </section>
+        </div>
+      </main>
+    </>
+  );
+}

@@ -112,9 +112,12 @@
     "startDate": "2024-10-20T00:00",
     "endDate": "2024-11-24T23:59",
     "maxVotesPerPhone": 5,
-    "eventTitle": "HUIT's Iconic 2024",
-    "organizer": "Trường Đại học Công Thương TP.HCM (HUIT)",
+    "eventTitle": "HUIT STARTUP - Đổi mới sáng tạo hướng tới phát triển bền vững",
+    "organizer": "Đổi mới sáng tạo hướng tới phát triển bền vững",
     "contactEmail": "support@voting.vn",
-    "isMaintenanceMode": false
+    "isMaintenanceMode": false,
+    "aboutTitle": "HUIT STARTUP LẦN THỨ VII 2026",
+    "aboutDescription": "Cuộc thi HUIT Startup lần 07 năm 2026 với chủ đề “Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững\" cấp thành phố (HUIT STARTUP LẦN THỨ VII) là hoạt động thường niên do Trường Đại học Công Thương TP. Hồ Chí Minh tổ chức, nhằm tìm kiếm và ươm tạo các ý tưởng, dự án sáng tạo của học sinh, sinh viên, học viên và doanh nghiệp góp phần giải quyết các vấn đề xã hội và thúc đẩy phát triển bền vững. Đây không chỉ là sân chơi học thuật mà còn là bệ phóng cho những ý tưởng sáng tạo, những giải pháp thiết thực được hình thành, phát triển và hiện thực hóa, mang lại giá trị thiết thực cho bản thân, gia đình, cộng đồng và toàn xã hội. Năm 2026, cuộc thi trở lại với quy mô mở rộng và chủ đề đầy cảm hứng: \"Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững\". Cuộc thi chào đón sự tham gia của Học sinh, sinh viên, học viên ở các trường đại học, cao đắng, trung cấp, THPT, GDTX và Các cá nhân, tổ chức, doanh nghiệp (HTX, hộ kinh doanh, doanh nghiệp vừa và nhỏ trên địa bàn Thành phố Hồ Chí Minh và các tỉnh lân cận yêu thích hoạt động khởi nghiệp, có ý tưởng, dự án khởi nghiệp sáng. Mục tiêu là tìm kiếm và ươm mầm những ý tưởng, giải pháp đổi mới sáng tạo, góp phần giải quyết các vấn đề cấp thiết của cộng đồng, xã hội và thúc đẩy phát triển kinh tế – xã hội một cách bền vững. Thông qua cuộc thi, ban tổ chức mong muốn lan tỏa mạnh mẽ tinh thần khởi nghiệp, đổi mới sáng tạo trong giới trẻ; đồng thời kết nối và mở rộng hệ sinh thái khởi nghiệp đổi mới sáng tạo trong khối các cơ sở giáo dục, các startup tạo tiền đề cho sự phát triển nguồn nhân lực sáng tạo, thích ứng và bản lĩnh trong thời đại mới.",
+    "aboutImageUrl": "/uploads/poster-khoi-nghiep.jpg"
   }
 }

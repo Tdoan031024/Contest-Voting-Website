@@ -23,6 +23,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const fullSiteTitle = "HUIT STARTUP - Đổi mới sáng tạo hướng tới phát triển bền vững";
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolledDown, setScrolledDown] = useState(false);
@@ -38,7 +39,7 @@ export default function RootLayout({
           const data = await res.json();
           setSettings(data);
           if (typeof document !== 'undefined') {
-            document.title = data.eventTitle ? `Cổng bình chọn - ${data.eventTitle}` : "Cổng bình chọn HUIT's Iconic";
+            document.title = fullSiteTitle;
           }
         }
       } catch (err) {
@@ -96,7 +97,7 @@ export default function RootLayout({
         <head>
           <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <title>{settings.eventTitle} - Bảo trì hệ thống</title>
+          <title>{fullSiteTitle} - Bảo trì hệ thống</title>
           <link rel="stylesheet" href="/css/82aef30d151230ac.css" />
           <link rel="stylesheet" href="/css/be16ba848ed13f21.css" />
           <link rel="stylesheet" href="/css/431944509084d071.css" />
@@ -146,9 +147,9 @@ export default function RootLayout({
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>{settings?.eventTitle ? `Cổng bình chọn - ${settings.eventTitle}` : "Cổng bình chọn HUIT's Iconic"}</title>
-        <meta name="description" content={settings?.eventTitle ? `Bình chọn ${settings.eventTitle}` : "Bình chọn HUIT's Warrior"} />
-        <link rel="icon" href="/favicon.ico" type="image/x-icon" sizes="16x16" />
+        <title>{fullSiteTitle}</title>
+        <meta name="description" content={settings?.eventTitle ? `Bình chọn ${settings.eventTitle}` : "Bình chọn HUIT STARTUP"} />
+        <link rel="icon" href="/favicon.png" type="image/png" />
         
         {/* Load Google Fonts Inter */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -253,9 +254,9 @@ export default function RootLayout({
                     {/* Logo Section */}
                     <div className="h-full flex items-center gap-1 md:gap-[40px]">
                       <Link className="focus:outline-none w-[105px] sm:w-[139px] flex items-center" href="/">
-                        <img alt="Eventista" width="139" height="16" className="mobile:max-w-[105px]" src="/images/eventista.7a1126d5.svg" />
+                        <img alt="IEC" width="139" height="28" className="mobile:max-w-[105px] object-contain" src="/images/ieclogo.png" />
                       </Link>
-                      <img alt="HUIT's Iconic" width="115" height="36" className="object-contain max-h-[60px] mobile:max-w-[60px]" src="/images/imageb821.png" />
+                      <img alt="HUIT STARTUP" width="125" height="36" className="object-contain max-h-[60px] mobile:max-w-[72px]" src="/images/startuplogo.png" />
                     </div>
                   </div>
 
@@ -273,6 +274,12 @@ export default function RootLayout({
                           Giới thiệu
                         </p>
                         {pathname === '/gioi-thieu' && <div className="h-[3.5px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] shadow-[0_0_8px_#79BCC2] bottom-3"></div>}
+                      </Link>
+                      <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/thoi-gian">
+                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/thoi-gian' ? 'text-[#79BCC2] font-bold' : 'text-white/85 hover:text-[#79BCC2] font-normal'}`}>
+                          Thời gian
+                        </p>
+                        {pathname === '/thoi-gian' && <div className="h-[3.5px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] shadow-[0_0_8px_#79BCC2] bottom-3"></div>}
                       </Link>
                       <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/bang-xep-hang">
                         <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/bang-xep-hang' ? 'text-[#79BCC2] font-bold' : 'text-white/85 hover:text-[#79BCC2] font-normal'}`}>
@@ -311,6 +318,9 @@ export default function RootLayout({
                   <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/gioi-thieu' ? 'text-[#79BCC2] font-bold' : 'text-white/80 hover:text-[#79BCC2]'}`} href="/gioi-thieu" onClick={() => setMobileMenuOpen(false)}>
                     Giới thiệu
                   </Link>
+                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/thoi-gian' ? 'text-[#79BCC2] font-bold' : 'text-white/80 hover:text-[#79BCC2]'}`} href="/thoi-gian" onClick={() => setMobileMenuOpen(false)}>
+                    Thời gian
+                  </Link>
                   <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/bang-xep-hang' ? 'text-[#79BCC2] font-bold' : 'text-white/80 hover:text-[#79BCC2]'}`} href="/bang-xep-hang" onClick={() => setMobileMenuOpen(false)}>
                     Bảng xếp hạng
                   </Link>
@@ -333,10 +343,10 @@ export default function RootLayout({
             <div className="sc-1a037b37-0 ekqPrV">
               <div className="flex flex-col space-y-6 py-8 items-center">
                 <div className="flex flex-col items-start sm:items-center space-y-1 sm:space-y-0 justify-center">
-                  <img alt="Provider" width="176" height="20" className="object-contain my-[10px]" src="/images/eventista.7a1126d5.svg" />
+                  <img alt="HUIT STARTUP" width="176" height="40" className="object-contain my-[10px]" src="/images/startuplogo.png" />
                   <div className="max-w-[884px] pt-1.5">
                     <p className="text-body text-neutral-grey text-center text-[12px] leading-relaxed">
-                      Eventista là nền tảng công nghệ giúp các doanh nghiệp tối đa hóa nguồn doanh thu sự kiện từ cộng đồng, với hệ sinh thái giải pháp đa dạng: nền tảng bình chọn trực tuyến, nền tảng phân phối vé và vật phẩm &amp; quà lưu niệm, ứng dụng tương tác giữa nghệ sĩ và người hâm mộ.... Eventista hiện là đối tác chiến lược của Sen Vàng Entertainment, Uni Corp, TNA Entertainment,.... trở thành nền tảng quan trọng mang lại hiệu quả kinh doanh vượt trội cho các doanh nghiệp trong ngành giải trí.
+                      Cuộc thi HUIT Startup lần thứ 7 năm 2026 cấp Thành phố với chủ đề “Đổi mới sáng tạo hướng tới phát triển bền vững” nhằm tìm kiếm và ươm tạo các ý tưởng, dự án sáng tạo của học sinh, sinh viên, học viên và doanh nghiệp; góp phần giải quyết các vấn đề xã hội và thúc đẩy phát triển bền vững.
                     </p>
                   </div>
                 </div>
@@ -345,32 +355,23 @@ export default function RootLayout({
                   <div className="flex flex-col space-y-2 max-w-[300px]">
                     <span className="text-button text-white text-[18px] font-bold">Hỗ trợ</span>
                     <div className="flex flex-col gap-1 text-[13px] text-white/70">
-                      <p>Email: <a href={`mailto:${settings?.contactEmail || 'support@eventista.vn'}`} className="hover:underline">{settings?.contactEmail || 'support@eventista.vn'}</a></p>
-                      <p>Website: <a href="https://eventista.vn/" target="_blank" className="hover:underline">Eventista.vn</a></p>
-                      <p>Hotline: <br /><a href="tel:+84 90 1946686" className="hover:underline">+84 90 1946686</a></p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col space-y-2 max-w-[300px]">
-                    <span className="text-button text-white text-[18px] font-bold">Chứng nhận bởi</span>
-                    <div className="w-[186px]">
-                      <a target="_blank" rel="noopener noreferrer" href="http://online.gov.vn/Home/WebDetails/108397">
-                        <img alt="Bộ công thương" width="87" height="32" src="/images/image7872.png" />
-                      </a>
+                      <p>Email: <a href="mailto:iec@huit.edu.vn" className="hover:underline">iec@huit.edu.vn</a></p>
+                      <p>Website: <a href="https://iec.huit.edu.vn" target="_blank" rel="noopener noreferrer" className="hover:underline">https://iec.huit.edu.vn</a></p>
+                      <p>Hotline: Điện thoại 0963 621 124 hoặc (028) 3816 3318 - 142</p>
                     </div>
                   </div>
 
                   <div className="flex flex-col space-y-2 max-w-[300px]">
                     <span className="text-button text-white text-[18px] font-bold">Kết nối với chúng tôi</span>
                     <div className="flex space-x-2">
-                      <a target="_blank" rel="noopener noreferrer" href="https://www.facebook.com/eventista.vn">
+                      <a target="_blank" rel="noopener noreferrer" href="https://www.facebook.com/huit.startup">
                         <img alt="Facebook" width="32" height="32" src="/images/imaged2ec.png" />
                       </a>
-                      <a target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@eventista.vn">
+                      <a target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@huit_media">
                         <img alt="Tiktok" width="32" height="32" src="/images/image7782.png" />
                       </a>
-                      <a target="_blank" rel="noopener noreferrer" href="https://www.linkedin.com/company/eventistavn">
-                        <img alt="LinkedIn" width="32" height="32" src="/images/image87ff.png" />
+                      <a target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/dh_congthuong/">
+                        <img alt="Instagram" width="32" height="32" src="/images/instagram.avif" />
                       </a>
                     </div>
                   </div>

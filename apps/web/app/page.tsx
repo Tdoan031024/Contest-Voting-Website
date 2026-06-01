@@ -32,6 +32,9 @@ interface Banner {
 
 export default function HomePage() {
   const { showAlert } = useAlert();
+  const ABOUT_FALLBACK_TITLE = 'HUIT STARTUP LẦN THỨ VII 2026';
+  const ABOUT_FALLBACK_DESCRIPTION = `Cuộc thi HUIT Startup lần 07 năm 2026 với chủ đề “Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững" cấp thành phố (HUIT STARTUP LẦN THỨ VII) là hoạt động thường niên do Trường Đại học Công Thương TP. Hồ Chí Minh tổ chức, nhằm tìm kiếm và ươm tạo các ý tưởng, dự án sáng tạo của học sinh, sinh viên, học viên và doanh nghiệp góp phần giải quyết các vấn đề xã hội và thúc đẩy phát triển bền vững. Đây không chỉ là sân chơi học thuật mà còn là bệ phóng cho những ý tưởng sáng tạo, những giải pháp thiết thực được hình thành, phát triển và hiện thực hóa, mang lại giá trị thiết thực cho bản thân, gia đình, cộng đồng và toàn xã hội. Năm 2026, cuộc thi trở lại với quy mô mở rộng và chủ đề đầy cảm hứng: "Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững". Cuộc thi chào đón sự tham gia của Học sinh, sinh viên, học viên ở các trường đại học, cao đắng, trung cấp, THPT, GDTX và Các cá nhân, tổ chức, doanh nghiệp (HTX, hộ kinh doanh, doanh nghiệp vừa và nhỏ trên địa bàn Thành phố Hồ Chí Minh và các tỉnh lân cận yêu thích hoạt động khởi nghiệp, có ý tưởng, dự án khởi nghiệp sáng. Mục tiêu là tìm kiếm và ươm mầm những ý tưởng, giải pháp đổi mới sáng tạo, góp phần giải quyết các vấn đề cấp thiết của cộng đồng, xã hội và thúc đẩy phát triển kinh tế – xã hội một cách bền vững. Thông qua cuộc thi, ban tổ chức mong muốn lan tỏa mạnh mẽ tinh thần khởi nghiệp, đổi mới sáng tạo trong giới trẻ; đồng thời kết nối và mở rộng hệ sinh thái khởi nghiệp đổi mới sáng tạo trong khối các cơ sở giáo dục, các startup tạo tiền đề cho sự phát triển nguồn nhân lực sáng tạo, thích ứng và bản lĩnh trong thời đại mới.`;
+  const ABOUT_REGISTER_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdlRmaBRgPAl_rbLjDOY__ROcyZsCOnoxec2izDhRVJTcHBfA/viewform';
   const [candidates, setCandidates] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -40,31 +43,14 @@ export default function HomePage() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [settings, setSettings] = useState<any>(null);
+  const aboutTitleText = (settings?.aboutTitle || ABOUT_FALLBACK_TITLE).replace(/\s+NĂM\s+/i, ' ');
 
-  // Default mixed slides (3 images, 1 video)
+  // Default banner when DB has no active banner
   const defaultSlides = [
     {
       type: 'image',
-      url: '/original_assets/image974c.jpg',
-      title: "HUIT's Iconic 2024 - Khai mạc cổng bình chọn chính thức",
-      link: '#about-section'
-    },
-    {
-      type: 'video',
-      url: '/video/video-bg.mp4',
-      title: 'Video giới thiệu chính thức cuộc thi',
-      link: '#about-section'
-    },
-    {
-      type: 'image',
-      url: '/original_assets/image5999.jpg',
-      title: 'Đại sứ truyền thông HUIT - Tỏa sáng vẻ đẹp trí tuệ',
-      link: '#about-section'
-    },
-    {
-      type: 'image',
-      url: '/original_assets/image6981.jpg',
-      title: 'Hành trình tìm kiếm gương mặt đại diện sinh viên HUIT',
+      url: '/uploads/baner.jpg',
+      title: 'HUIT STARTUP',
       link: '#about-section'
     }
   ];
@@ -105,6 +91,11 @@ export default function HomePage() {
           setBanners(activeBanners);
           setHasLoadedBanners(true);
           setCurrentBannerIndex(0);
+        } else {
+          setSlides(defaultSlides);
+          setBanners([]);
+          setHasLoadedBanners(true);
+          setCurrentBannerIndex(0);
         }
         if (sponRes.ok) {
           const sponData = await sponRes.json();
@@ -112,6 +103,10 @@ export default function HomePage() {
         }
       } catch (err) {
         console.log('NestJS Backend API offline, using local mock/default data.', err);
+        setSlides(defaultSlides);
+        setBanners([]);
+        setHasLoadedBanners(true);
+        setCurrentBannerIndex(0);
       } finally {
         setIsLoading(false);
       }
@@ -470,19 +465,18 @@ export default function HomePage() {
                   style={{
                     fontSize: 'clamp(26px, 4vw, 38px)',
                     fontWeight: 800,
-                    background: 'linear-gradient(to right, #0A2FFF, #79BCC2)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    color: 'transparent',
-                    display: 'inline-block'
+                    color: '#9FDBFF',
+                    fontFamily: 'Inter, Arial, Helvetica, sans-serif',
+                    textShadow: '0 1px 10px rgba(121,188,194,0.18)',
+                    display: 'inline-block',
+                    textTransform: 'none'
                   }}
                 >
-                  {settings?.aboutTitle || "Về HUIT's Iconic 2026"}
+                  {aboutTitleText}
                 </h3>
 
-                <p className="text-[14px] sm:text-[16px] text-neutral-neutral1/80 dark:text-neutral-white/80 leading-relaxed font-light whitespace-pre-line">
-                  {settings?.aboutDescription || "HUIT's Iconic là cuộc thi tìm kiếm gương mặt đại diện và tài năng sinh viên Trường Đại học Công Thương TP. Hồ Chí Minh (HUIT). Cuộc thi nhằm tôn vinh nét đẹp tri thức, phong cách tự tin, tài năng nổi bật cùng tinh thần trách nhiệm với cộng đồng của thế hệ trẻ HUIT. Đây là bệ phóng giúp các bạn sinh viên tỏa sáng, khẳng định bản thân và phát triển kỹ năng toàn diện trong thời đại mới."}
+                <p className="text-[14px] sm:text-[16px] text-white/90 leading-relaxed font-light whitespace-pre-line">
+                  {settings?.aboutDescription || ABOUT_FALLBACK_DESCRIPTION}
                 </p>
 
                 {/* Staggered Stats Counters */}
@@ -495,7 +489,7 @@ export default function HomePage() {
                     className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                       }`}
                   >
-                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">{settings?.statsCandidates || "20+"}</p>
+                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Thí sinh</p>
                   </div>
 
@@ -507,7 +501,7 @@ export default function HomePage() {
                     className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                       }`}
                   >
-                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">{settings?.statsVotes || "100K+"}</p>
+                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Bình chọn</p>
                   </div>
 
@@ -519,22 +513,22 @@ export default function HomePage() {
                     className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                       }`}
                   >
-                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">{settings?.statsViews || "30M+"}</p>
+                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Lượt xem</p>
                   </div>
                 </div>
 
-                {/* Read More Button */}
+                {/* About Action Buttons */}
                 <div
                   style={{
                     transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                     transitionDelay: '2200ms'
                   }}
-                  className={`transform transition-all duration-[2800ms] ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+                  className={`flex flex-wrap items-center gap-3 transform transition-all duration-[2800ms] ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
                 >
                   <Link
                     href="/the-le"
-                    className="group hover-shine-effect inline-flex items-center justify-center bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] text-white font-bold rounded-full px-8 py-3.5 shadow-[0_4px_20px_rgba(10,47,255,0.25)] hover:shadow-[0_6px_24px_rgba(10,47,255,0.45)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 text-[14px] sm:text-[15px] uppercase tracking-wider"
+                    className="group hover-shine-effect inline-flex items-center justify-center border border-[#79BCC2]/50 bg-white/10 text-white font-bold rounded-full px-8 py-3.5 shadow-[0_4px_20px_rgba(121,188,194,0.16)] hover:shadow-[0_6px_24px_rgba(121,188,194,0.3)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 text-[14px] sm:text-[15px] uppercase tracking-wider"
                   >
                     <span>Đọc thêm</span>
                     <svg
@@ -553,6 +547,14 @@ export default function HomePage() {
                       <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
                   </Link>
+                  <a
+                    href={ABOUT_REGISTER_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group hover-shine-effect inline-flex items-center justify-center bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] text-white font-bold rounded-full px-8 py-3.5 shadow-[0_4px_20px_rgba(10,47,255,0.25)] hover:shadow-[0_6px_24px_rgba(10,47,255,0.45)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 text-[14px] sm:text-[15px] uppercase tracking-wider"
+                  >
+                    <span>Đăng ký</span>
+                  </a>
                 </div>
               </div>
 
@@ -568,18 +570,14 @@ export default function HomePage() {
                 <div className={`absolute -inset-3 bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] rounded-[28px] blur-2xl opacity-0 transition-opacity duration-[3500ms] delay-[1000ms] pointer-events-none ${aboutVisible ? 'opacity-25' : 'opacity-0'}`} />
                 <div className="absolute -inset-1 bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] rounded-[26px] opacity-15 blur-sm pointer-events-none" />
 
-                <div className="relative aspect-[4/3] sm:aspect-[16/10] overflow-hidden rounded-[24px] border border-white/10 shadow-2xl group hover-shine-effect bg-black/40">
+                <div className="relative aspect-[4/5] w-full max-w-[560px] mx-auto overflow-hidden rounded-[24px] border border-white/10 shadow-2xl group hover-shine-effect bg-black/40">
                   <img
-                    alt="About HUIT's Iconic"
-                    className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-                    src={settings?.aboutImageUrl || "/original_assets/image17ae.png"}
+                    alt="Poster HUIT STARTUP"
+                    className="w-full h-full object-contain object-center p-2 group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                    src={settings?.aboutImageUrl || "/uploads/poster-khoi-nghiep.jpg"}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-70 group-hover:opacity-40 transition-opacity duration-500"></div>
 
-                  {/* Decorative Badge on Image */}
-                  <div className={`absolute top-4 right-4 bg-black/60 backdrop-blur-md border border-white/15 px-4 py-1.5 rounded-full text-[12px] font-bold tracking-wider text-[#79BCC2] uppercase shadow-md transition-all duration-[2800ms] delay-[1600ms] ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'}`}>
-                    HUIT's Iconic 2024
-                  </div>
                 </div>
               </div>
 
@@ -600,16 +598,19 @@ export default function HomePage() {
               <div className={`flex flex-col space-y-4 text-center transform transition-all duration-[2800ms] ease-out ${candidatesVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
                 <div className="flex flex-col space-y-1.5">
                   <h2 className="text-[22px] sm:text-[42px] tracking-[-1px] leading-[27px] sm:leading-[52px] font-extrabold uppercase bg-clip-text text-transparent bg-gradient-to-r from-black to-black/70 dark:from-white dark:to-white/70">
-                    Danh sách thí sinh
+                    Danh sách dự án
                   </h2>
                   <h3 className="text-[16px] sm:text-[28px] py-1 leading-[24px] uppercase font-bold text-[#79BCC2]">
-                    HUIT's Iconic
+                    HUIT STARTUP LẦN THỨ VII 2026
                   </h3>
                 </div>
                 <div
                   className="h-[3.5px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-1.5 transition-all duration-[3200ms] ease-out"
                   style={{ width: candidatesVisible ? '80px' : '0px' }}
                 />
+                <p className="mx-auto max-w-[760px] text-[14px] sm:text-[16px] leading-relaxed text-white/68">
+                  Khám phá các ý tưởng khởi nghiệp sáng tạo, theo dõi lượt bình chọn và ủng hộ dự án bạn yêu thích.
+                </p>
               </div>
 
               {/* Search Bar matching sample web */}
@@ -628,7 +629,7 @@ export default function HomePage() {
                   </div>
                   <input
                     className="w-full bg-transparent focus:outline-none text-neutral-neutral1 dark:text-neutral-white placeholder:text-neutral-neutral1 dark:placeholder:text-neutral-white pl-2 text-[14px]"
-                    placeholder="Tìm kiếm thí sinh..."
+                    placeholder="Tìm kiếm dự án..."
                     type="text"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
@@ -641,14 +642,14 @@ export default function HomePage() {
 
               {isLoading ? (
                 <div className="flex justify-center items-center py-20 text-white">
-                  Đang tải danh sách thí sinh...
+                  Đang tải danh sách dự án...
                 </div>
               ) : filteredCandidates.length === 0 ? (
                 <div className="text-center py-20 text-white/50">
-                  Không tìm thấy thí sinh phù hợp
+                  Không tìm thấy dự án phù hợp
                 </div>
               ) : (
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center max-w-[1280px] mx-auto px-4">
+                <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-stretch max-w-[1320px] mx-auto px-4">
                   {filteredCandidates.map((c, idx) => {
                     // Find actual rank based on overall sorted position
                     const rank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
@@ -660,59 +661,53 @@ export default function HomePage() {
                           transitionDelay: `${Math.min(idx * 250, 1500)}ms`,
                           transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
                         }}
-                        className={`h-full group w-full mobile:max-w-[286px] sm:max-w-[280px] transform transition-all duration-[2500ms] ${candidatesVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
+                        className={`h-full group w-full transform transition-all duration-[2500ms] ${candidatesVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
                           }`}
                       >
-                        <div className="relative backdrop-blur-[8px] rounded-[24px] border border-transparent bg-[rgba(222,222,222,0.15)] group-hover:bg-[rgb(222,222,222)]/40 group-hover:dark:bg-[rgb(222,222,222)]/20 group-hover:shadow-2xl group-hover:shadow-black/20 group-hover:dark:shadow-[#79BCC2]/15 cursor-pointer transition-all duration-300 hover-shine-effect">
+                        <div className="relative h-full backdrop-blur-[8px] rounded-[24px] border border-white/10 bg-[rgba(222,222,222,0.13)] group-hover:bg-[rgb(222,222,222)]/35 group-hover:dark:bg-[rgb(222,222,222)]/18 group-hover:shadow-2xl group-hover:shadow-black/20 group-hover:dark:shadow-[#79BCC2]/15 cursor-pointer transition-all duration-300 hover-shine-effect overflow-hidden">
 
-                          {/* Candidate Image Link */}
-                          <Link className="focus:outline-none relative flex cursor-pointer w-full aspect-[360/461]" href={`/thi-sinh/${c.sbd}`}>
-                            <div className="mx-2 mt-2 flex-1 relative sm:mx-3 sm:mt-3 overflow-hidden rounded-lg bg-black/10">
+                          {/* Project banner image */}
+                          <Link className="focus:outline-none relative block cursor-pointer w-full aspect-[16/9]" href={`/thi-sinh/${c.sbd}`}>
+                            <div className="m-3 mb-0 relative h-[calc(100%-12px)] overflow-hidden rounded-[18px] bg-black/20 border border-white/10">
                               <img
                                 alt={c.name}
-                                className="object-cover object-top w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
+                                className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
                                 src={c.imageUrl}
                               />
+                              <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white/90 backdrop-blur-md">
+                                MDB {c.sbd}
+                              </div>
+                              <div className="absolute right-3 top-3 rounded-full border border-[#79BCC2]/30 bg-[#0A2FFF]/45 px-3 py-1 text-[11px] font-bold text-[#CFFAFE] backdrop-blur-md">
+                                #{rank}
+                              </div>
                             </div>
                           </Link>
 
-                          {/* Details section */}
-                          <div className="flex-1 flex flex-col px-3 pt-2 pb-3">
-                            <div className="flex-1 flex flex-col justify-between space-y-2">
-
-                              <div className="rounded-[12px] flex justify-between items-center px-3 py-0.5 bg-grey-lightGrey2 dark:bg-grey-dimGrey h-[36px]">
-                                <div className="flex sm:hidden w-[72px] text-center gap-[6px] items-center">
-                                  <span className="text-[12px] text-neutral-neutral1 dark:text-neutral-white">SBD:</span>
-                                  <p className="text-[14px] font-bold text-neutral-neutral1 dark:text-neutral-white">{c.sbd}</p>
-                                </div>
-                                <div className="hidden sm:flex w-[72px] text-center gap-[6px] items-center">
-                                  <p className="text-[13px] text-neutral-neutral1 dark:text-neutral-white">SBD:</p>
-                                  <p className="text-[15px] font-bold text-neutral-neutral1 dark:text-neutral-white">{c.sbd}</p>
-                                </div>
-                                <div className="h-[24px] w-[1px] bg-neutral-neutral1/20 dark:bg-[#94949E]/20"></div>
-                                <div className="w-[110px] sm:w-[140px] text-right">
-                                  <h6 className="text-[15px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] leading-[27px]">
-                                    {c.votes.toLocaleString()}
-                                  </h6>
-                                </div>
+                          {/* Project details */}
+                          <div className="flex flex-1 flex-col px-4 pt-4 pb-4">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="min-w-0">
+                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#79BCC2]">Dự án khởi nghiệp</p>
+                                <h4 className="mt-1 line-clamp-2 text-[18px] sm:text-[20px] font-extrabold text-neutral-neutral1 dark:text-neutral-white leading-snug group-hover:text-[#79BCC2] transition-colors duration-300">
+                                  {c.name}
+                                </h4>
                               </div>
-
-                              <div className="flex flex-1 flex-col space-y-2">
-                                <div className="h-[12px]"></div>
-                                <div className="h-[54px] py-[5px]">
-                                  <p className="text-[18px] font-bold text-neutral-neutral1 dark:text-neutral-white leading-snug group-hover:text-[#79BCC2] transition-colors duration-300">
-                                    {c.name}
-                                  </p>
-                                </div>
+                              <div className="shrink-0 rounded-[14px] bg-white/10 px-3 py-2 text-right border border-white/10">
+                                <p className="text-[10px] uppercase tracking-wider text-white/55">Bình chọn</p>
+                                <p className="text-[16px] font-extrabold text-[#FDE047] drop-shadow-[0_0_10px_rgba(253,224,71,0.35)]">
+                                  {c.votes.toLocaleString()}
+                                </p>
                               </div>
-
                             </div>
 
-                            {/* Vote & Laurel ranking */}
-                            <div className="flex items-end gap-3 h-[72px] sm:gap-4 sm:h-[80px] mt-2">
+                            <p className="mt-3 line-clamp-2 min-h-[40px] text-[13px] leading-relaxed text-white/68">
+                              {c.description || 'Ý tưởng khởi nghiệp đang được cập nhật thông tin giới thiệu.'}
+                            </p>
+
+                            <div className="mt-4 flex items-center gap-3">
                               <button
                                 onClick={() => handleVote(c.sbd, c.name)}
-                                className={`sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-lg py-[10px] w-full border-0 cursor-pointer transition-all hover-shine-effect ${isGateCurrentlyOpen()
+                                className={`sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-xl py-[11px] w-full border-0 cursor-pointer transition-all hover-shine-effect ${isGateCurrentlyOpen()
                                     ? 'bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]'
                                     : 'bg-slate-700/50 cursor-not-allowed opacity-50'
                                   }`}
@@ -721,26 +716,12 @@ export default function HomePage() {
                                     ? 'text-neutral-white dark:text-primary'
                                     : 'text-slate-400'
                                   }`}>
-                                  {isGateCurrentlyOpen() ? 'Bình chọn' : 'Đã đóng'}
+                                  {isGateCurrentlyOpen() ? 'Bình chọn dự án' : 'Đã đóng'}
                                 </p>
                               </button>
 
-                              {/* Laurel Rank graphics */}
-                              <div className="relative flex-shrink-0 group-hover:scale-110 transition-transform duration-500">
-                                <div className="hidden sm:block w-[71.5px] sm:w-[80px]">
-                                  <img alt="" className="block dark:hidden" src="/original_assets/static/media/laurel-light-big.58ee16d9.svg" />
-                                  <img alt="" className="hidden dark:block" src="/original_assets/static/media/laurel-dark-big.6d9a838c.svg" />
-                                </div>
-                                <div className="block sm:hidden w-[71.5px]">
-                                  <img alt="" className="block dark:hidden" src="/original_assets/static/media/laurel-light-small.27b47318.svg" />
-                                  <img alt="" className="hidden dark:block" src="/original_assets/static/media/laurel-dark-small.e0887cc3.svg" />
-                                </div>
-                                <div className="hidden sm:block absolute w-full text-center top-[14px]">
-                                  <h3 className="text-[20px] font-bold text-grey-darkGrey dark:text-grey-lightGrey2">{rank}</h3>
-                                </div>
-                                <div className="block sm:hidden absolute w-full text-center top-[18px]">
-                                  <span className="text-grey-darkGrey dark:text-grey-lightGrey2 text-[18px] font-semibold leading-[120%] tracking-[-0.48px]">{rank}</span>
-                                </div>
+                              <div className="hidden sm:flex h-[44px] min-w-[74px] items-center justify-center rounded-xl border border-white/10 bg-white/10 text-[12px] font-bold uppercase tracking-wider text-white/70">
+                                MDB {c.sbd}
                               </div>
                             </div>
 
@@ -752,7 +733,7 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* 2 Buttons: Toàn bộ xếp hạng & Danh sách thí sinh */}
+              {/* 2 Buttons: Toàn bộ xếp hạng & Danh sách dự án */}
               <div
                 style={{
                   transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
@@ -771,7 +752,7 @@ export default function HomePage() {
                   href="#candidates-section"
                   className="flex items-center justify-center border border-white/20 hover:border-[#79BCC2] bg-white/5 hover:bg-white/10 text-white font-bold rounded-full px-6 py-3 sm:px-8 sm:py-3.5 transition-all duration-300 text-[12px] sm:text-[14px] uppercase tracking-wider shadow-lg hover:shadow-[#79BCC2]/10 hover-shine-effect hover:scale-105 active:scale-95"
                 >
-                  Danh sách thí sinh
+                  Danh sách dự án
                 </Link>
               </div>
 

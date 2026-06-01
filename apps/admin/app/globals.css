@@ -1,29 +1,331 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-body {
-  margin: 0;
-  padding: 0;
-  background:
-    linear-gradient(135deg, rgba(15, 118, 110, 0.08), transparent 34%),
-    radial-gradient(circle at 100% 0%, rgba(228, 81, 54, 0.11), transparent 28%),
-    #f4f7f6;
-  color: #18211f;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+:root {
+  --primary: #006AD1;
+  --primary-dark: #004C99;
+  --primary-soft: #F0F7FF;
+
+  --accent: #FF3B30;
+  --accent-soft: #FFF2F2;
+
+  --background: #FAFBFD;
+  --surface: #FFFFFF;
+  --border: #E2E8F0;
+
+  --text-primary: #1E293B;
+  --text-secondary: #64748B;
 }
 
-h1, h2, h3, h4, h5, h6, .font-heading {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  letter-spacing: -0.02em;
+@layer base {
+  html {
+    font-size: 120%; /* Globally scales all rem-based spacing, text, and padding to mimic 120-125% zoom level */
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background:
+      linear-gradient(135deg, rgba(0, 91, 170, 0.05), transparent 45%),
+      radial-gradient(circle at 100% 0%, rgba(227, 30, 47, 0.06), transparent 35%),
+      var(--background);
+    color: var(--text-primary);
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6, .font-heading {
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 91, 170, 0.15) transparent;
+    border-color: var(--border);
+  }
+
+  ::selection {
+    background: rgba(0, 91, 170, 0.15);
+    color: var(--primary-dark);
+  }
 }
 
-* {
-  scrollbar-width: thin;
-  scrollbar-color: #9bb0a9 transparent;
+@layer utilities {
+  /* Premium macOS Soft Shadows */
+  .mac-shadow-sm {
+    box-shadow: 0 1px 2px rgba(16, 42, 67, 0.01), 0 4px 12px rgba(16, 42, 67, 0.01);
+  }
+  
+  .mac-shadow-md {
+    box-shadow: 0 2px 4px rgba(16, 42, 67, 0.01), 0 8px 30px rgba(16, 42, 67, 0.04);
+  }
+  
+  .mac-shadow-lg {
+    box-shadow: 0 10px 40px rgba(16, 42, 67, 0.06), 0 2px 8px rgba(16, 42, 67, 0.02);
+  }
+
+  /* Glassmorphism */
+  .mac-glass {
+    background-color: rgba(255, 255, 255, 0.86);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+  }
+
+  .mac-glass-dark {
+    background-color: rgba(0, 63, 125, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 91, 170, 0.12);
+    border-radius: 999px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 91, 170, 0.25);
+  }
 }
 
-::selection {
-  background: rgba(15, 118, 110, 0.2);
+@layer components {
+  /* Premium Design System Components */
+  
+  .admin-card {
+    background: rgba(255, 255, 255, 0.88);
+    border: 1px solid var(--border);
+    box-shadow: 0 8px 30px rgba(16, 42, 67, 0.04);
+    backdrop-filter: blur(16px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .admin-card:hover {
+    box-shadow: 0 12px 35px rgba(16, 42, 67, 0.06);
+    border-color: rgba(0, 91, 170, 0.15);
+  }
+
+  .admin-input {
+    height: 44px;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0 1rem;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+  }
+  
+  .admin-input::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+  }
+  
+  .admin-input:focus {
+    border-color: var(--primary);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(0, 91, 170, 0.12);
+  }
+
+  .admin-textarea {
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 0.75rem 1rem;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.6;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
+  }
+  
+  .admin-textarea::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+  }
+  
+  .admin-textarea:focus {
+    border-color: var(--primary);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(0, 91, 170, 0.12);
+  }
+
+  .admin-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    height: 42px;
+    padding: 0 1.25rem;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+    border: 1px solid transparent;
+  }
+  
+  .admin-btn:active {
+    transform: scale(0.97);
+  }
+  
+  .admin-btn-primary {
+    background: var(--primary);
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(0, 91, 170, 0.15);
+  }
+  
+  .admin-btn-primary:hover {
+    background: var(--primary-dark);
+    box-shadow: 0 4px 12px rgba(0, 91, 170, 0.25);
+  }
+  
+  .admin-btn-secondary {
+    background: #ffffff;
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+  }
+  
+  .admin-btn-secondary:hover {
+    background: var(--primary-soft);
+    color: var(--primary);
+    border-color: rgba(0, 91, 170, 0.2);
+  }
+  
+  .admin-btn-danger {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid rgba(227, 30, 47, 0.15);
+  }
+  
+  .admin-btn-danger:hover {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #ffffff;
+  }
+
+  .admin-btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border: 1px solid rgba(0, 91, 170, 0.2);
+  }
+
+  .admin-btn-outline:hover {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+  }
+
+  .admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid transparent;
+  }
+  
+  .admin-badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .admin-badge-online {
+    background-color: var(--primary-soft);
+    color: var(--primary);
+    border-color: rgba(0, 91, 170, 0.2);
+  }
+
+  .admin-badge-online .admin-badge-dot {
+    background-color: var(--primary);
+  }
+
+  .admin-badge-offline {
+    background-color: #f3f4f6;
+    color: #374151;
+    border-color: #e5e7eb;
+  }
+
+  .admin-badge-offline .admin-badge-dot {
+    background-color: #9ca3af;
+  }
 }
 
+@keyframes admin-typewriter-cycle {
+  0% {
+    width: 0;
+  }
+  40% {
+    width: 100%;
+  }
+  60% {
+    width: 100%;
+  }
+  100% {
+    width: 0;
+  }
+}
+
+@keyframes admin-caret {
+  0%,
+  100% {
+    border-color: rgba(14, 116, 144, 0.0);
+  }
+  50% {
+    border-color: rgba(14, 116, 144, 0.9);
+  }
+}
+
+.typewriter-title {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 0;
+  background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 45%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  border-right: 2px solid rgba(14, 116, 144, 0.9);
+  animation: admin-typewriter-cycle 6s steps(30, end) 0.2s infinite, admin-caret 0.8s step-end infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typewriter-title {
+    animation: none;
+    border-right: none;
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}

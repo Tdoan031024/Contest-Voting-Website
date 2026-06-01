@@ -27,12 +27,12 @@ function useInView(threshold = 0.15) {
 }
 
 const LOCAL_MOCK_CANDIDATES: Candidate[] = [
-  { id: '1', sbd: '085', name: 'Nguyễn Thanh Tân', votes: 106100, imageUrl: '/original_assets/image389b.png', description: '' },
-  { id: '2', sbd: '089', name: 'Nguyễn Đình Tú', votes: 62215, imageUrl: '/original_assets/image725f.png', description: '' },
-  { id: '3', sbd: '024', name: 'Lê Ngọc Yến Vy', votes: 22800, imageUrl: '/original_assets/image940e.jpg', description: '' },
-  { id: '4', sbd: '096', name: 'Võ Bá Thiện', votes: 20590, imageUrl: '/original_assets/image8681.png', description: '' },
-  { id: '5', sbd: '018', name: 'Trần Tuyết Ngân', votes: 16070, imageUrl: '/original_assets/imageada2.png', description: '' },
-  { id: '6', sbd: '095', name: 'Nguyễn Thị Cẩm Thanh', votes: 8410, imageUrl: '/original_assets/image4706.png', description: '' },
+  { id: '1', sbd: '085', name: 'Dự án Nông nghiệp xanh', votes: 106100, imageUrl: '/original_assets/image389b.png', description: 'Giải pháp ứng dụng công nghệ để tối ưu sản xuất nông nghiệp bền vững.' },
+  { id: '2', sbd: '089', name: 'Nền tảng học tập thông minh', votes: 62215, imageUrl: '/original_assets/image725f.png', description: 'Ứng dụng AI hỗ trợ cá nhân hóa lộ trình học tập cho học sinh, sinh viên.' },
+  { id: '3', sbd: '024', name: 'Sản phẩm tái chế sáng tạo', votes: 22800, imageUrl: '/original_assets/image940e.jpg', description: 'Dự án biến vật liệu tái chế thành sản phẩm có giá trị thương mại.' },
+  { id: '4', sbd: '096', name: 'Chăm sóc sức khỏe cộng đồng', votes: 20590, imageUrl: '/original_assets/image8681.png', description: 'Mô hình kết nối tư vấn sức khỏe và theo dõi chỉ số cơ bản từ xa.' },
+  { id: '5', sbd: '018', name: 'Du lịch trải nghiệm địa phương', votes: 16070, imageUrl: '/original_assets/imageada2.png', description: 'Nền tảng quảng bá văn hóa bản địa và tour trải nghiệm cho giới trẻ.' },
+  { id: '6', sbd: '095', name: 'Thương mại xanh cho SME', votes: 8410, imageUrl: '/original_assets/image4706.png', description: 'Giải pháp chuyển đổi số cho hộ kinh doanh và doanh nghiệp vừa và nhỏ.' },
 ];
 
 export default function RankingPage() {
@@ -141,17 +141,91 @@ export default function RankingPage() {
     c.name.toLowerCase().includes(search.toLowerCase()) || c.sbd.includes(search)
   );
 
-  const totalVotes = candidates.reduce((sum, c) => sum + c.votes, 0) || 1;
-  const getPercentage = (votes: number) => {
-    return ((votes / totalVotes) * 100).toFixed(2) + '%';
-  };
-
   const top5 = sortedCandidates.slice(0, 5);
   // Order for staggered display: Rank 4, Rank 3, Rank 1, Rank 2, Rank 5
   const podiumOrder = [3, 2, 0, 1, 4];
   const orderedTop5 = podiumOrder
     .map(idx => top5[idx])
     .filter(c => c !== undefined);
+
+  const renderProjectCard = (c: Candidate, rank: number, featured = false, animationDelay = '0ms') => {
+    const rankLabel = rank === 1 ? 'Dẫn đầu' : rank <= 3 ? `Top ${rank}` : `Hạng ${rank}`;
+    const rankTone =
+      rank === 1
+        ? 'from-[#FFE066] to-[#F59E0B] text-[#1B1600]'
+        : rank === 2
+          ? 'from-[#E5E7EB] to-[#94A3B8] text-[#101827]'
+          : rank === 3
+            ? 'from-[#FDBA74] to-[#B45309] text-white'
+            : 'from-[#0A2FFF] to-[#79BCC2] text-white';
+
+    return (
+      <div
+        key={c.id}
+        className={`group h-full w-full ${featured ? 'max-w-[420px]' : ''} ${listSection.visible || podiumSection.visible ? 'anim-up' : ''}`}
+        style={{ animationDelay }}
+      >
+        <div className="cand-card relative flex h-full flex-col overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.18)] backdrop-blur-[10px]">
+          <Link className="relative block aspect-[16/9] overflow-hidden bg-[#071034]" href={`/thi-sinh/${c.sbd}`}>
+            <img
+              alt={c.name}
+              className="h-full w-full object-cover object-center transition duration-700 group-hover:scale-105"
+              src={c.imageUrl}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#03071F]/88 via-transparent to-transparent" />
+            <div className={`absolute left-4 top-4 rounded-full bg-gradient-to-r ${rankTone} px-4 py-1.5 text-[12px] font-extrabold uppercase tracking-wider shadow-lg`}>
+              {rankLabel}
+            </div>
+            <div className="absolute right-4 top-4 rounded-full border border-white/15 bg-black/55 px-3 py-1.5 text-[12px] font-bold text-white backdrop-blur-md">
+              MDB {c.sbd}
+            </div>
+          </Link>
+
+          <div className="flex flex-1 flex-col p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="min-w-0">
+                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#79BCC2]">Dự án khởi nghiệp</p>
+                <Link href={`/thi-sinh/${c.sbd}`} className="mt-1 block">
+                  <h3 className="line-clamp-2 text-[20px] font-extrabold leading-tight text-white transition group-hover:text-[#79BCC2]">
+                    {c.name}
+                  </h3>
+                </Link>
+              </div>
+              <div className="shrink-0 rounded-2xl border border-[#FDE047]/25 bg-[#FDE047]/10 px-3 py-2 text-right">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#FDE68A]">Bình chọn</p>
+                <p className="text-[18px] font-black text-[#FDE047] drop-shadow-[0_0_14px_rgba(253,224,71,0.4)]">
+                  {c.votes.toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            <p className="mt-3 line-clamp-2 min-h-[42px] text-[14px] leading-relaxed text-white/72">
+              {c.description || 'Thông tin giới thiệu dự án đang được cập nhật.'}
+            </p>
+
+            <div className="mt-5 flex items-center gap-3">
+              <button
+                onClick={() => handleVote(c.sbd, c.name)}
+                className={`vote-btn flex min-h-[46px] flex-1 items-center justify-center rounded-xl border-0 px-4 text-[14px] font-extrabold uppercase tracking-wider ${
+                  isGateCurrentlyOpen()
+                    ? 'bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] text-white'
+                    : 'cursor-not-allowed bg-slate-700/50 text-slate-400 opacity-60'
+                }`}
+              >
+                {isGateCurrentlyOpen() ? 'Bình chọn dự án' : 'Đã đóng'}
+              </button>
+              <Link
+                href={`/thi-sinh/${c.sbd}`}
+                className="flex min-h-[46px] items-center justify-center rounded-xl border border-white/15 bg-white/8 px-4 text-[13px] font-bold uppercase tracking-wider text-white transition hover:border-[#79BCC2]/60 hover:bg-white/12"
+              >
+                Chi tiết
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <>
@@ -260,10 +334,10 @@ export default function RankingPage() {
               <div ref={titleSection.ref} className="flex flex-col space-y-[24px] text-center">
                 <div className="flex flex-col space-y-1.5">
                   <h2 className={`text-[22px] sm:text-[42px] tracking-[-1px] leading-[27px] sm:leading-[52px] font-extrabold uppercase text-white ${titleSection.visible ? 'anim-up anim-d100' : ''}`}>
-                    Bảng xếp hạng
+                    Bảng xếp hạng dự án
                   </h2>
                   <h3 className={`text-[16px] sm:text-[28px] py-1 leading-[24px] uppercase font-semibold text-[#79BCC2] ${titleSection.visible ? 'anim-up anim-d200' : ''}`}>
-                    HUIT&apos;s Iconic
+                    HUIT STARTUP LẦN THỨ VII 2026
                   </h3>
                   <div
                     className="h-[3px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-2 transition-all duration-[1200ms] ease-out"
@@ -282,7 +356,7 @@ export default function RankingPage() {
                   </div>
                   <input
                     className="w-full bg-transparent focus:outline-none text-neutral-neutral1 dark:text-neutral-white placeholder:text-neutral-neutral1 dark:placeholder:text-neutral-white pl-2 text-[14px]"
-                    placeholder="Tìm kiếm..."
+                    placeholder="Tìm kiếm dự án theo tên hoặc MDB..."
                     type="text"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
@@ -293,142 +367,33 @@ export default function RankingPage() {
 
               {isLoading ? (
                 <div className="flex justify-center items-center py-20 text-white">
-                  Đang tải bảng xếp hạng...
+                  Đang tải bảng xếp hạng dự án...
                 </div>
               ) : filteredCandidates.length === 0 ? (
                 <div className="text-center py-20 text-white/50">
-                  Không tìm thấy thí sinh phù hợp
+                  Không tìm thấy dự án phù hợp
                 </div>
               ) : (
                 <>
-                  {/* Top 5 Podium Section */}
+                  {/* Featured ranking cards */}
                   {!search && orderedTop5.length > 0 && (
-                    <div ref={podiumSection.ref} className="w-full max-w-[1360px] mx-auto px-4 mb-16 mt-3 sm:mt-5">
-                      <div className="relative w-full">
-                        {/* Top 5 Row */}
-                        <div className="overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-pink-300 scrollbar-track-transparent">
-                          <div className="flex justify-center items-end gap-3 sm:gap-6 min-w-[960px] lg:min-w-0 pt-24 sm:pt-32 pb-4 px-2">
-                            {orderedTop5.map((c) => {
-                              const originalRank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
-                              const percentage = getPercentage(c.votes);
-
-                              let staggerClass = "";
-                              let cardSizeClass = "";
-                              let imageSizeClass = "";
-                              let borderClass = "border-transparent";
-
-                              if (originalRank === 1) {
-                                staggerClass = "-translate-y-10 sm:-translate-y-16 scale-[1.03] sm:scale-105 z-10";
-                                cardSizeClass = "w-[195px] sm:w-[240px]";
-                                imageSizeClass = "h-[190px] sm:h-[235px]";
-                                borderClass = "border-2 border-[#FFD700]/70 shadow-[0_0_20px_rgba(255,215,0,0.15)]";
-                              } else if (originalRank === 2) {
-                                staggerClass = "-translate-y-4 sm:-translate-y-8 z-0";
-                                cardSizeClass = "w-[185px] sm:w-[230px]";
-                                imageSizeClass = "h-[180px] sm:h-[220px]";
-                                borderClass = "border-2 border-[#C0C0C0]/70 shadow-[0_0_20px_rgba(192,192,192,0.12)]";
-                              } else if (originalRank === 3) {
-                                staggerClass = "-translate-y-4 sm:-translate-y-8 z-0";
-                                cardSizeClass = "w-[185px] sm:w-[230px]";
-                                imageSizeClass = "h-[180px] sm:h-[220px]";
-                                borderClass = "border-2 border-[#CD7F32]/70 shadow-[0_0_20px_rgba(205,127,50,0.12)]";
-                              } else if (originalRank === 4) {
-                                staggerClass = "translate-y-4 sm:translate-y-8 z-0";
-                                cardSizeClass = "w-[170px] sm:w-[210px]";
-                                imageSizeClass = "h-[165px] sm:h-[200px]";
-                              } else if (originalRank === 5) {
-                                staggerClass = "translate-y-4 sm:translate-y-8 z-0";
-                                cardSizeClass = "w-[170px] sm:w-[210px]";
-                                imageSizeClass = "h-[165px] sm:h-[200px]";
-                              }
-
-                              // Laurel wreath rank icon for all podium cards
-                              const badgeElement = (
-                                <div className="absolute -top-9 sm:-top-10 left-1/2 transform -translate-x-1/2 z-20 flex flex-col items-center">
-                                  <div className="relative w-[65px] h-[65px] sm:w-[75px] sm:h-[75px] flex items-center justify-center">
-                                    <img alt="" className="block dark:hidden w-full h-full object-contain" src="/original_assets/static/media/laurel-light-big.58ee16d9.svg" />
-                                    <img alt="" className="hidden dark:block w-full h-full object-contain" src="/original_assets/static/media/laurel-dark-big.6d9a838c.svg" />
-                                    <span className="absolute text-grey-darkGrey dark:text-grey-lightGrey2 text-[15px] sm:text-[18px] font-black top-[21px] sm:top-[25px] left-1/2 transform -translate-x-1/2">
-                                      {originalRank}
-                                    </span>
-                                  </div>
-                                </div>
-                              );
-
-                              return (
-                                <div
-                                  key={c.id}
-                                  className={`flex-shrink-0 transition-transform duration-500 ${staggerClass}`}
-                                >
-                                  <div
-                                    className={podiumSection.visible ? 'anim-scale' : ''}
-                                    style={{ animationDelay: `${originalRank * 100}ms` }}
-                                  >
-                                    <div className={`podium-card relative backdrop-blur-[8px] rounded-[24px] border ${borderClass} bg-[rgba(222,222,222,0.15)] cursor-pointer flex flex-col ${cardSizeClass}`}>
-
-                                      {badgeElement}
-
-                                      {/* Candidate Image Link */}
-                                      <Link className="focus:outline-none relative flex cursor-pointer w-full aspect-[360/461]" href={`/thi-sinh/${c.sbd}`}>
-                                        <div className="mx-2 mt-2 flex-1 relative sm:mx-3 sm:mt-3 overflow-hidden rounded-lg">
-                                          <img
-                                            alt={c.name}
-                                            className="object-cover object-top w-full h-full hover:scale-105 transition-transform duration-500"
-                                            src={c.imageUrl}
-                                          />
-                                        </div>
-                                      </Link>
-
-                                      {/* Details section */}
-                                      <div className="flex-1 flex flex-col px-3 pt-2 pb-3">
-                                        <div className="flex-1 flex flex-col justify-between space-y-2">
-                                          {/* SBD & Vote Count Bar */}
-                                          <div className="rounded-[12px] flex justify-between items-center px-2.5 bg-grey-lightGrey2 dark:bg-grey-dimGrey h-[36px] w-full text-[11px] sm:text-[13px] font-bold text-neutral-neutral1 dark:text-neutral-white">
-                                            <span>SBD: {c.sbd}</span>
-                                            <span>{c.votes.toLocaleString()}</span>
-                                          </div>
-
-                                          <div className="flex flex-1 flex-col space-y-1">
-                                            <div className="h-[6px]"></div>
-                                            <div className="py-[3px] text-center">
-                                              <p className="text-[13px] sm:text-[15px] font-bold text-neutral-neutral1 dark:text-neutral-white leading-tight line-clamp-2 h-[34px] sm:h-[40px] uppercase w-full px-1 flex items-center justify-center text-center">
-                                                {c.name}
-                                              </p>
-                                            </div>
-                                          </div>
-                                        </div>
-
-                                        {/* Vote button */}
-                                        <div className="flex items-end mt-3">
-                                          <button
-                                            onClick={() => handleVote(c.sbd, c.name)}
-                                            className={`vote-btn sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-lg py-[8px] sm:py-[10px] w-full border-0 cursor-pointer ${isGateCurrentlyOpen()
-                                                ? 'bg-primary dark:bg-neutral-white'
-                                                : 'bg-slate-700/50 cursor-not-allowed opacity-50'
-                                              }`}
-                                          >
-                                            <p className={`text-[13px] sm:text-[14px] leading-[20px] font-medium ${isGateCurrentlyOpen()
-                                                ? 'text-neutral-white dark:text-primary'
-                                                : 'text-slate-400'
-                                              }`}>
-                                              {isGateCurrentlyOpen() ? 'Bình chọn' : 'Đã đóng'}
-                                            </p>
-                                          </button>
-                                        </div>
-
-                                      </div>
-
-                                    </div>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
+                    <div ref={podiumSection.ref} className="w-full max-w-[1360px] mx-auto px-4 mb-14 mt-8">
+                      <div className="mb-6 flex flex-col gap-2 text-center">
+                        <p className={`text-[12px] font-bold uppercase tracking-[0.28em] text-[#79BCC2] ${podiumSection.visible ? 'anim-up' : ''}`}>
+                          Dự án nổi bật
+                        </p>
+                        <h3 className={`text-[22px] sm:text-[34px] font-extrabold uppercase text-white ${podiumSection.visible ? 'anim-up anim-d100' : ''}`}>
+                          Top dự án được bình chọn nhiều nhất
+                        </h3>
+                      </div>
+                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                        {orderedTop5.map((c, idx) => {
+                          const originalRank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
+                          return renderProjectCard(c, originalRank, true, `${idx * 110}ms`);
+                        })}
                       </div>
                     </div>
                   )}
-
                   {/* Section Title for Full Grid */}
                   {!search && (
                     <div ref={listSection.ref} className="flex flex-col items-center mb-8 sm:mb-12">
@@ -442,101 +407,10 @@ export default function RankingPage() {
                     </div>
                   )}
 
-                  <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 justify-items-center max-w-[1280px] mx-auto px-4">
+                  <div className="w-full grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 max-w-[1360px] mx-auto px-4">
                     {filteredCandidates.map((c) => {
                       const rank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
-
-                      return (
-                        <div
-                          key={c.id}
-                          className={`h-full group w-full mobile:max-w-[286px] sm:max-w-[280px] ${listSection.visible ? 'anim-up' : ''}`}
-                          style={{ animationDelay: `${(rank - 1) * 80}ms` }}
-                        >
-                          <div className="cand-card relative backdrop-blur-[8px] rounded-[24px] border border-transparent bg-[rgba(222,222,222,0.15)] cursor-pointer h-full">
-
-                            {/* Candidate Image Link */}
-                            <Link className="focus:outline-none relative flex cursor-pointer w-full aspect-[360/461]" href={`/thi-sinh/${c.sbd}`}>
-                              <div className="mx-2 mt-2 flex-1 relative sm:mx-3 sm:mt-3 overflow-hidden rounded-lg">
-                                <img
-                                  alt={c.name}
-                                  className="object-cover object-top w-full h-full group-hover:scale-105 transition-transform duration-500"
-                                  src={c.imageUrl}
-                                />
-                              </div>
-                            </Link>
-
-                            {/* Details section */}
-                            <div className="flex-1 flex flex-col px-3 pt-2 pb-3">
-                              <div className="flex-1 flex flex-col justify-between space-y-2">
-
-                                <div className="rounded-[12px] flex justify-between items-center px-3 py-0.5 bg-grey-lightGrey2 dark:bg-grey-dimGrey h-[36px]">
-                                  <div className="flex sm:hidden w-[72px] text-center gap-[6px] items-center">
-                                    <span className="text-[12px] text-neutral-neutral1 dark:text-neutral-white">SBD:</span>
-                                    <p className="text-[14px] font-bold text-neutral-neutral1 dark:text-neutral-white">{c.sbd}</p>
-                                  </div>
-                                  <div className="hidden sm:flex w-[72px] text-center gap-[6px] items-center">
-                                    <p className="text-[13px] text-neutral-neutral1 dark:text-neutral-white">SBD:</p>
-                                    <p className="text-[15px] font-bold text-neutral-neutral1 dark:text-neutral-white">{c.sbd}</p>
-                                  </div>
-                                  <div className="h-[24px] w-[1px] bg-neutral-neutral1/20 dark:bg-[#94949E]/20"></div>
-                                  <div className="w-[110px] sm:w-[140px] text-right">
-                                    <h6 className="text-[15px] font-bold text-neutral-neutral1 leading-[27px] dark:text-neutral-white">
-                                      {c.votes.toLocaleString()}
-                                    </h6>
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-1 flex-col space-y-2">
-                                  <div className="h-[12px]"></div>
-                                  <div className="h-[54px] py-[5px]">
-                                    <p className="text-[18px] font-bold text-neutral-neutral1 dark:text-neutral-white leading-snug">
-                                      {c.name}
-                                    </p>
-                                  </div>
-                                </div>
-
-                              </div>
-
-                              {/* Vote & Laurel ranking */}
-                              <div className="flex items-end gap-3 h-[72px] sm:gap-4 sm:h-[80px] mt-2">
-                                <button
-                                  onClick={() => handleVote(c.sbd, c.name)}
-                                  className={`vote-btn sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-lg py-[10px] w-full border-0 cursor-pointer ${isGateCurrentlyOpen()
-                                      ? 'bg-primary dark:bg-neutral-white'
-                                      : 'bg-slate-700/50 cursor-not-allowed opacity-50'
-                                    }`}
-                                >
-                                  <p className={`text-[16px] leading-[20px] font-medium ${isGateCurrentlyOpen()
-                                      ? 'text-neutral-white dark:text-primary'
-                                      : 'text-slate-400'
-                                    }`}>
-                                    {isGateCurrentlyOpen() ? 'Bình chọn' : 'Đã đóng'}
-                                  </p>
-                                </button>
-
-                                {/* Laurel Rank graphics */}
-                                <div className="relative flex-shrink-0">
-                                  <div className="hidden sm:block w-[71.5px] sm:w-[80px]">
-                                    <img alt="" className="block dark:hidden" src="/original_assets/static/media/laurel-light-big.58ee16d9.svg" />
-                                    <img alt="" className="hidden dark:block" src="/original_assets/static/media/laurel-dark-big.6d9a838c.svg" />
-                                  </div>
-                                  <div className="block sm:hidden w-[71.5px]">
-                                    <img alt="" className="block dark:hidden" src="/original_assets/static/media/laurel-light-small.27b47318.svg" />
-                                    <img alt="" className="hidden dark:block" src="/original_assets/static/media/laurel-dark-small.e0887cc3.svg" />
-                                  </div>
-                                  <div className="hidden sm:block absolute w-full text-center top-[14px]">
-                                    <h3 className="text-[20px] font-bold text-grey-darkGrey dark:text-grey-lightGrey2">{rank}</h3>
-                                  </div>
-                                  <div className="block sm:hidden absolute w-full text-center top-[18px]">
-                                    <span className="text-grey-darkGrey dark:text-grey-lightGrey2 text-[18px] font-semibold leading-[120%] tracking-[-0.48px]">{rank}</span>
-                                  </div>
-                                </div>
-                              </div>
-
-                            </div>
-                          </div>
-                        </div>
-                      );
+                      return renderProjectCard(c, rank, false, `${(rank - 1) * 70}ms`);
                     })}
                   </div>
                 </>
@@ -555,3 +429,4 @@ export default function RankingPage() {
     </>
   );
 }
+

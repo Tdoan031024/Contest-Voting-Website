@@ -202,7 +202,7 @@ export default function LoginPage() {
             <h1 className="text-[28px] sm:text-[36px] font-extrabold text-white uppercase tracking-[0.06em] mb-1">
               Đăng nhập
             </h1>
-            <p className="text-[13px] text-white/40 tracking-wider">HUIT&apos;s Iconic 2024 — Cổng bình chọn chính thức</p>
+            <p className="text-[13px] text-white/40 tracking-wider">HUIT STARTUP 2024 — Cổng bình chọn chính thức</p>
             <div className="h-[2.5px] w-[50px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-4 transition-all duration-[1000ms]" style={{ width: mounted ? '50px' : '0px' }} />
           </div>
 
@@ -340,3 +340,4 @@ export default function LoginPage() {
     </>
   );
 }
+

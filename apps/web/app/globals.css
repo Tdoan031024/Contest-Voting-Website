@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  font-size: 120%; /* Globally scales all rem-based text, padding, and layout spacing to match 120-125% zoom */
+}
+
 body {
   margin: 0;
   padding: 0;
