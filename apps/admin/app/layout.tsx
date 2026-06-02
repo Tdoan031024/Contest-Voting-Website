@@ -7,7 +7,7 @@ export const metadata = {
   title: 'HUIT STARTUP - Đổi mới sáng tạo hướng tới phát triển bền vững',
   description: 'HUIT STARTUP Voting Platform Management Dashboard',
   icons: {
-    icon: '/favicon.png',
+    icon: '/admin/favicon.png',
   },
 };
 
@@ -18,6 +18,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
+      <head>
+        <link rel="icon" href="/admin/favicon.png" type="image/png" />
+      </head>
       <body className="h-screen overflow-hidden">
         <AlertProvider>
           <ClientShell>{children}</ClientShell>

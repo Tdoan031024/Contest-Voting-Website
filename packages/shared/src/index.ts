@@ -7,6 +7,23 @@ export interface Candidate {
   description: string;
   biography?: string;
   detailsUrl?: string;
+  contestTable?: 'HIGH_SCHOOL' | 'STUDENT' | 'ENTERPRISE';
+  contestTableLabel?: string;
+  sector?: string;
+  stage?: string;
+  status?: string;
+  currentRound?: string;
+  teamName?: string;
+  representativeSchool?: string;
+  leaderName?: string;
+  leaderPhone?: string;
+  leaderEmail?: string;
+  advisorName?: string;
+  members?: string;
+  supportNeeds?: string;
+  expectations?: string;
+  implementationLocation?: string;
+  intellectualPropertyCommitment?: boolean;
 }
 
 export interface Sponsor {
@@ -30,6 +47,8 @@ export interface TimelineEvent {
   title: string;
   description: string;
   isActive: boolean;
+  round?: string;
+  isImportant?: boolean;
 }
 
 export interface AdminUser {
@@ -44,4 +63,37 @@ export interface VoteRecord {
   voterPhone: string;
   voteTime: Date;
   transactionId?: string;
+  eventId?: string;
+  packageId?: string;
+  points?: number;
+  voteType?: 'FREE' | 'PAID';
+  userId?: string;
+  amount?: number;
+}
+
+export interface WebUser {
+  id: string;
+  fullName: string;
+  email: string;
+  phone?: string;
+  passwordHash?: string;
+  provider: 'email' | 'google' | 'quick';
+  role: 'USER';
+  status: 'ACTIVE' | 'LOCKED';
+  schoolOrCompany?: string;
+  contestTable?: string;
+  registeredAt: string;
+  lastLoginAt?: string;
+}
+
+export interface VotePackage {
+  id: string;
+  code: string;
+  name: string;
+  points: number;
+  price: number;
+  currency: 'VND';
+  vatRate: number;
+  packageType: 'FREE' | 'PAID';
+  isActive: boolean;
 }

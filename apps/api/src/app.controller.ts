@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseInterceptors, UploadedFile, UnauthorizedException } from '@nestjs/common';
 import { AppService, SystemSettings } from './app.service';
-import { Candidate, Sponsor, TimelineEvent, Banner } from '@huitfest/shared';
+import { Candidate, Sponsor, TimelineEvent, Banner, VotePackage, WebUser } from '@huitfest/shared';
 import { FileInterceptor } from '@nestjs/platform-express';
 // @ts-ignore
 import { diskStorage } from 'multer';
@@ -93,9 +93,30 @@ export class AppController {
   @Post('candidates/:sbd/vote')
   async voteCandidate(
     @Param('sbd') sbd: string,
-    @Body('phone') phone: string
+    @Body() body: any
   ): Promise<Candidate> {
-    return this.appService.voteCandidate(sbd, phone || '0123456789');
+    const result = await this.appService.voteCandidate(sbd, body || {});
+    return result.candidate;
+  }
+
+  @Get('vote-packages')
+  getVotePackages(): VotePackage[] {
+    return this.appService.getVotePackages();
+  }
+
+  @Get('voting/packages')
+  getVotingPackages(): VotePackage[] {
+    return this.appService.getVotePackages();
+  }
+
+  @Get('voting/free-quota/:userId')
+  getFreeVoteQuota(@Param('userId') userId: string): { remaining: number; limit: number } {
+    return this.appService.getFreeVoteQuota(userId);
+  }
+
+  @Post('voting/candidates/:sbd')
+  async createVote(@Param('sbd') sbd: string, @Body() body: any): Promise<any> {
+    return this.appService.voteCandidate(sbd, body || {});
   }
 
   @Post('admin/candidates')
@@ -114,6 +135,32 @@ export class AppController {
   @Delete('admin/candidates/:id')
   async deleteCandidate(@Param('id') id: string): Promise<{ success: boolean }> {
     return this.appService.deleteCandidate(id);
+  }
+
+  // --- WEB AUTH & USERS ---
+  @Post('web/auth/register')
+  async registerWebUser(@Body() payload: any): Promise<{ ok: boolean; user: WebUser; token: string }> {
+    return this.appService.registerWebUser(payload);
+  }
+
+  @Post('web/auth/quick-register')
+  async quickRegisterWebUser(@Body() payload: any): Promise<{ ok: boolean; user: WebUser; token: string }> {
+    return this.appService.quickRegisterWebUser(payload);
+  }
+
+  @Post('web/auth/login')
+  async loginWebUser(@Body('email') email: string, @Body('password') password: string): Promise<{ ok: boolean; user: WebUser; token: string }> {
+    return this.appService.loginWebUser(email, password);
+  }
+
+  @Post('web/auth/google')
+  async googleLogin(@Body() payload: any): Promise<{ ok: boolean; user: WebUser; token: string }> {
+    return this.appService.googleLogin(payload);
+  }
+
+  @Get('admin/web-users')
+  getWebUsers(): WebUser[] {
+    return this.appService.getWebUsers();
   }
 
   // --- SPONSORS ---

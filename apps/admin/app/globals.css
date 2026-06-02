@@ -329,3 +329,48 @@
 .animate-float {
   animation: float 4s ease-in-out infinite;
 }
+
+.rich-editor-content h1 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.25;
+  margin: 0.75rem 0;
+}
+
+.rich-editor-content h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.3;
+  margin: 0.7rem 0;
+}
+
+.rich-editor-content h3 {
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0.6rem 0;
+}
+
+.rich-editor-content p {
+  margin: 0.55rem 0;
+}
+
+.rich-editor-content ul,
+.rich-editor-content ol {
+  margin: 0.65rem 0;
+  padding-left: 1.5rem;
+}
+
+.rich-editor-content ul {
+  list-style: disc;
+}
+
+.rich-editor-content ol {
+  list-style: decimal;
+}
+
+.rich-editor-content a {
+  color: #0f766e;
+  font-weight: 700;
+  text-decoration: underline;
+}

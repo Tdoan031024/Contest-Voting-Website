@@ -18,6 +18,8 @@ export default function TimelineAdminPage() {
   const [formTitle, setFormTitle] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [formActive, setFormActive] = useState(false);
+  const [formRound, setFormRound] = useState('Vòng loại');
+  const [formImportant, setFormImportant] = useState(false);
 
   async function loadTimeline() {
     try {
@@ -40,6 +42,8 @@ export default function TimelineAdminPage() {
     setFormTitle('');
     setFormDesc('');
     setFormActive(false);
+    setFormRound('Vòng loại');
+    setFormImportant(false);
     setIsAddModalOpen(true);
   };
 
@@ -49,6 +53,8 @@ export default function TimelineAdminPage() {
     setFormTitle(ev.title);
     setFormDesc(ev.description);
     setFormActive(ev.isActive);
+    setFormRound(ev.round || 'Vòng loại');
+    setFormImportant(ev.isImportant || false);
     setIsEditModalOpen(true);
   };
 
@@ -58,7 +64,9 @@ export default function TimelineAdminPage() {
       date: formDate,
       title: formTitle,
       description: formDesc,
-      isActive: formActive
+      isActive: formActive,
+      round: formRound,
+      isImportant: formImportant
     };
 
     try {
@@ -87,7 +95,9 @@ export default function TimelineAdminPage() {
       date: formDate,
       title: formTitle,
       description: formDesc,
-      isActive: formActive
+      isActive: formActive,
+      round: formRound,
+      isImportant: formImportant
     };
 
     try {
@@ -137,8 +147,8 @@ export default function TimelineAdminPage() {
       <div className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Quản lý lộ trình</p>
-          <h1 className="text-lg font-black text-[#123c34]">Lộ trình cuộc thi</h1>
-          <p className="text-xs text-[#6b7773] mt-0.5">Danh sách các giai đoạn, vòng thi và thời gian diễn ra của HUIT's Iconic.</p>
+          <h1 className="text-lg font-black text-[#123c34]">Thời gian & Lộ trình cuộc thi</h1>
+          <p className="text-xs text-[#6b7773] mt-0.5">Danh sách các giai đoạn, vòng thi và thời gian diễn ra của HUIT Startup 2026.</p>
         </div>
         <button 
           onClick={openAddModal}
@@ -165,8 +175,10 @@ export default function TimelineAdminPage() {
           <thead className="bg-[#fbfdfc] text-[10px] font-black uppercase tracking-wider text-[#7a8b85] border-b border-[#edf2f0]">
             <tr>
               <th className="px-5 py-3">Vòng thi / Tiêu đề</th>
+              <th className="px-5 py-3">Phân loại vòng</th>
               <th className="px-5 py-3">Thời gian diễn ra</th>
               <th className="px-5 py-3">Mô tả chi tiết</th>
+              <th className="px-5 py-3">Mốc quan trọng</th>
               <th className="px-5 py-3">Trạng thái hoạt động</th>
               <th className="px-5 py-3 text-right">Thao tác</th>
             </tr>
@@ -175,8 +187,22 @@ export default function TimelineAdminPage() {
             {filteredEvents.map(ev => (
               <tr key={ev.id} className="hover:bg-[#edf4f1]/20 transition-colors">
                 <td className="px-5 py-2.5 font-bold text-[#123c34]">{ev.title}</td>
+                <td className="px-5 py-2.5">
+                  <span className="rounded bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+                    {ev.round || 'Vòng loại'}
+                  </span>
+                </td>
                 <td className="px-5 py-2.5 text-[#0f766e] font-semibold">{ev.date}</td>
                 <td className="px-5 py-2.5 max-w-[300px] truncate text-[#6b7773] font-medium">{ev.description}</td>
+                <td className="px-5 py-2.5">
+                  {ev.isImportant ? (
+                    <span className="rounded bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide">
+                      Mốc quan trọng
+                    </span>
+                  ) : (
+                    <span className="text-slate-400 font-semibold text-[10px]">Lộ trình thường</span>
+                  )}
+                </td>
                 <td className="px-5 py-2.5">
                   <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
                     ev.isActive 
@@ -220,6 +246,19 @@ export default function TimelineAdminPage() {
             </div>
 
             <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Phân loại vòng thi</label>
+              <select 
+                className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                value={formRound}
+                onChange={e => setFormRound(e.target.value)}
+              >
+                <option value="Vòng loại">Vòng loại</option>
+                <option value="Vòng bán kết">Vòng bán kết</option>
+                <option value="Vòng chung kết">Vòng chung kết</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col space-y-1.5">
               <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Thời gian diễn ra (Ví dụ: 03/11/2024 - 15/11/2024)</label>
               <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formDate} onChange={e => setFormDate(e.target.value)} required />
             </div>
@@ -235,6 +274,14 @@ export default function TimelineAdminPage() {
                 <p className="text-[10px] text-[#6b7773]">Hiển thị huy hiệu Đang hoạt động trên trang chủ.</p>
               </div>
               <input type="checkbox" className="w-5 h-5 rounded accent-[#0f766e] cursor-pointer" checked={formActive} onChange={e => setFormActive(e.target.checked)} />
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-[#fbfdfc] border border-[#dce5e1] rounded-xl shadow-sm">
+              <div>
+                <p className="font-bold text-xs text-[#123c34]">Mốc thời gian quan trọng</p>
+                <p className="text-[10px] text-[#6b7773]">Đưa vào bảng tóm tắt thời gian ở đầu trang lộ trình.</p>
+              </div>
+              <input type="checkbox" className="w-5 h-5 rounded accent-[#0f766e] cursor-pointer" checked={formImportant} onChange={e => setFormImportant(e.target.checked)} />
             </div>
 
             <div className="flex justify-end gap-2 pt-3 border-t border-[#edf2f0]">
@@ -257,6 +304,19 @@ export default function TimelineAdminPage() {
             </div>
 
             <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Phân loại vòng thi</label>
+              <select 
+                className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                value={formRound}
+                onChange={e => setFormRound(e.target.value)}
+              >
+                <option value="Vòng loại">Vòng loại</option>
+                <option value="Vòng bán kết">Vòng bán kết</option>
+                <option value="Vòng chung kết">Vòng chung kết</option>
+              </select>
+            </div>
+
+            <div className="flex flex-col space-y-1.5">
               <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Thời gian diễn ra</label>
               <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formDate} onChange={e => setFormDate(e.target.value)} required />
             </div>
@@ -272,6 +332,14 @@ export default function TimelineAdminPage() {
                 <p className="text-[10px] text-[#6b7773]">Hiển thị huy hiệu Đang hoạt động trên trang chủ.</p>
               </div>
               <input type="checkbox" className="w-5 h-5 rounded accent-[#0f766e] cursor-pointer" checked={formActive} onChange={e => setFormActive(e.target.checked)} />
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-[#fbfdfc] border border-[#dce5e1] rounded-xl shadow-sm">
+              <div>
+                <p className="font-bold text-xs text-[#123c34]">Mốc thời gian quan trọng</p>
+                <p className="text-[10px] text-[#6b7773]">Đưa vào bảng tóm tắt thời gian ở đầu trang lộ trình.</p>
+              </div>
+              <input type="checkbox" className="w-5 h-5 rounded accent-[#0f766e] cursor-pointer" checked={formImportant} onChange={e => setFormImportant(e.target.checked)} />
             </div>
 
             <div className="flex justify-end gap-2 pt-3 border-t border-[#edf2f0]">

@@ -2,15 +2,75 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAlert } from '../AlertProvider';
+import { apiUrl } from '../api';
+
+type RegisterMode = 'normal' | 'quick';
+
+declare global {
+  interface Window {
+    google?: any;
+  }
+}
+
+const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '';
+
+const defaultRegisterForm = {
+  fullName: '',
+  email: '',
+  phone: '',
+  password: '',
+  schoolOrCompany: '',
+  contestTable: 'Bảng sinh viên, học viên',
+};
+
+function saveSession(payload: any) {
+  localStorage.setItem('huit_web_user', JSON.stringify(payload.user));
+  localStorage.setItem('huit_web_token', payload.token);
+}
+
+function redirectAfterAuth() {
+  const params = new URLSearchParams(window.location.search);
+  window.location.href = params.get('redirect') || '/';
+}
+
+function loadGoogleIdentityScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (window.google?.accounts?.oauth2) {
+      resolve();
+      return;
+    }
+
+    const existingScript = document.querySelector<HTMLScriptElement>('script[src="https://accounts.google.com/gsi/client"]');
+    if (existingScript) {
+      existingScript.addEventListener('load', () => resolve(), { once: true });
+      existingScript.addEventListener('error', () => reject(new Error('Không thể tải Google Identity Services.')), { once: true });
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error('Không thể tải Google Identity Services.'));
+    document.head.appendChild(script);
+  });
+}
 
 export default function LoginPage() {
   const { showAlert } = useAlert();
   const [email, setEmail] = useState('abcxyz@mail.com');
   const [password, setPassword] = useState('Mật khẩu');
   const [showPassword, setShowPassword] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [registerOpen, setRegisterOpen] = useState(false);
+  const [registerMode, setRegisterMode] = useState<RegisterMode>('normal');
+  const [registerForm, setRegisterForm] = useState(defaultRegisterForm);
 
   useEffect(() => {
+    setHydrated(true);
     // Trigger entrance animation on mount
     const t = setTimeout(() => setMounted(true), 50);
     return () => clearTimeout(t);
@@ -18,11 +78,74 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch(apiUrl('/api/web/auth/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || 'Không thể đăng nhập.');
+      saveSession(data);
+      await showAlert('Đăng nhập thành công. Chuyển hướng về trang chủ.', 'success', 'Đăng nhập thành công');
+      redirectAfterAuth();
+    } catch (error: any) {
+      showAlert(error.message || 'Không thể đăng nhập.', 'error', 'Lỗi đăng nhập');
+    } finally {
+      setLoading(false);
+    }
+    return;
     await showAlert(`Đăng nhập thành công với tài khoản: ${email}\nChuyển hướng về trang chủ.`, 'success', 'Đăng nhập thành công');
     window.location.href = '/';
   };
 
   const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      if (!GOOGLE_CLIENT_ID) {
+        throw new Error('Chưa cấu hình NEXT_PUBLIC_GOOGLE_CLIENT_ID cho đăng nhập Google.');
+      }
+
+      await loadGoogleIdentityScript();
+
+      const accessToken = await new Promise<string>((resolve, reject) => {
+        const tokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: 'openid email profile',
+          prompt: 'select_account',
+          callback: (response: any) => {
+            if (response?.access_token) {
+              resolve(response.access_token);
+              return;
+            }
+            reject(new Error(response?.error_description || response?.error || 'Không nhận được token Google.'));
+          },
+        });
+        tokenClient.requestAccessToken();
+      });
+
+      const res = await fetch(apiUrl('/api/web/auth/google'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accessToken,
+          phone: registerForm.phone,
+          schoolOrCompany: registerForm.schoolOrCompany,
+          contestTable: registerForm.contestTable,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || 'Không thể đăng nhập Google.');
+      saveSession(data);
+      await showAlert('Đăng nhập Google thành công. Chuyển hướng về trang chủ.', 'success', 'Đăng nhập thành công');
+      redirectAfterAuth();
+    } catch (error: any) {
+      showAlert(error.message || 'Không thể đăng nhập Google.', 'error', 'Lỗi Google');
+    } finally {
+      setLoading(false);
+    }
+    return;
     await showAlert('Kết nối dịch vụ Google thành công! Đăng nhập offline thành công.\nChuyển hướng về trang chủ.', 'success', 'Đăng nhập thành công');
     window.location.href = '/';
   };
@@ -31,6 +154,53 @@ export default function LoginPage() {
     e.preventDefault();
     showAlert('Tính năng đang được phát triển ở chế độ offline!', 'info', 'Thông báo');
   };
+
+  const updateRegisterForm = (key: keyof typeof defaultRegisterForm, value: string) => {
+    setRegisterForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const endpoint = registerMode === 'normal'
+        ? '/api/web/auth/register'
+        : '/api/web/auth/quick-register';
+      const payload = registerMode === 'normal'
+        ? registerForm
+        : {
+            fullName: registerForm.fullName,
+            email: registerForm.email,
+            phone: registerForm.phone,
+            schoolOrCompany: registerForm.schoolOrCompany,
+            contestTable: registerForm.contestTable,
+          };
+
+      const res = await fetch(apiUrl(endpoint), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || 'Không thể đăng ký tài khoản.');
+      saveSession(data);
+      await showAlert('Đăng ký tài khoản thành công. Chuyển hướng về trang chủ.', 'success', 'Đăng ký thành công');
+      redirectAfterAuth();
+    } catch (error: any) {
+      showAlert(error.message || 'Không thể đăng ký tài khoản.', 'error', 'Lỗi đăng ký');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!hydrated) {
+    return (
+      <main
+        suppressHydrationWarning
+        className="sc-908a50-0 iUzfqH flex-1 w-full min-h-[calc(100vh-80px-200px)] bg-[#030612]"
+      />
+    );
+  }
 
   return (
     <>
@@ -325,7 +495,10 @@ export default function LoginPage() {
                 <p className="text-white/30 text-[12px]">Chưa có tài khoản?</p>
                 <a
                   href="#"
-                  onClick={handleOfflineAlert}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    setRegisterOpen(true);
+                  }}
                   className="link-hover text-[#79BCC2] text-[14px] font-semibold underline-offset-4 hover:underline"
                 >
                   Đăng ký ngay →
@@ -336,6 +509,138 @@ export default function LoginPage() {
           </div>
         </div>
 
+        {registerOpen && (
+          <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/65 px-4 pb-6 pt-[84px] sm:px-8 sm:pb-8 sm:pt-[96px] backdrop-blur-md">
+            <form onSubmit={handleRegisterSubmit} className="login-card w-full max-w-[960px] rounded-[28px] p-6 sm:p-8">
+              <div className="grid gap-6 md:grid-cols-[0.95fr_1.05fr]">
+                <div className="space-y-5">
+                  <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
+                    <div>
+                      <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#79BCC2]">Tạo tài khoản</p>
+                      <h2 className="mt-1 text-[24px] font-extrabold uppercase tracking-wide text-white">Đăng ký bình chọn</h2>
+                      <p className="mt-1 text-[12px] text-white/45">Tài khoản dùng để nhận lượt miễn phí và lưu lịch sử bình chọn.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setRegisterOpen(false)}
+                      className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition hover:border-[#79BCC2]/50 hover:text-white"
+                      aria-label="Đóng"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 rounded-[14px] border border-white/10 bg-white/[0.03] p-1 text-[12px] font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setRegisterMode('normal')}
+                      className={`rounded-[11px] px-3 py-2 transition ${registerMode === 'normal' ? 'bg-[#0A2FFF] text-white' : 'text-white/50 hover:text-white'}`}
+                    >
+                      Đăng ký thường
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRegisterMode('quick')}
+                      className={`rounded-[11px] px-3 py-2 transition ${registerMode === 'quick' ? 'bg-[#0A2FFF] text-white' : 'text-white/50 hover:text-white'}`}
+                    >
+                      Đăng ký nhanh
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-5">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                <label className="space-y-2 sm:col-span-2">
+                  <span className="text-[12px] font-semibold text-white/75">Họ và tên</span>
+                  <input
+                    className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
+                    value={registerForm.fullName}
+                    onChange={(event) => updateRegisterForm('fullName', event.target.value)}
+                    required
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-[12px] font-semibold text-white/75">Email</span>
+                  <input
+                    type="email"
+                    className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
+                    value={registerForm.email}
+                    onChange={(event) => updateRegisterForm('email', event.target.value)}
+                    required={registerMode === 'normal'}
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-[12px] font-semibold text-white/75">Số điện thoại</span>
+                  <input
+                    className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
+                    value={registerForm.phone}
+                    onChange={(event) => updateRegisterForm('phone', event.target.value)}
+                    required={registerMode === 'quick'}
+                  />
+                </label>
+
+                {registerMode === 'normal' && (
+                  <label className="space-y-2 sm:col-span-2">
+                    <span className="text-[12px] font-semibold text-white/75">Mật khẩu</span>
+                    <input
+                      type="password"
+                      className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
+                      value={registerForm.password}
+                      onChange={(event) => updateRegisterForm('password', event.target.value)}
+                      required
+                    />
+                  </label>
+                )}
+
+                <label className="space-y-2">
+                  <span className="text-[12px] font-semibold text-white/75">Đơn vị / trường</span>
+                  <input
+                    className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
+                    value={registerForm.schoolOrCompany}
+                    onChange={(event) => updateRegisterForm('schoolOrCompany', event.target.value)}
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-[12px] font-semibold text-white/75">Bảng quan tâm</span>
+                  <select
+                    className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
+                    value={registerForm.contestTable}
+                    onChange={(event) => updateRegisterForm('contestTable', event.target.value)}
+                  >
+                    <option>Bảng học sinh</option>
+                    <option>Bảng sinh viên, học viên</option>
+                    <option>Bảng cá nhân, tổ chức, doanh nghiệp</option>
+                  </select>
+                </label>
+                  </div>
+
+                  <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setRegisterOpen(false)}
+                      className="h-[46px] rounded-[14px] border border-white/10 px-5 text-[13px] font-bold text-white/65 transition hover:border-white/25 hover:text-white"
+                    >
+                      Hủy
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="btn-login h-[46px] rounded-[14px] bg-gradient-to-r from-[#0A2FFF] to-[#1a5aff] px-5 text-[13px] font-bold uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {loading ? 'Đang xử lý...' : 'Tạo tài khoản'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </form>
+          </div>
+        )}
       </main>
     </>
   );

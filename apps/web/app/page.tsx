@@ -30,6 +30,38 @@ interface Banner {
   isActive?: boolean;
 }
 
+function hasHtml(value?: string | null) {
+  return !!value && /<[a-z][\s\S]*>/i.test(value);
+}
+
+function sanitizeRichHtml(value: string) {
+  if (typeof window === 'undefined') {
+    return value.replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, '').replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '');
+  }
+
+  const wrapper = document.createElement('div');
+  wrapper.innerHTML = value;
+  wrapper.querySelectorAll('script, style, iframe, object, embed').forEach((node) => node.remove());
+  wrapper.querySelectorAll('*').forEach((node) => {
+    Array.from(node.attributes).forEach((attribute) => {
+      const name = attribute.name.toLowerCase();
+      const attrValue = attribute.value.trim().toLowerCase();
+      if (name.startsWith('on') || attrValue.startsWith('javascript:')) {
+        node.removeAttribute(attribute.name);
+      }
+    });
+  });
+  return wrapper.innerHTML;
+}
+
+function RichContent({ value, fallback, className }: { value?: string | null; fallback: string; className: string }) {
+  const content = value || fallback;
+  if (hasHtml(content)) {
+    return <div className={className} dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(content) }} />;
+  }
+  return <div className={`${className} whitespace-pre-line`}>{content}</div>;
+}
+
 export default function HomePage() {
   const { showAlert } = useAlert();
   const ABOUT_FALLBACK_TITLE = 'HUIT STARTUP LẦN THỨ VII 2026';
@@ -475,9 +507,11 @@ export default function HomePage() {
                   {aboutTitleText}
                 </h3>
 
-                <p className="text-[14px] sm:text-[16px] text-white/90 leading-relaxed font-light whitespace-pre-line">
-                  {settings?.aboutDescription || ABOUT_FALLBACK_DESCRIPTION}
-                </p>
+                <RichContent
+                  value={settings?.aboutDescription}
+                  fallback={ABOUT_FALLBACK_DESCRIPTION}
+                  className="rich-content text-[14px] sm:text-[16px] text-white/90 leading-relaxed font-light text-justify"
+                />
 
                 {/* Staggered Stats Counters */}
                 <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-2">
@@ -700,7 +734,7 @@ export default function HomePage() {
                               </div>
                             </div>
 
-                            <p className="mt-3 line-clamp-2 min-h-[40px] text-[13px] leading-relaxed text-white/68">
+                            <p className="mt-3 line-clamp-2 min-h-[40px] text-[13px] leading-relaxed text-white/68 text-justify">
                               {c.description || 'Ý tưởng khởi nghiệp đang được cập nhật thông tin giới thiệu.'}
                             </p>
 

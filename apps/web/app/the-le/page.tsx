@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import { apiUrl } from '../api';
@@ -21,22 +21,72 @@ interface ExchangeRate {
 
 const defaultSections: SectionConfig[] = [
   {
-    title: 'Huong dan binh chon mien phi',
+    title: 'Hướng dẫn bình chọn miễn phí',
     steps: [
-      { number: '01', description: 'Tao tai khoan moi hoac dang nhap nhanh bang tai khoan Google', image: '/original_assets/imagefca6.png' },
-      { number: '02', description: 'Xac thuc tai khoan cua ban thong qua lien ket gui ve Email ca nhan', image: '/original_assets/imagef1be.png' },
-      { number: '03', description: 'Tim kiem va lua chon thi sinh ban mong muon binh chon', image: '/original_assets/image81d3.png' },
-      { number: '04', description: 'He thong hien thi thong bao ban da binh chon thanh cong', image: '/original_assets/image20da.png' },
+      { number: '01', description: 'Tạo tài khoản mới hoặc đăng nhập nhanh bằng tài khoản Google.', image: '/original_assets/imagefca6.png' },
+      { number: '02', description: 'Đăng nhập tài khoản để nhận lượt bình chọn miễn phí hằng ngày.', image: '/original_assets/imagef1be.png' },
+      { number: '03', description: 'Tìm kiếm và lựa chọn dự án hoặc thí sinh bạn muốn bình chọn.', image: '/original_assets/image81d3.png' },
+      { number: '04', description: 'Chọn gói 5 điểm miễn phí, hệ thống ghi nhận điểm sau khi xác nhận thành công.', image: '/original_assets/image20da.png' },
+    ],
+  },
+  {
+    title: 'Thanh toán qua cổng VNPay',
+    steps: [
+      { number: '01', description: 'Truy cập danh sách dự án, chọn hồ sơ bạn muốn ủng hộ.', image: '/original_assets/image17ae.png' },
+      { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm thanh toán qua VNPay.', image: '/original_assets/imageefc9.png' },
+      { number: '03', description: 'Quét mã QR hoặc nhập thông tin thanh toán theo hướng dẫn của cổng VNPay.', image: '/original_assets/image837f.png' },
+      { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động cộng điểm và lưu lịch sử bình chọn.', image: '/original_assets/image20da.png' },
+    ],
+  },
+  {
+    title: 'Thanh toán qua ví điện tử MOMO',
+    steps: [
+      { number: '01', description: 'Truy cập danh sách dự án, chọn hồ sơ bạn muốn ủng hộ.', image: '/original_assets/image17ae.png' },
+      { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm thanh toán qua ví MOMO.', image: '/original_assets/image8ca3.png' },
+      { number: '03', description: 'Sử dụng ứng dụng MOMO trên điện thoại để quét mã QR thanh toán.', image: '/original_assets/imagebf6f.png' },
+      { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động cộng điểm và lưu lịch sử bình chọn.', image: '/original_assets/image20da.png' },
+    ],
+  },
+  {
+    title: 'Thanh toán qua cổng PayPal',
+    steps: [
+      { number: '01', description: 'Truy cập danh sách dự án, chọn hồ sơ bạn muốn ủng hộ.', image: '/original_assets/image17ae.png' },
+      { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm thanh toán qua PayPal.', image: '/original_assets/image9d6d.png' },
+      { number: '03', description: 'Nhập thông tin tài khoản PayPal để xác thực giao dịch.', image: '/original_assets/image1206.png' },
+      { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động cộng điểm và lưu lịch sử bình chọn.', image: '/original_assets/image20da.png' },
     ],
   },
 ];
 
 const defaultExchangeRates: ExchangeRate[] = [
-  { points: '5 Diem', price: 'Mien phi (01 luot / ngay)' },
-  { points: '10 Diem', price: '10,000 VND' },
-  { points: '20 Diem', price: '20,000 VND' },
-  { points: '50 Diem', price: '50,000 VND' },
+  { points: '5 Điểm', price: 'Miễn phí (01 lượt / ngày)' },
+  { points: '10 Điểm', price: '10,000 VND' },
+  { points: '20 Điểm', price: '20,000 VND' },
+  { points: '50 Điểm', price: '50,000 VND' },
+  { points: '220 Điểm', price: '100,000 VND' },
+  { points: '1,050 Điểm', price: '500,000 VND' },
+  { points: '2,300 Điểm', price: '1,000,000 VND' },
+  { points: '7,000 Điểm', price: '3,000,000 VND' },
 ];
+
+function normalizeSections(rawSections: any[]): SectionConfig[] {
+  const stepSections = rawSections.filter((section) => Array.isArray(section.steps) && section.steps.length > 0);
+  if (stepSections.length === 0) return defaultSections;
+  return stepSections.map((section, index) => ({
+    title: section.title || `Mục ${index + 1}`,
+    steps: section.steps,
+  }));
+}
+
+function normalizeRates(rawRates: any[]): ExchangeRate[] {
+  const rates = rawRates
+    .map((rate) => ({
+      points: String(rate.pointsLabel || rate.label || (rate.points ? `${Number(rate.points).toLocaleString('vi-VN')} Điểm` : '')),
+      price: String(rate.priceLabel || (Number(rate.price) > 0 ? `${Number(rate.price).toLocaleString('vi-VN')} VND` : 'Miễn phí (01 lượt / ngày)')),
+    }))
+    .filter((rate) => rate.points && rate.price);
+  return rates.length > 0 ? rates : defaultExchangeRates;
+}
 
 const sectionIcons = [
   (
@@ -71,10 +121,10 @@ export default function TheLePage() {
         if (!res.ok) return;
         const data = await res.json();
         if (Array.isArray(data.guideSections) && data.guideSections.length > 0) {
-          setSections(data.guideSections);
+          setSections(normalizeSections(data.guideSections));
         }
         if (Array.isArray(data.exchangeRates) && data.exchangeRates.length > 0) {
-          setExchangeRates(data.exchangeRates);
+          setExchangeRates(normalizeRates(data.exchangeRates));
         }
       } catch (err) {
         console.error('Failed to load guide settings', err);
@@ -97,19 +147,17 @@ export default function TheLePage() {
         }
       `}</style>
       <main className="sc-908a50-0 iUzfqH flex-1 min-h-screen pb-16 mt-[-80px] pt-[128px] sm:pt-[160px] relative overflow-hidden">
-        <div className="absolute top-[5%] left-[-15%] w-[400px] sm:w-[600px] h-[400px] sm:h-[600px] bg-[#0A2FFF]/8 rounded-full blur-[110px] sm:blur-[140px] pointer-events-none" />
-        <div className="absolute top-[40%] right-[-15%] w-[450px] sm:w-[650px] h-[450px] sm:h-[650px] bg-[#79BCC2]/8 rounded-full blur-[120px] sm:blur-[160px] pointer-events-none" />
-        <div className="absolute bottom-[10%] left-[-10%] w-[380px] sm:w-[500px] h-[380px] sm:h-[500px] bg-[#0A2FFF]/6 rounded-full blur-[100px] sm:blur-[130px] pointer-events-none" />
+        <div className="absolute inset-0 bg-black/55 pointer-events-none" />
 
         <div className="max-w-[1140px] mx-auto px-4 sm:px-6 relative z-10">
           <div className="flex flex-col space-y-3 text-center mb-16 sm:mb-24">
             <span className="text-[#79BCC2] text-xs sm:text-sm font-semibold tracking-[0.3em] uppercase">
-              Cam nang binh chon chinh thuc
+              Cẩm nang bình chọn chính thức
             </span>
-            <h2 className="text-[28px] sm:text-[46px] tracking-[-1px] font-extrabold uppercase text-white bg-gradient-to-r from-white via-white/95 to-[#79BCC2] bg-clip-text text-transparent leading-none">
-              HUONG DAN BINH CHON
+            <h2 className="text-[28px] sm:text-[46px] tracking-[-1px] font-extrabold uppercase text-white leading-none">
+              Hướng dẫn & Thể lệ
             </h2>
-            <h3 className="text-[14px] sm:text-[18px] tracking-[0.2em] uppercase font-medium text-white/40">
+            <h3 className="text-[14px] sm:text-[18px] tracking-[0.2em] uppercase font-medium text-white/50">
               HUIT STARTUP
             </h3>
             <div className="h-[3.5px] w-[70px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-3.5" />
@@ -133,15 +181,15 @@ export default function TheLePage() {
                   {section.steps.map((step, idx) => (
                     <div
                       key={`${step.number}-${idx}`}
-                      className="group flex flex-col justify-between backdrop-blur-md bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 hover:border-[#79BCC2]/30 rounded-[20px] p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_12px_40px_rgba(10,47,255,0.08)]"
+                      className="group flex flex-col justify-between backdrop-blur-md bg-white/[0.04] hover:bg-white/[0.06] border border-white/10 hover:border-[#79BCC2]/30 rounded-[20px] p-6 transition-all duration-300"
                     >
                       <div>
                         <div className="flex justify-between items-center mb-3">
                           <span className="text-[11px] font-black tracking-widest text-[#79BCC2] uppercase bg-[#79BCC2]/10 px-3 py-1 rounded-full border border-[#79BCC2]/20">
-                            Buoc {step.number}
+                            Bước {step.number}
                           </span>
                         </div>
-                        <p className="text-[14px] sm:text-[15px] font-semibold text-white/90 leading-relaxed mb-5 group-hover:text-white transition-colors whitespace-pre-line">
+                        <p className="text-[14px] sm:text-[15px] font-semibold text-white/90 leading-relaxed mb-5 whitespace-pre-line text-justify">
                           {step.description}
                         </p>
                       </div>
@@ -149,12 +197,11 @@ export default function TheLePage() {
                       {step.image ? (
                         <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black/50 aspect-[431/244] w-full shadow-2xl">
                           <img
-                            alt={`Buoc ${step.number}`}
+                            alt={`Bước ${step.number}`}
                             loading="lazy"
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-103"
+                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
                             src={step.image}
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         </div>
                       ) : null}
                     </div>
@@ -173,26 +220,26 @@ export default function TheLePage() {
                 </svg>
               </div>
               <h4 className="text-[18px] sm:text-[22px] font-extrabold text-white uppercase tracking-wider">
-                Bang Quy doi diem &amp; Gia tri quy doi
+                Bảng quy đổi điểm & giá trị quy đổi
               </h4>
             </div>
 
-            <div className="backdrop-blur-md bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between w-full max-w-5xl mx-auto">
-              <div className="p-6 border-b border-white/5 bg-white/[0.01]">
-                <p className="text-[13px] text-white/50 leading-relaxed">
-                  Diem binh chon duoc tu dong quy doi ngay khi he thong xac nhan thanh toan giao dich thanh cong.
+            <div className="backdrop-blur-md bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden shadow-2xl w-full max-w-5xl mx-auto">
+              <div className="p-6 border-b border-white/10">
+                <p className="text-[13px] text-white/60 leading-relaxed">
+                  Điểm bình chọn được tự động cộng sau khi hệ thống xác nhận giao dịch thành công. Giá hiển thị đã bao gồm VAT 10%.
                 </p>
               </div>
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-white/[0.04] text-white/60 text-[11px] sm:text-[12px] font-bold uppercase tracking-wider border-b border-white/5">
-                      <th className="py-4 px-6">Goi binh chon</th>
-                      <th className="py-4 px-6 text-right">Gia tri tuong ung</th>
+                    <tr className="bg-white/[0.05] text-white/60 text-[11px] sm:text-[12px] font-bold uppercase tracking-wider border-b border-white/10">
+                      <th className="py-4 px-6">Gói bình chọn</th>
+                      <th className="py-4 px-6 text-right">Giá trị tương ứng</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-white/5">
+                  <tbody className="divide-y divide-white/10">
                     {exchangeRates.map((rate, index) => (
                       <tr key={index} className="text-[13px] sm:text-[14px] text-white/80 hover:bg-[#79BCC2]/5 transition-all duration-150">
                         <td className="py-3.5 px-6 font-semibold flex items-center gap-2.5">
@@ -214,4 +261,3 @@ export default function TheLePage() {
     </>
   );
 }
-

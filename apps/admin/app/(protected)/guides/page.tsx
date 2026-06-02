@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { apiUrl } from '../../api';
+import React, { useEffect, useState } from 'react';
+import { apiUrl, formatAssetUrl } from '../../api';
 
 type Step = {
   number: string;
@@ -14,76 +14,130 @@ type GuideSection = {
   steps: Step[];
 };
 
+type ExchangeRate = {
+  points: string;
+  price: string;
+};
+
+const defaultSections: GuideSection[] = [
+  {
+    title: 'Hướng dẫn bình chọn miễn phí',
+    steps: [
+      { number: '01', description: 'Tạo tài khoản mới hoặc đăng nhập nhanh bằng tài khoản Google.', image: '/original_assets/imagefca6.png' },
+      { number: '02', description: 'Đăng nhập tài khoản để nhận lượt bình chọn miễn phí hằng ngày.', image: '/original_assets/imagef1be.png' },
+      { number: '03', description: 'Tìm kiếm và lựa chọn dự án hoặc thí sinh bạn muốn bình chọn.', image: '/original_assets/image81d3.png' },
+      { number: '04', description: 'Chọn gói 5 điểm miễn phí, hệ thống ghi nhận điểm sau khi xác nhận thành công.', image: '/original_assets/image20da.png' },
+    ],
+  },
+  {
+    title: 'Thanh toán qua cổng VNPay',
+    steps: [
+      { number: '01', description: 'Truy cập danh sách dự án, chọn hồ sơ bạn muốn ủng hộ.', image: '/original_assets/image17ae.png' },
+      { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm thanh toán qua VNPay.', image: '/original_assets/imageefc9.png' },
+      { number: '03', description: 'Quét mã QR hoặc nhập thông tin thanh toán theo hướng dẫn của cổng VNPay.', image: '/original_assets/image837f.png' },
+      { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động cộng điểm và lưu lịch sử bình chọn.', image: '/original_assets/image20da.png' },
+    ],
+  },
+  {
+    title: 'Thanh toán qua ví điện tử MOMO',
+    steps: [
+      { number: '01', description: 'Truy cập danh sách dự án, chọn hồ sơ bạn muốn ủng hộ.', image: '/original_assets/image17ae.png' },
+      { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm thanh toán qua ví MOMO.', image: '/original_assets/image8ca3.png' },
+      { number: '03', description: 'Sử dụng ứng dụng MOMO trên điện thoại để quét mã QR thanh toán.', image: '/original_assets/imagebf6f.png' },
+      { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động cộng điểm và lưu lịch sử bình chọn.', image: '/original_assets/image20da.png' },
+    ],
+  },
+  {
+    title: 'Thanh toán qua cổng PayPal',
+    steps: [
+      { number: '01', description: 'Truy cập danh sách dự án, chọn hồ sơ bạn muốn ủng hộ.', image: '/original_assets/image17ae.png' },
+      { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm thanh toán qua PayPal.', image: '/original_assets/image9d6d.png' },
+      { number: '03', description: 'Nhập thông tin tài khoản PayPal để xác thực giao dịch.', image: '/original_assets/image1206.png' },
+      { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động cộng điểm và lưu lịch sử bình chọn.', image: '/original_assets/image20da.png' },
+    ],
+  },
+];
+
+const defaultExchangeRates: ExchangeRate[] = [
+  { points: '5 Điểm', price: 'Miễn phí (01 lượt / ngày)' },
+  { points: '10 Điểm', price: '10,000 VND' },
+  { points: '20 Điểm', price: '20,000 VND' },
+  { points: '50 Điểm', price: '50,000 VND' },
+  { points: '220 Điểm', price: '100,000 VND' },
+  { points: '1,050 Điểm', price: '500,000 VND' },
+  { points: '2,300 Điểm', price: '1,000,000 VND' },
+  { points: '7,000 Điểm', price: '3,000,000 VND' },
+];
+
+function normalizeRates(rawRates: any[]): ExchangeRate[] {
+  const rates = rawRates
+    .map((rate) => ({
+      points: String(rate.pointsLabel || rate.label || (rate.points ? `${Number(rate.points).toLocaleString('vi-VN')} Điểm` : '')),
+      price: String(rate.priceLabel || (Number(rate.price) > 0 ? `${Number(rate.price).toLocaleString('vi-VN')} VND` : 'Miễn phí (01 lượt / ngày)')),
+    }))
+    .filter((rate) => rate.points && rate.price);
+  return rates.length > 0 ? rates : defaultExchangeRates;
+}
+
 export default function GuidesAdminPage() {
   const [activeTab, setActiveTab] = useState(0);
+  const [sections, setSections] = useState<GuideSection[]>(defaultSections);
+  const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>(defaultExchangeRates);
 
-  const [sections, setSections] = useState<GuideSection[]>([
-    {
-      title: 'Hướng dẫn bình chọn miễn phí',
-      steps: [
-        { number: '01', description: 'Tạo tài khoản mới hoặc Đăng nhập nhanh bằng tài khoản Google', image: '/original_assets/imagefca6.png' },
-        { number: '02', description: 'Xác thực tài khoản của bạn thông qua liên kết gửi về Email cá nhân', image: '/original_assets/imagef1be.png' },
-        { number: '03', description: 'Tìm kiếm và lựa chọn thí sinh bạn mong muốn bình chọn', image: '/original_assets/image81d3.png' },
-        { number: '04', description: 'Hệ thống hiển thị thông báo bạn đã bình chọn thành công', image: '/original_assets/image20da.png' }
-      ]
-    },
-    {
-      title: 'Thanh toán qua cổng VNPay',
-      steps: [
-        { number: '01', description: 'Truy cập danh sách thí sinh, lựa chọn ứng viên bạn muốn ủng hộ', image: '/original_assets/image17ae.png' },
-        { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm chọn thanh toán qua VNPay', image: '/original_assets/imageefc9.png' },
-        { number: '03', description: 'Quét mã QR hiển thị và nhập mã giảm giá ưu đãi 1ZONEVNPay', image: '/original_assets/image837f.png' },
-        { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động ghi nhận điểm số bình chọn', image: '/original_assets/image20da.png' }
-      ]
-    },
-    {
-      title: 'Thanh toán qua ví điện tử MOMO',
-      steps: [
-        { number: '01', description: 'Truy cập danh sách thí sinh, lựa chọn ứng viên bạn muốn ủng hộ', image: '/original_assets/image17ae.png' },
-        { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm chọn thanh toán qua ví MOMO', image: '/original_assets/image8ca3.png' },
-        { number: '03', description: 'Sử dụng ứng dụng MOMO trên điện thoại quét mã QR hiển thị để thanh toán', image: '/original_assets/imagebf6f.png' },
-        { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động ghi nhận điểm số bình chọn', image: '/original_assets/image20da.png' }
-      ]
-    },
-    {
-      title: 'Thanh toán qua cổng PayPal',
-      steps: [
-        { number: '01', description: 'Truy cập danh sách thí sinh, lựa chọn ứng viên bạn muốn ủng hộ', image: '/original_assets/image17ae.png' },
-        { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm chọn thanh toán qua PayPal', image: '/original_assets/image9d6d.png' },
-        { number: '03', description: 'Nhập thông tin tài khoản thanh toán quốc tế PayPal để xác thực', image: '/original_assets/image1206.png' },
-        { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động ghi nhận điểm số bình chọn', image: '/original_assets/image20da.png' }
-      ]
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch(apiUrl('/api/settings'));
+        if (!res.ok) return;
+        const data = await res.json();
+
+        const validGuideSections = Array.isArray(data.guideSections)
+          ? data.guideSections.filter((section: any) => Array.isArray(section.steps) && section.steps.length > 0)
+          : [];
+
+        if (validGuideSections.length > 0) {
+          setSections(validGuideSections.map((section: any, index: number) => ({
+            title: section.title || `Mục ${index + 1}`,
+            steps: section.steps,
+          })));
+        }
+
+        if (Array.isArray(data.exchangeRates) && data.exchangeRates.length > 0) {
+          setExchangeRates(normalizeRates(data.exchangeRates));
+        }
+      } catch (err) {
+        console.error('Failed to load guide settings', err);
+      }
     }
-  ]);
 
-  const [exchangeRates, setExchangeRates] = useState([
-    { points: '5 Điểm', price: 'Miễn phí (01 lượt / ngày)' },
-    { points: '10 Điểm', price: '10,000 VND' },
-    { points: '20 Điểm', price: '20,000 VND' },
-    { points: '50 Điểm', price: '50,000 VND' },
-    { points: '220 Điểm', price: '100,000 VND' },
-    { points: '1,050 Điểm', price: '500,000 VND' },
-    { points: '2,300 Điểm', price: '1,000,000 VND' },
-    { points: '7,000 Điểm', price: '3,000,000 VND' }
-  ]);
+    loadSettings();
+  }, []);
 
-  const handleStepChange = (secIdx: number, stepIdx: number, value: string) => {
-    setSections((prev) => {
-      const updated = [...prev];
-      updated[secIdx].steps[stepIdx].description = value;
-      return updated;
-    });
+  const handleSectionTitleChange = (sectionIndex: number, value: string) => {
+    setSections((prev) => prev.map((section, index) => index === sectionIndex ? { ...section, title: value } : section));
   };
 
-  const handleStepImageChange = (secIdx: number, stepIdx: number, value: string) => {
-    setSections((prev) => {
-      const updated = [...prev];
-      updated[secIdx].steps[stepIdx].image = value;
-      return updated;
-    });
+  const handleStepChange = (sectionIndex: number, stepIndex: number, value: string) => {
+    setSections((prev) => prev.map((section, index) => {
+      if (index !== sectionIndex) return section;
+      return {
+        ...section,
+        steps: section.steps.map((step, idx) => idx === stepIndex ? { ...step, description: value } : step),
+      };
+    }));
   };
 
-  const handleStepFileUpload = async (secIdx: number, stepIdx: number, event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleStepImageChange = (sectionIndex: number, stepIndex: number, value: string) => {
+    setSections((prev) => prev.map((section, index) => {
+      if (index !== sectionIndex) return section;
+      return {
+        ...section,
+        steps: section.steps.map((step, idx) => idx === stepIndex ? { ...step, image: value } : step),
+      };
+    }));
+  };
+
+  const handleStepFileUpload = async (sectionIndex: number, stepIndex: number, event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -95,172 +149,201 @@ export default function GuidesAdminPage() {
         method: 'POST',
         body: formData,
       });
-      if (res.ok) {
-        const data = await res.json();
-        handleStepImageChange(secIdx, stepIdx, data.url);
-        alert('Tải ảnh minh họa bước lên thành công!');
-      } else {
+      if (!res.ok) {
         alert('Tải ảnh thất bại.');
+        return;
       }
+
+      const data = await res.json();
+      handleStepImageChange(sectionIndex, stepIndex, data.url);
+      alert('Tải ảnh minh họa thành công.');
     } catch (err) {
       console.error(err);
-      alert('Có lỗi xảy ra khi kết nối server tải ảnh.');
+      alert('Không thể kết nối server tải ảnh.');
     }
   };
 
-  const handleRateChange = (idx: number, field: 'points' | 'price', value: string) => {
-    setExchangeRates((prev) => {
-      const updated = [...prev];
-      updated[idx][field] = value;
-      return updated;
-    });
+  const handleRateChange = (index: number, field: 'points' | 'price', value: string) => {
+    setExchangeRates((prev) => prev.map((rate, idx) => idx === index ? { ...rate, [field]: value } : rate));
   };
 
-  const handleSave = () => {
-    // In a fully loaded settings context, we'd save to settings API or db.
-    // For now we simulate save and notify.
-    alert('Đã lưu cấu hình Cẩm nang hướng dẫn thành công!');
+  const handleResetDefaults = () => {
+    if (!confirm('Khôi phục nội dung hướng dẫn mặc định?')) return;
+    setSections(defaultSections);
+    setExchangeRates(defaultExchangeRates);
+    setActiveTab(0);
   };
+
+  const handleSave = async () => {
+    try {
+      const res = await fetch(apiUrl('/api/admin/settings'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ guideSections: sections, exchangeRates }),
+      });
+      if (res.ok) {
+        alert('Đã lưu cấu hình Hướng dẫn & Thể lệ thành công.');
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to save guide settings', err);
+    }
+    alert('Không thể lưu cấu hình Hướng dẫn & Thể lệ.');
+  };
+
+  const isRateTab = activeTab === sections.length;
+  const activeSection = sections[activeTab];
 
   return (
     <div className="space-y-5">
-      {/* Page Header */}
-      <section className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+      <section className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e] font-heading">Quản lý giao diện</p>
-          <h2 className="mt-0.5 text-lg font-black text-[#123c34] font-heading">Cấu hình hướng dẫn & Thể lệ</h2>
-          <p className="text-xs text-[#6b7773] mt-0.5">Chỉnh sửa các bước hướng dẫn bình chọn và bảng quy đổi điểm hiển thị trên trang thể lệ công khai.</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">Quản lý giao diện</p>
+          <h2 className="mt-1 text-xl font-black text-slate-900">Cấu hình Hướng dẫn & Thể lệ</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-500">
+            Chỉnh sửa 4 nhóm hướng dẫn bình chọn và bảng quy đổi điểm hiển thị ở trang Hướng dẫn & Thể lệ của website chính.
+          </p>
         </div>
-        <button 
-          onClick={handleSave}
-          className="rounded-lg bg-[#123c34] px-4 py-2 text-xs font-bold text-white shadow transition hover:bg-[#0f766e] active:scale-[0.98] font-heading"
-        >
-          Lưu toàn bộ hướng dẫn
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={handleResetDefaults}
+            className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-black text-slate-600 transition hover:border-emerald-600 hover:text-emerald-700"
+          >
+            Khôi phục mặc định
+          </button>
+          <button
+            onClick={handleSave}
+            className="rounded-xl bg-slate-900 px-4 py-2 text-xs font-black text-white shadow transition hover:bg-emerald-700"
+          >
+            Lưu toàn bộ
+          </button>
+        </div>
       </section>
 
-      {/* Tabs */}
-      <div className="flex border-b border-[#dce5e1] overflow-x-auto gap-1">
-        {sections.map((sec, idx) => (
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex gap-1 overflow-x-auto border-b border-slate-100 px-3 pt-3">
+          {sections.map((section, index) => (
+            <button
+              key={`${section.title}-${index}`}
+              onClick={() => setActiveTab(index)}
+              className={`whitespace-nowrap rounded-t-xl border-b-2 px-4 py-3 text-xs font-black transition ${
+                activeTab === index
+                  ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                  : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-emerald-700'
+              }`}
+            >
+              {section.title}
+            </button>
+          ))}
           <button
-            key={idx}
-            onClick={() => setActiveTab(idx)}
-            className={`px-4 py-2.5 text-xs font-bold transition-all border-b-2 whitespace-nowrap ${
-              activeTab === idx 
-                ? 'border-[#0f766e] text-[#0f766e] bg-white rounded-t-lg' 
-                : 'border-transparent text-[#52605b] hover:text-[#0f766e]'
+            onClick={() => setActiveTab(sections.length)}
+            className={`whitespace-nowrap rounded-t-xl border-b-2 px-4 py-3 text-xs font-black transition ${
+              isRateTab
+                ? 'border-emerald-600 bg-emerald-50 text-emerald-700'
+                : 'border-transparent text-slate-500 hover:bg-slate-50 hover:text-emerald-700'
             }`}
           >
-            {sec.title}
+            Bảng quy đổi điểm
           </button>
-        ))}
-        <button
-          onClick={() => setActiveTab(4)}
-          className={`px-4 py-2.5 text-xs font-bold transition-all border-b-2 whitespace-nowrap ${
-            activeTab === 4 
-              ? 'border-[#0f766e] text-[#0f766e] bg-white rounded-t-lg' 
-              : 'border-transparent text-[#52605b] hover:text-[#0f766e]'
-          }`}
-        >
-          Bảng quy đổi điểm
-        </button>
-      </div>
+        </div>
 
-      {/* Tab Contents */}
-      <div className="rounded-xl border border-[#dce5e1] bg-white p-6 shadow-sm">
-        {activeTab < 4 ? (
-          <div className="space-y-6">
-            <h3 className="text-sm font-black text-[#123c34] uppercase tracking-wider font-heading pb-2 border-b border-[#edf2f0]">
-              {sections[activeTab].title} - Các bước hướng dẫn
-            </h3>
+        <div className="p-5">
+          {!isRateTab && activeSection ? (
+            <div className="space-y-5">
+              <label className="block space-y-1.5">
+                <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Tiêu đề nhóm hướng dẫn</span>
+                <input
+                  value={activeSection.title}
+                  onChange={(event) => handleSectionTitleChange(activeTab, event.target.value)}
+                  className="h-10 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-bold text-slate-900 outline-none focus:border-emerald-600 focus:bg-white"
+                />
+              </label>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {sections[activeTab].steps.map((step, idx) => (
-                <div key={idx} className="rounded-lg border border-[#dce5e1] bg-[#fbfdfc] p-4 space-y-4">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-bold tracking-widest text-[#0f766e] uppercase bg-[#edf8f4] px-2.5 py-1 rounded-full">
-                      Bước {step.number}
-                    </span>
-                  </div>
-
-                  <label className="block space-y-1.5">
-                    <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Mô tả nội dung bước</span>
-                    <textarea
-                      value={step.description}
-                      onChange={(e) => handleStepChange(activeTab, idx, e.target.value)}
-                      className="h-16 w-full resize-none rounded-lg border border-[#dce5e1] bg-white p-2.5 text-xs font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e]"
-                    />
-                  </label>
-
-                  {/* Step Image */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider block">Hình ảnh minh họa</span>
-                    <div className="aspect-[431/244] w-full rounded-md border border-[#dce5e1] bg-[#f4f7f6] overflow-hidden flex items-center justify-center relative">
-                      <img src={step.image} alt={`Bước ${step.number}`} className="w-full h-full object-cover" />
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                {activeSection.steps.map((step, stepIndex) => (
+                  <div key={`${step.number}-${stepIndex}`} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-black uppercase tracking-[0.14em] text-emerald-700">
+                        Bước {step.number}
+                      </span>
                     </div>
-                    
-                    <div className="grid grid-cols-1 gap-2">
+
+                    <label className="block space-y-1.5">
+                      <span className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Nội dung bước</span>
+                      <textarea
+                        value={step.description}
+                        onChange={(event) => handleStepChange(activeTab, stepIndex, event.target.value)}
+                        className="h-24 w-full resize-none rounded-xl border border-slate-200 bg-white p-3 text-xs font-semibold leading-5 text-slate-800 outline-none focus:border-emerald-600"
+                      />
+                    </label>
+
+                    <div className="mt-4 space-y-2">
+                      <span className="block text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">Ảnh minh họa</span>
+                      <div className="aspect-[431/244] overflow-hidden rounded-xl border border-slate-200 bg-white">
+                        {step.image ? (
+                          <img src={formatAssetUrl(step.image)} alt={`Bước ${step.number}`} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="grid h-full place-items-center text-xs font-semibold text-slate-400">Chưa có ảnh</div>
+                        )}
+                      </div>
                       <input
-                        type="text"
                         value={step.image}
-                        onChange={(e) => handleStepImageChange(activeTab, idx, e.target.value)}
-                        className="h-8 w-full rounded-lg border border-[#dce5e1] bg-white px-2.5 text-[11px] font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e]"
+                        onChange={(event) => handleStepImageChange(activeTab, stepIndex, event.target.value)}
+                        className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 outline-none focus:border-emerald-600"
                         placeholder="Đường dẫn ảnh"
                       />
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => handleStepFileUpload(activeTab, idx, e)}
-                        className="w-full text-[11px] text-[#52605b] file:mr-2 file:py-1 file:px-2.5 file:rounded file:border-0 file:text-[10px] file:font-bold file:bg-[#123c34] file:text-white hover:file:bg-[#0f766e] cursor-pointer"
+                        onChange={(event) => handleStepFileUpload(activeTab, stepIndex, event)}
+                        className="w-full text-xs text-slate-500 file:mr-3 file:rounded-lg file:border-0 file:bg-slate-900 file:px-3 file:py-2 file:text-xs file:font-black file:text-white hover:file:bg-emerald-700"
                       />
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-5">
-            <h3 className="text-sm font-black text-[#123c34] uppercase tracking-wider font-heading pb-2 border-b border-[#edf2f0]">
-              Bảng quy đổi điểm & Giá trị quy đổi
-            </h3>
+          ) : (
+            <div className="space-y-5">
+              <div>
+                <h3 className="text-base font-black text-slate-900">Bảng quy đổi điểm</h3>
+                <p className="mt-1 text-xs text-slate-500">Các giá trị này hiển thị ở trang Hướng dẫn & Thể lệ công khai.</p>
+              </div>
 
-            <div className="overflow-hidden rounded-lg border border-[#dce5e1]">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-[#f4f7f6] text-[10px] font-black uppercase tracking-wider border-b border-[#dce5e1] text-[#7a8b85]">
-                    <th className="py-3 px-5">Gói bình chọn (Điểm số)</th>
-                    <th className="py-3 px-5">Giá trị quy đổi (VND / Miễn phí)</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#edf2f0] text-xs">
-                  {exchangeRates.map((rate, idx) => (
-                    <tr key={idx} className="hover:bg-[#edf4f1]/20">
-                      <td className="py-2.5 px-5">
-                        <input
-                          type="text"
-                          value={rate.points}
-                          onChange={(e) => handleRateChange(idx, 'points', e.target.value)}
-                          className="h-8 w-full max-w-[200px] rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-2.5 text-xs font-bold text-[#123c34] outline-none transition focus:border-[#0f766e]"
-                        />
-                      </td>
-                      <td className="py-2.5 px-5">
-                        <input
-                          type="text"
-                          value={rate.price}
-                          onChange={(e) => handleRateChange(idx, 'price', e.target.value)}
-                          className="h-8 w-full max-w-[300px] rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-2.5 text-xs font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e]"
-                        />
-                      </td>
+              <div className="overflow-hidden rounded-2xl border border-slate-200">
+                <table className="w-full border-collapse text-left">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                      <th className="px-5 py-3">Gói bình chọn</th>
+                      <th className="px-5 py-3">Giá trị quy đổi</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-xs">
+                    {exchangeRates.map((rate, index) => (
+                      <tr key={index} className="hover:bg-emerald-50/40">
+                        <td className="px-5 py-3">
+                          <input
+                            value={rate.points}
+                            onChange={(event) => handleRateChange(index, 'points', event.target.value)}
+                            className="h-9 w-full max-w-[220px] rounded-xl border border-slate-200 bg-white px-3 font-bold text-slate-900 outline-none focus:border-emerald-600"
+                          />
+                        </td>
+                        <td className="px-5 py-3">
+                          <input
+                            value={rate.price}
+                            onChange={(event) => handleRateChange(index, 'price', event.target.value)}
+                            className="h-9 w-full max-w-[320px] rounded-xl border border-slate-200 bg-white px-3 font-semibold text-slate-800 outline-none focus:border-emerald-600"
+                          />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
-      </div>
-
+          )}
+        </div>
+      </section>
     </div>
   );
 }

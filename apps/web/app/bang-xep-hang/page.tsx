@@ -141,15 +141,15 @@ export default function RankingPage() {
     c.name.toLowerCase().includes(search.toLowerCase()) || c.sbd.includes(search)
   );
 
-  const top5 = sortedCandidates.slice(0, 5);
-  // Order for staggered display: Rank 4, Rank 3, Rank 1, Rank 2, Rank 5
-  const podiumOrder = [3, 2, 0, 1, 4];
-  const orderedTop5 = podiumOrder
-    .map(idx => top5[idx])
+  const top3 = sortedCandidates.slice(0, 3);
+  // Order for staggered display: Rank 2, Rank 1, Rank 3
+  const podiumOrder = [1, 0, 2];
+  const orderedTop3 = podiumOrder
+    .map(idx => top3[idx])
     .filter(c => c !== undefined);
 
   const renderProjectCard = (c: Candidate, rank: number, featured = false, animationDelay = '0ms') => {
-    const rankLabel = rank === 1 ? 'Dẫn đầu' : rank <= 3 ? `Top ${rank}` : `Hạng ${rank}`;
+    const rankLabel = rank <= 3 ? `Top ${rank}` : `Hạng ${rank}`;
     const rankTone =
       rank === 1
         ? 'from-[#FFE066] to-[#F59E0B] text-[#1B1600]'
@@ -199,7 +199,7 @@ export default function RankingPage() {
               </div>
             </div>
 
-            <p className="mt-3 line-clamp-2 min-h-[42px] text-[14px] leading-relaxed text-white/72">
+            <p className="mt-3 line-clamp-2 min-h-[42px] text-[14px] leading-relaxed text-white/72 text-justify">
               {c.description || 'Thông tin giới thiệu dự án đang được cập nhật.'}
             </p>
 
@@ -376,7 +376,7 @@ export default function RankingPage() {
               ) : (
                 <>
                   {/* Featured ranking cards */}
-                  {!search && orderedTop5.length > 0 && (
+                  {!search && orderedTop3.length > 0 && (
                     <div ref={podiumSection.ref} className="w-full max-w-[1360px] mx-auto px-4 mb-14 mt-8">
                       <div className="mb-6 flex flex-col gap-2 text-center">
                         <p className={`text-[12px] font-bold uppercase tracking-[0.28em] text-[#79BCC2] ${podiumSection.visible ? 'anim-up' : ''}`}>
@@ -387,7 +387,7 @@ export default function RankingPage() {
                         </h3>
                       </div>
                       <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                        {orderedTop5.map((c, idx) => {
+                        {orderedTop3.map((c, idx) => {
                           const originalRank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
                           return renderProjectCard(c, originalRank, true, `${idx * 110}ms`);
                         })}

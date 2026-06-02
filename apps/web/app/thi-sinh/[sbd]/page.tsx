@@ -1,38 +1,27 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Candidate } from '@huitfest/shared';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Candidate, VotePackage, WebUser } from '@huitfest/shared';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAlert } from '../../AlertProvider';
 import { apiUrl } from '../../api';
 
-interface CandidateExtendedDetails {
-  birthYear: string;
-  department: string;
-  height: string;
-  weight: string;
-  measurements: string;
-  rank: number;
+function formatMoney(value: number) {
+  if (!value) return 'Miễn phí';
+  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
 }
 
-const CANDIDATE_METADATA_MAP: Record<string, CandidateExtendedDetails> = {
-  '085': { birthYear: '2005', department: 'QUẢN TRỊ KINH DOANH', height: '174 cm', weight: '65 kg', measurements: '93-80-98', rank: 1 },
-  '089': { birthYear: '2004', department: 'CÔNG NGHỆ THÔNG TIN', height: '178 cm', weight: '68 kg', measurements: '95-82-96', rank: 2 },
-  '024': { birthYear: '2005', department: 'NGOẠI NGỮ', height: '165 cm', weight: '48 kg', measurements: '86-60-90', rank: 3 },
-  '096': { birthYear: '2004', department: 'CÔNG NGHỆ THỰC PHẨM', height: '180 cm', weight: '72 kg', measurements: '96-84-97', rank: 4 },
-  '018': { birthYear: '2005', department: 'TÀI CHÍNH NGÂN HÀNG', height: '168 cm', weight: '50 kg', measurements: '88-62-92', rank: 5 },
-  '095': { birthYear: '2005', department: 'LUẬT', height: '163 cm', weight: '46 kg', measurements: '84-59-88', rank: 6 },
-};
-
-const LOCAL_MOCK_CANDIDATES: Candidate[] = [
-  { id: '1', sbd: '085', name: 'Nguyễn Thanh Tân', votes: 106100, imageUrl: '/original_assets/image389b.png', description: 'Thí sinh tài năng của HUIT\'s Iconic 2024.' },
-  { id: '2', sbd: '089', name: 'Nguyễn Đình Tú', votes: 62215, imageUrl: '/original_assets/image725f.png', description: 'Chiến binh bản lĩnh mang màu sắc nhiệt huyết.' },
-  { id: '3', sbd: '024', name: 'Lê Ngọc Yến Vy', votes: 22800, imageUrl: '/original_assets/image940e.jpg', description: 'Đại diện cho vẻ đẹp tri thức và sự duyên dáng.' },
-  { id: '4', sbd: '096', name: 'Võ Bá Thiện', votes: 20590, imageUrl: '/original_assets/image8681.png', description: 'Nụ cười tỏa nắng cùng trái tim ấm áp.' },
-  { id: '5', sbd: '018', name: 'Trần Tuyết Ngân', votes: 16070, imageUrl: '/original_assets/imageada2.png', description: 'Gương mặt cá tính đầy bứt phá.' },
-  { id: '6', sbd: '095', name: 'Nguyễn Thị Cẩm Thanh', votes: 8410, imageUrl: '/original_assets/image4706.png', description: 'Sự kết hợp hoàn hảo giữa năng động và dịu dàng.' },
-];
+function getStoredUser(): WebUser | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem('huit_web_user');
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
 
 export default function CandidateDetailPage() {
   const { showAlert } = useAlert();
@@ -40,413 +29,217 @@ export default function CandidateDetailPage() {
   const sbd = params.sbd as string;
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
-  const [candidatesList, setCandidatesList] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
+  const [packages, setPackages] = useState<VotePackage[]>([]);
+  const [selectedPackageId, setSelectedPackageId] = useState('free-5');
   const [isLoading, setIsLoading] = useState(true);
-  const [copyText, setCopyText] = useState('SAO CHÉP');
-  const [copied, setCopied] = useState(false);
-
+  const [isVoting, setIsVoting] = useState(false);
   const [settings, setSettings] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<WebUser | null>(null);
 
   useEffect(() => {
+    setCurrentUser(getStoredUser());
+
     async function loadData() {
       setIsLoading(true);
-      try {
-        const res = await fetch(apiUrl(`/api/candidates`));
-        if (res.ok) {
-          const list = await res.json();
-          setCandidatesList(list);
-          const found = list.find((c: Candidate) => c.sbd === sbd);
-          if (found) {
-            setCandidate(found);
-            setIsLoading(false);
-            return;
-          }
-        }
-      } catch (err) {
-        console.log('NestJS Backend API offline, using local mock candidate detail.');
+      const [candidateRes, packageRes, settingsRes] = await Promise.all([
+        fetch(apiUrl(`/api/candidates/${sbd}`)),
+        fetch(apiUrl('/api/voting/packages')),
+        fetch(apiUrl('/api/settings')),
+      ]);
+
+      if (candidateRes.ok) setCandidate(await candidateRes.json());
+      if (packageRes.ok) {
+        const data = await packageRes.json();
+        setPackages(data);
+        setSelectedPackageId(data[0]?.id || 'free-5');
       }
-      
-      const found = LOCAL_MOCK_CANDIDATES.find(c => c.sbd === sbd);
-      setCandidate(found || null);
+      if (settingsRes.ok) setSettings(await settingsRes.json());
       setIsLoading(false);
     }
-    loadData();
 
-    // Poll candidate scores and list
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(apiUrl(`/api/candidates`));
-        if (res.ok) {
-          const list = await res.json();
-          setCandidatesList(list);
-          const found = list.find((c: Candidate) => c.sbd === sbd);
-          if (found) {
-            setCandidate(found);
-          }
-        }
-      } catch (err) {
-        console.log('Poll detail candidates failed');
-      }
-    }, 10000);
-    return () => clearInterval(interval);
+    loadData().catch(() => setIsLoading(false));
   }, [sbd]);
 
-  useEffect(() => {
-    async function loadSettings() {
-      try {
-        const res = await fetch(apiUrl('/api/settings'));
-        if (res.ok) {
-          const data = await res.json();
-          setSettings(data);
-        }
-      } catch (err) {
-        console.log('Load settings failed');
-      }
-    }
-    loadSettings();
-    const interval = setInterval(loadSettings, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const selectedPackage = useMemo(
+    () => packages.find((item) => item.id === selectedPackageId) || packages[0],
+    [packages, selectedPackageId]
+  );
 
-  const isGateCurrentlyOpen = () => {
+  const isGateOpen = useMemo(() => {
     if (!settings) return true;
     if (!settings.isGateOpen) return false;
-    
     const now = new Date();
     const start = new Date(settings.startDate);
     const end = new Date(settings.endDate);
     return now >= start && now <= end;
-  };
+  }, [settings]);
 
   const handleVote = async () => {
-    if (!candidate) return;
-    if (!isGateCurrentlyOpen()) {
-      showAlert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!", "warning", "Cổng bình chọn");
+    if (!candidate || !selectedPackage) return;
+    if (!isGateOpen) {
+      showAlert('Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng.', 'warning', 'Cổng bình chọn');
       return;
     }
+
+    if (selectedPackage.packageType === 'FREE' && !currentUser) {
+      showAlert('Bạn cần đăng nhập để sử dụng lượt bình chọn miễn phí hằng ngày.', 'info', 'Yêu cầu đăng nhập');
+      window.location.href = `/dang-nhap?redirect=/thi-sinh/${candidate.sbd}`;
+      return;
+    }
+
+    setIsVoting(true);
     try {
-      const res = await fetch(apiUrl(`/api/candidates/${candidate.sbd}/vote`), {
+      const res = await fetch(apiUrl(`/api/voting/candidates/${candidate.sbd}`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: '0987654321' }),
+        body: JSON.stringify({
+          packageId: selectedPackage.id,
+          userId: currentUser?.id,
+          phone: currentUser?.phone,
+          eventId: 'thi-sinh-duoc-yeu-thich-nhat',
+        }),
       });
-      if (res.ok) {
-        const updated = await res.json();
-        setCandidate(updated);
-        showAlert(`Bình chọn thành công cho ${updated.name}!`, "success", "Bình chọn thành công");
-        return;
-      }
-    } catch (err) {
-      console.log('NestJS Backend API offline, executing client-side mock vote.');
-    }
 
-    setCandidate(prev => prev ? { ...prev, votes: prev.votes + 1 } : null);
-    showAlert(`Bình chọn offline thành công cho ${candidate.name}!`, "success", "Bình chọn thành công");
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || 'Không thể bình chọn.');
+
+      setCandidate(data.candidate);
+      showAlert(
+        `Đã cộng ${selectedPackage.points.toLocaleString()} điểm cho dự án ${data.candidate.name}.`,
+        'success',
+        selectedPackage.packageType === 'FREE' ? 'Bình chọn thành công' : 'Thanh toán thành công'
+      );
+    } catch (error: any) {
+      showAlert(error.message || 'Không thể bình chọn.', 'error', 'Lỗi bình chọn');
+    } finally {
+      setIsVoting(false);
+    }
   };
 
-  const handleCopyLink = () => {
-    if (typeof window !== 'undefined') {
-      navigator.clipboard.writeText(window.location.href);
-      setCopyText('ĐÃ SAO CHÉP!');
-      setCopied(true);
-      setTimeout(() => {
-        setCopyText('SAO CHÉP');
-        setCopied(false);
-      }, 2000);
-    }
+  const copyLink = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    showAlert('Đã sao chép đường dẫn dự án.', 'success', 'Chia sẻ');
   };
 
   if (isLoading) {
-    return (
-      <div className="w-full flex-1 flex justify-center items-center py-20 text-white">
-        Đang tải thông tin thí sinh...
-      </div>
-    );
+    return <main className="min-h-[60vh] bg-[#f6faf8] px-4 py-12 text-center text-sm font-semibold text-[#52605b]">Đang tải hồ sơ dự án...</main>;
   }
 
   if (!candidate) {
     return (
-      <div className="w-full flex-1 flex flex-col justify-center items-center py-20 text-white/60">
-        <h3 className="text-[20px] font-bold">Không tìm thấy thí sinh</h3>
-        <Link href="/" className="text-secondary hover:underline mt-4 text-[14px]">Quay lại trang chủ</Link>
-      </div>
+      <main className="min-h-[60vh] bg-[#f6faf8] px-4 py-12 text-center">
+        <h1 className="text-xl font-black text-[#123c34]">Không tìm thấy dự án</h1>
+        <Link href="/" className="mt-4 inline-block text-sm font-bold text-[#0f766e]">Quay lại trang chủ</Link>
+      </main>
     );
   }
 
-  // Get rank dynamically from current scores list
-  const sorted = [...candidatesList].sort((a, b) => b.votes - a.votes);
-  const currentRank = sorted.findIndex(c => c.sbd === candidate.sbd) + 1;
-
-  // Retrieve metadata
-  const meta = CANDIDATE_METADATA_MAP[candidate.sbd] || {
-    birthYear: '2005',
-    department: 'QUẢN TRỊ KINH DOANH',
-    height: '172 cm',
-    weight: '60 kg',
-    measurements: '90-75-92',
-    rank: currentRank
-  };
-
   return (
-    <>
-      <style>{`
-        @media (min-width: 812px) {
-          .iUzfqH {
-            background-image: url(/media-platform.1vote.vn/uploads/tAtj0/1727187460437.jpg);
-            background-color: white;
-            background-attachment: fixed;
-            background-size: cover;
-            background-repeat: no-repeat;
-          }
-        }
-      `}</style>
-
-      <main className="sc-908a50-0 iUzfqH flex-1 pb-[100px]">
-        <div className="sc-1a037b37-0 hfAPBN relative">
-          <div className="pt-0 pb-4 mt-4 sm:mt-8 flex flex-col md:flex-row gap-4 md:gap-0 md:space-x-[113px] justify-center">
-            
-            {/* Candidate image */}
-            <div className="w-full md:w-[533px] lg:w-[577px] md:flex">
-              <div className="w-full">
-                <div className="relative flex justify-center">
-                  <div className="relative w-[100vw] max-w-full h-[calc(100vw/533*711)] md:w-[533px] sm:h-[100vw] md:h-[711px] overflow-hidden rounded-[20px]">
-                    <img 
-                      alt="Avatar" 
-                      className="rounded-[20px] transition-all duration-[700ms] object-cover object-top opacity-100 scale-100 w-full h-full" 
-                      src={candidate.imageUrl}
-                    />
-                  </div>
+    <main className="bg-[#f6faf8] pb-28">
+      <section className="bg-[#123c34] px-4 py-8 text-white">
+        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[420px_1fr]">
+          <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+            <img src={candidate.imageUrl} alt={candidate.name} className="aspect-[4/3] w-full object-cover" />
+          </div>
+          <div className="flex flex-col justify-center">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#79d4bd]">Hồ sơ dự án HUIT Startup 2026</p>
+            <h1 className="mt-3 text-3xl font-black leading-tight md:text-4xl">{candidate.name}</h1>
+            <p className="mt-4 max-w-3xl text-sm leading-6 text-white/75">{candidate.description}</p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-4">
+              {[
+                ['Mã dự án', candidate.sbd],
+                ['Bảng thi', candidate.contestTableLabel || candidate.contestTable || 'Chưa phân bảng'],
+                ['Vòng hiện tại', candidate.currentRound || 'Vòng loại'],
+                ['Điểm bình chọn', candidate.votes.toLocaleString()],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/45">{label}</p>
+                  <p className="mt-1 text-sm font-black">{value}</p>
                 </div>
-              </div>
+              ))}
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Profile specifications */}
-            <div className="gap-3 flex flex-col justify-between">
-              <div>
-                {/* Wreath Rank Wreath */}
-                <div className="flex h-[64px] gap-3 md:h-[100px] md:gap-4 mb-4">
-                  <div className="relative">
-                    <div className="hidden sm:block w-[71.5px] sm:w-[100px]">
-                      <img alt="" className="block dark:hidden" src="/original_assets/static/media/laurel-light-big.58ee16d9.svg"/>
-                      <img alt="" className="hidden dark:block" src="/original_assets/static/media/laurel-dark-big.6d9a838c.svg"/>
-                    </div>
-                    <div className="block sm:hidden w-[71.5px]">
-                      <img alt="" className="block dark:hidden" src="/original_assets/static/media/laurel-light-small.27b47318.svg"/>
-                      <img alt="" className="hidden dark:block" src="/original_assets/static/media/laurel-dark-small.e0887cc3.svg"/>
-                    </div>
-                    <div className="hidden sm:block absolute w-full text-center top-[20px]">
-                      <h3 className="text-h3 text-grey-darkGrey dark:text-grey-lightGrey2">{currentRank}</h3>
-                    </div>
-                    <div className="block sm:hidden absolute w-full text-center top-[18px]">
-                      <span className="text-grey-darkGrey dark:text-grey-lightGrey2 text-[24px] font-semibold leading-[120%] tracking-[-0.48px]">{currentRank}</span>
-                    </div>
-                  </div>
+      <section className="mx-auto grid max-w-6xl gap-5 px-4 py-6 lg:grid-cols-[1fr_360px]">
+        <div className="space-y-5">
+          <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-black text-[#123c34]">Thông tin nhóm dự thi</h2>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {[
+                ['Tên nhóm', candidate.teamName || 'Chưa cập nhật'],
+                ['Trưởng nhóm', candidate.leaderName || 'Chưa cập nhật'],
+                ['Đơn vị / trường', candidate.representativeSchool || 'Chưa cập nhật'],
+                ['Lĩnh vực', candidate.sector || 'Chưa cập nhật'],
+                ['Email liên hệ', candidate.leaderEmail || 'Chưa cập nhật'],
+                ['Số điện thoại', candidate.leaderPhone || 'Chưa cập nhật'],
+                ['Cố vấn', candidate.advisorName || 'Chưa cập nhật'],
+                ['Trạng thái', candidate.status || 'Đang cập nhật'],
+              ].map(([label, value]) => (
+                <div key={label} className="rounded-lg bg-[#fbfdfc] p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7a8b85]">{label}</p>
+                  <p className="mt-1 text-sm font-bold text-[#123c34]">{value}</p>
                 </div>
+              ))}
+            </div>
+          </div>
 
-                <div className="flex flex-col space-y-[6px]">
-                  <p className="text-[14px] text-grey-lightGrey1 leading-[24px] tracking-wide">Thí sinh HUIT's Iconic</p>
-                  <h3 className="text-[28px] sm:text-[34px] font-extrabold text-neutral-neutral1 dark:text-white leading-tight">
-                    {candidate.name}
-                  </h3>
-                </div>
+          <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm">
+            <h2 className="text-lg font-black text-[#123c34]">Thuyết minh dự án</h2>
+            <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#52605b]">{candidate.biography || candidate.description}</p>
+          </div>
 
-                <div className="flex flex-col space-y-[6px] mt-4">
-                  <p className="text-[14px] text-grey-lightGrey1 leading-[24px] tracking-wide">Tổng điểm</p>
-                  <h4 className="text-[24px] sm:text-[30px] font-bold text-rose-600 dark:text-blue-500">
-                    {candidate.votes.toLocaleString()}
-                  </h4>
-                </div>
+          <div className="grid gap-5 md:grid-cols-2">
+            <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm">
+              <h3 className="font-black text-[#123c34]">Nhu cầu hỗ trợ</h3>
+              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#52605b]">{candidate.supportNeeds || 'Chưa cập nhật nhu cầu hỗ trợ.'}</p>
+            </div>
+            <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm">
+              <h3 className="font-black text-[#123c34]">Kỳ vọng sau cuộc thi</h3>
+              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#52605b]">{candidate.expectations || 'Chưa cập nhật kỳ vọng.'}</p>
+            </div>
+          </div>
+        </div>
 
-                {/* Profile table */}
-                <div className="flex flex-col space-y-2 mt-6">
-                  <p className="text-[16px] font-semibold text-neutral-neutral1 dark:text-white mt-1 border-b border-white/5 pb-2">
-                    Thông tin
-                  </p>
-                  <div className="space-y-2 text-[14px] text-neutral-neutral1 dark:text-white">
-                    <div className="flex space-x-1.5">
-                      <div className="w-[113px] text-white/60">SBD</div>
-                      <p>:</p>
-                      <p className="flex-1 font-bold">{candidate.sbd}</p>
-                    </div>
-                    <div className="flex space-x-1.5">
-                      <div className="w-[113px] text-white/60">Năm sinh</div>
-                      <p>:</p>
-                      <p className="flex-1">{meta.birthYear}</p>
-                    </div>
-                    <div className="flex space-x-1.5">
-                      <div className="w-[113px] text-white/60">Khoa</div>
-                      <p>:</p>
-                      <p className="flex-1">{meta.department}</p>
-                    </div>
-                    <div className="flex space-x-1.5">
-                      <div className="w-[113px] text-white/60">Chiều cao</div>
-                      <p>:</p>
-                      <p className="flex-1">{meta.height}</p>
-                    </div>
-                    <div className="flex space-x-1.5">
-                      <div className="w-[113px] text-white/60">Cân nặng</div>
-                      <p>:</p>
-                      <p className="flex-1">{meta.weight}</p>
-                    </div>
-                    <div className="flex space-x-1.5">
-                      <div className="w-[113px] text-white/60">Số đo 3 vòng</div>
-                      <p>:</p>
-                      <p className="flex-1">{meta.measurements}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Share box links */}
-              <div className="flex mt-6 md:items-center px-4 py-3 bg-grey-lightGrey3 dark:bg-grey-dimGrey rounded-xl flex-col md:flex-row gap-3 border border-white/5 max-w-[562px]">
-                <div className="flex-1">
-                  <p className="text-[13px] text-black dark:text-white leading-snug">
-                    Chia sẻ đường dẫn bình chọn tới người hâm mộ!
-                  </p>
-                </div>
-                <button 
-                  onClick={handleCopyLink}
-                  className="bg-transparent border-0 cursor-pointer flex space-x-2 items-center hover:opacity-85"
+        <aside className="space-y-4">
+          <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#0f766e]">Thí sinh được yêu thích nhất</p>
+            <h2 className="mt-2 text-lg font-black text-[#123c34]">Bình chọn cho dự án</h2>
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              {packages.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setSelectedPackageId(item.id)}
+                  className={`rounded-lg border p-3 text-left transition ${selectedPackageId === item.id ? 'border-[#e45136] bg-[#fff5f2]' : 'border-[#dce5e1] bg-[#fbfdfc] hover:border-[#0f766e]'}`}
                 >
-                  <p className={`text-[14px] font-bold text-black dark:text-white ${copied ? 'text-green-400' : ''}`}>
-                    {copyText}
-                  </p>
-                  <div className="fill-neutral-neutral1 dark:fill-neutral-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 25 24">
-                      <path d="M15.5 1H4.5C3.4 1 2.5 1.9 2.5 3V16C2.5 16.55 2.95 17 3.5 17C4.05 17 4.5 16.55 4.5 16V4C4.5 3.45 4.95 3 5.5 3H15.5C16.05 3 16.5 2.55 16.5 2C16.5 1.45 16.05 1 15.5 1ZM19.5 5H8.5C7.4 5 6.5 5.9 6.5 7V21C6.5 22.1 7.4 23 8.5 23H19.5C20.6 23 21.5 22.1 21.5 21V7C21.5 5.9 20.6 5 19.5 5ZM18.5 21H9.5C8.95 21 8.5 20.55 8.5 20V8C8.5 7.45 8.95 7 9.5 7H18.5C19.05 7 19.5 7.45 19.5 8V20C19.5 20.55 19.05 21 18.5 21Z" fill="currentColor"></path>
-                    </svg>
-                  </div>
+                  <p className="text-sm font-black text-[#123c34]">{item.points.toLocaleString()} điểm</p>
+                  <p className="mt-1 text-xs font-bold text-[#e45136]">{formatMoney(item.price)}</p>
                 </button>
-              </div>
-
+              ))}
             </div>
-          </div>
-        </div>
-
-        {/* Voting history of candidate */}
-        <div className="w-full h-[1px] bg-white/5 my-8"></div>
-
-        <div className="sc-1a037b37-0 ekqPrV relative">
-          <div className="py-3 md:px-8">
-            <h2 className="text-[22px] sm:text-[28px] text-center font-bold text-neutral-neutral1 dark:text-white uppercase tracking-wider">
-              Lịch sử bình chọn
-            </h2>
-            <h5 className="text-[14px] text-center mt-2 capitalize font-bold text-neutral-neutral1 dark:text-neutral-white">
-              {candidate.name}
-            </h5>
-            <p className="text-[12px] text-center mt-1 leading-[24px] uppercase text-white/50 tracking-wider">
-              HUIT's Iconic
-            </p>
-
-            <div className="flex flex-col md:flex-row gap-6 mt-8 md:justify-center items-start">
-              
-              {/* Left: Transaction table */}
-              <div className="flex flex-col w-full md:max-w-[586px]">
-                <div className="flex justify-center">
-                  <div className="rounded-lg overflow-hidden w-full md:w-[989px] border border-white/10">
-                    
-                    <div className="p-3 flex bg-[rgba(255,255,255,0.06)] border-b border-white/5 font-semibold text-[13px] text-white">
-                      <div className="flex-1">Mã giao dịch</div>
-                      <div className="flex-1">Thời gian</div>
-                    </div>
-                    
-                    <div className="bg-[#1C1F25]/40 divide-y divide-white/5 text-[14px] text-white/80">
-                      <div className="p-3 flex">
-                        <div className="flex-1">fB***13</div>
-                        <div className="flex-1">24/11/2024 19:40</div>
-                      </div>
-                      <div className="p-3 flex">
-                        <div className="flex-1">L0***qa</div>
-                        <div className="flex-1">24/11/2024 17:43</div>
-                      </div>
-                      <div className="p-3 flex">
-                        <div className="flex-1">up***4Q</div>
-                        <div className="flex-1">24/11/2024 16:37</div>
-                      </div>
-                      <div className="p-3 flex">
-                        <div className="flex-1">ca***R1</div>
-                        <div className="flex-1">24/11/2024 14:31</div>
-                      </div>
-                      <div className="p-3 flex">
-                        <div className="flex-1">Ak***F5</div>
-                        <div className="flex-1">24/11/2024 14:30</div>
-                      </div>
-                    </div>
-
-                  </div>
-                </div>
+            <div className="mt-4 rounded-lg bg-[#fbfdfc] p-4">
+              <div className="flex justify-between text-sm">
+                <span className="font-bold text-[#52605b]">Thành tiền</span>
+                <span className="font-black text-[#123c34]">{formatMoney(selectedPackage?.price || 0)}</span>
               </div>
-
-              {/* Right: Ad banner */}
-              <div className="flex mobile:w-full mobile:justify-center flex-shrink-0">
-                <a className="focus:outline-none max-w-[282px] block" target="_blank" rel="noopener noreferrer" href="https://eventistax.com/">
-                  <img alt="ads-banner" className="w-full rounded-lg border border-white/5" src="/original_assets/image98dd.png"/>
-                </a>
-              </div>
-
+              <p className="mt-2 text-[11px] leading-5 text-[#7a8b85]">Giá hiển thị đã bao gồm VAT 10%. Gói miễn phí yêu cầu đăng nhập và được cấp theo ngày cho mỗi tài khoản.</p>
             </div>
+            <button onClick={handleVote} disabled={isVoting || !isGateOpen} className="mt-4 h-11 w-full rounded-lg bg-[#e45136] text-sm font-black text-white shadow transition hover:bg-[#c83f28] disabled:cursor-not-allowed disabled:opacity-60">
+              {isVoting ? 'Đang xử lý...' : selectedPackage?.packageType === 'FREE' ? 'Bình chọn miễn phí' : 'Thanh toán và bình chọn'}
+            </button>
+            {!currentUser && selectedPackage?.packageType === 'FREE' && (
+              <Link href={`/dang-nhap?redirect=/thi-sinh/${candidate.sbd}`} className="mt-3 block text-center text-xs font-bold text-[#0f766e]">
+                Đăng nhập ngay để dùng lượt miễn phí
+              </Link>
+            )}
           </div>
-        </div>
 
-        {/* Floating sticky bottom actions bar */}
-        <div className="fixed bottom-0 left-0 right-0 z-20 bg-primary dark:bg-white border-t border-white/10 dark:border-black/10">
-          <div className="sc-1a037b37-0 ekqPrV">
-            <div className="h-[90px] flex items-center justify-between px-4">
-              
-              {/* Left Column: Avatar & Name */}
-              <div className="hidden sm:flex flex-1 space-x-4">
-                <div className="relative w-10 h-10 rounded-[64px] overflow-hidden border border-white/20">
-                  <img alt="Avatar" className="object-cover object-top w-full h-full" src={candidate.imageUrl}/>
-                </div>
-                <div className="flex flex-col justify-center text-[13px]">
-                  <p className="text-grey-lightGrey2 dark:text-neutral-neutral1/60 leading-none">Thí sinh</p>
-                  <p className="capitalize text-neutral-white dark:text-neutral-neutral1 font-bold mt-1 text-[15px] leading-none">
-                    {candidate.name}
-                  </p>
-                </div>
-              </div>
-
-              {/* Middle Column: Votes count */}
-              <div className="hidden md:flex flex-1 justify-between items-center">
-                <div className="flex-1 flex flex-col items-center justify-center text-[13px]">
-                  <p className="text-grey-lightGrey2 dark:text-neutral-neutral1/60 leading-none">Tổng điểm</p>
-                  <h5 className="text-neutral-white font-bold dark:text-neutral-neutral1 mt-1 text-[18px] leading-none">
-                    {candidate.votes.toLocaleString()}
-                  </h5>
-                </div>
-              </div>
-
-              {/* Right Column: Vote Button */}
-              <button 
-                onClick={handleVote}
-                className={`sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 text-neutral-neutral1 dark:text-white rounded-lg h-[50px] w-full sm:w-[200px] border-0 cursor-pointer transition-all font-semibold ${
-                  isGateCurrentlyOpen() 
-                    ? 'bg-white dark:bg-primary hover:opacity-90 active:scale-[0.98]' 
-                    : 'bg-slate-700/50 cursor-not-allowed opacity-50'
-                }`}
-              >
-                <p className={`text-[15px] uppercase tracking-wider font-bold ${
-                  isGateCurrentlyOpen() ? '' : 'text-slate-400'
-                }`}>
-                  {isGateCurrentlyOpen() ? 'Bình chọn' : 'Đã đóng'}
-                </p>
-                {isGateCurrentlyOpen() && (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="21" height="20" viewBox="0 0 21 20" fill="currentColor">
-                    <path d="M17.8172 10.4425L12.1922 16.0675C12.0749 16.1848 11.9159 16.2507 11.75 16.2507C11.5841 16.2507 11.4251 16.1848 11.3078 16.0675C11.1905 15.9503 11.1247 15.7912 11.1247 15.6253C11.1247 15.4595 11.1905 15.3004 11.3078 15.1832L15.8664 10.6253H3.625C3.45924 10.6253 3.30027 10.5595 3.18306 10.4423C3.06585 10.3251 3 10.1661 3 10.0003C3 9.83459 3.06585 9.67562 3.18306 9.55841C3.30027 9.4412 3.45924 9.37535 3.625 9.37535H15.8664L11.3078 4.81753C11.1905 4.70026 11.1247 4.5412 11.1247 4.37535C11.1247 4.2095 11.1905 4.05044 11.3078 3.93316C11.4251 3.81588 11.5841 3.75 11.75 3.75C11.9159 3.75 12.0749 3.81588 12.1922 3.93316L17.8172 9.55816C17.8753 9.61621 17.9214 9.68514 17.9529 9.76101C17.9843 9.83688 18.0005 9.91821 18.0005 10.0003C18.0005 10.0825 17.9843 10.1638 17.9529 10.2397C17.9214 10.3156 17.8753 10.3845 17.8172 10.4425Z"></path>
-                  </svg>
-                )}
-              </button>
-
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile Background bottom overlay */}
-        <div className="fixed left-0 top-0 right-0 supports-[height:100cqh]:h-[100cqh] supports-[height:100dvh]:h-[100dvh] sm:hidden -z-50">
-          <img alt="" className="absolute top-0 max-w-[1920px] max-h-[1080px] h-[1920px] w-[1080px]" src="/original_assets/image87ce.jpg"/>
-        </div>
-
-      </main>
-    </>
+          <button onClick={copyLink} className="h-11 w-full rounded-lg border border-[#dce5e1] bg-white text-sm font-bold text-[#123c34] hover:border-[#0f766e]">
+            Sao chép liên kết dự án
+          </button>
+        </aside>
+      </section>
+    </main>
   );
 }

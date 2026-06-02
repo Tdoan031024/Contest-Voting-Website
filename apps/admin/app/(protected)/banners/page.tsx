@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Banner } from '@huitfest/shared';
-import { apiUrl } from '../../api';
+import { apiUrl, formatAssetUrl } from '../../api';
 
 type AdminBanner = Banner & {
   isActive?: boolean;
@@ -54,9 +54,9 @@ function BannerModal({
             <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider block">Xem trước hiển thị</span>
             <div className="overflow-hidden rounded-lg border border-[#dce5e1] bg-[#f4f7f6] flex-1 flex items-center justify-center min-h-[220px] md:min-h-[280px]">
               {formImageUrl && formImageUrl.toLowerCase().endsWith('.mp4') ? (
-                <video src={formImageUrl} controls className="max-h-[280px] w-full object-contain rounded-md shadow-sm" />
+                <video src={formatAssetUrl(formImageUrl)} controls className="max-h-[280px] w-full object-contain rounded-md shadow-sm" />
               ) : (
-                <img src={formImageUrl || '/original_assets/image974c.jpg'} alt="Xem trước" className="max-h-[280px] w-full object-contain rounded-md shadow-sm" />
+                <img src={formatAssetUrl(formImageUrl || '/original_assets/image974c.jpg')} alt="Xem trước" className="max-h-[280px] w-full object-contain rounded-md shadow-sm" />
               )}
             </div>
           </div>
@@ -317,9 +317,9 @@ export default function BannersAdminPage() {
               {/* Image Preview Block */}
               <div className="relative aspect-[16/9] w-full bg-[#f4f7f6] border-b border-[#edf2f0] overflow-hidden flex items-center justify-center">
                 {banner.imageUrl && banner.imageUrl.toLowerCase().endsWith('.mp4') ? (
-                  <video src={banner.imageUrl} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" muted loop playsInline autoPlay />
+                  <video src={formatAssetUrl(banner.imageUrl)} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" muted loop playsInline autoPlay />
                 ) : (
-                  <img src={banner.imageUrl} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" alt={banner.title} />
+                  <img src={formatAssetUrl(banner.imageUrl)} className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500" alt={banner.title} />
                 )}
               </div>
 

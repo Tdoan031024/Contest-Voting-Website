@@ -14,6 +14,12 @@ export default function SettingsAdminPage() {
   const [eventTitle, setEventTitle] = useState("HUIT's Iconic 2024");
   const [organizer, setOrganizer] = useState("Trường Đại học Công Thương TP.HCM (HUIT)");
   const [contactEmail, setContactEmail] = useState("support@voting.vn");
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+  const [registrationDeadline, setRegistrationDeadline] = useState('2026-06-20T23:59');
+  const [registrationUrl, setRegistrationUrl] = useState('https://khoinghiep.huit.edu.vn');
+  const [detailUrl, setDetailUrl] = useState('https://khoinghiep.huit.edu.vn');
+  const [supportZaloUrl, setSupportZaloUrl] = useState('https://zalo.me/0975702463');
+  const [freeVotesPerAccountPerDay, setFreeVotesPerAccountPerDay] = useState(1);
 
   // Maintenance state
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
@@ -32,6 +38,12 @@ export default function SettingsAdminPage() {
           setOrganizer(data.organizer);
           setContactEmail(data.contactEmail);
           setIsMaintenanceMode(data.isMaintenanceMode);
+          setIsRegistrationOpen(data.isRegistrationOpen ?? true);
+          setRegistrationDeadline(data.registrationDeadline || '2026-06-20T23:59');
+          setRegistrationUrl(data.registrationUrl || 'https://khoinghiep.huit.edu.vn');
+          setDetailUrl(data.detailUrl || 'https://khoinghiep.huit.edu.vn');
+          setSupportZaloUrl(data.supportZaloUrl || 'https://zalo.me/0975702463');
+          setFreeVotesPerAccountPerDay(data.freeVotesPerAccountPerDay || 1);
         }
       } catch (err) {
         console.error('Failed to load system settings from backend, using defaults.', err);
@@ -50,7 +62,13 @@ export default function SettingsAdminPage() {
       eventTitle,
       organizer,
       contactEmail,
-      isMaintenanceMode
+      isMaintenanceMode,
+      isRegistrationOpen,
+      registrationDeadline,
+      registrationUrl,
+      detailUrl,
+      supportZaloUrl,
+      freeVotesPerAccountPerDay
     };
 
     try {
@@ -196,6 +214,49 @@ export default function SettingsAdminPage() {
               onChange={e => setContactEmail(e.target.value)} 
               required
             />
+          </div>
+        </div>
+
+        <div className="bg-white border border-[#dce5e1] rounded-xl p-5 shadow-sm space-y-4">
+          <h3 className="text-sm font-bold text-[#123c34] border-b border-[#edf2f0] pb-2 flex items-center gap-2">
+            Cấu hình đăng ký & bình chọn miễn phí
+          </h3>
+
+          <div className="flex items-center justify-between p-3 bg-[#fbfdfc] rounded-xl border border-[#dce5e1] shadow-sm">
+            <div>
+              <p className="font-bold text-xs text-[#123c34]">Mở đăng ký dự thi</p>
+              <p className="text-[10px] text-[#6b7773]">Điều khiển trạng thái nút đăng ký trên website chính.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsRegistrationOpen(!isRegistrationOpen)}
+              className={`w-12 h-6 rounded-full transition-colors duration-200 relative flex items-center ${isRegistrationOpen ? 'bg-emerald-600' : 'bg-slate-200'}`}
+            >
+              <span className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 absolute ${isRegistrationOpen ? 'translate-x-7' : 'translate-x-1'}`} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Hạn đăng ký hồ sơ</label>
+              <input type="datetime-local" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={registrationDeadline} onChange={e => setRegistrationDeadline(e.target.value)} />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Lượt miễn phí / tài khoản / ngày</label>
+              <input type="number" min={0} className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={freeVotesPerAccountPerDay} onChange={e => setFreeVotesPerAccountPerDay(Number(e.target.value))} />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Link đăng ký</label>
+              <input className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={registrationUrl} onChange={e => setRegistrationUrl(e.target.value)} />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Link chi tiết cuộc thi</label>
+              <input className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={detailUrl} onChange={e => setDetailUrl(e.target.value)} />
+            </div>
+            <div className="flex flex-col space-y-1.5 md:col-span-2">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Link hỗ trợ Zalo</label>
+              <input className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={supportZaloUrl} onChange={e => setSupportZaloUrl(e.target.value)} />
+            </div>
           </div>
         </div>
 

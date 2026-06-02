@@ -371,7 +371,7 @@ export default function RootLayout({
                         <img alt="Tiktok" width="32" height="32" src="/images/image7782.png" />
                       </a>
                       <a target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/dh_congthuong/">
-                        <img alt="Instagram" width="32" height="32" src="/images/instagram.avif" />
+                        <img alt="Instagram" width="32" height="32" src="/images/instagram.png" />
                       </a>
                     </div>
                   </div>

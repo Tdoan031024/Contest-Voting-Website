@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Sponsor } from '@huitfest/shared';
-import { apiUrl } from '../../api';
+import { apiUrl, formatAssetUrl } from '../../api';
 
 const INITIAL_MOCK_SPONSORS: Sponsor[] = [
   {
@@ -215,7 +215,7 @@ export default function SponsorsAdminPage() {
               <tr key={s.id} className="hover:bg-[#edf4f1]/20 transition-colors">
                 <td className="px-5 py-2.5">
                   <div className="bg-white p-1 rounded-lg border border-[#dce5e1] flex items-center justify-center w-16 h-9 overflow-hidden shadow-sm">
-                    <img src={s.logoUrl} className="max-w-full max-h-full object-contain" alt={s.name} />
+                    <img src={formatAssetUrl(s.logoUrl)} className="max-w-full max-h-full object-contain" alt={s.name} />
                   </div>
                 </td>
                 <td className="px-5 py-2.5 font-bold text-[#123c34]">{s.name}</td>

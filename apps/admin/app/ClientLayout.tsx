@@ -92,7 +92,8 @@ const navGroups = [
     title: 'Quản lý giao diện',
     items: [
       { href: '/banners', label: 'Banner quảng cáo', icon: bannerIcon },
-      { href: '/introduction', label: 'Thông tin giới thiệu', icon: introIcon },
+      { href: '/introduction', label: 'Thông tin cuộc thi', icon: introIcon },
+      { href: '/timeline', label: 'Thời gian cuộc thi', icon: timelineIcon },
       { href: '/guides', label: 'Thông tin Hướng dẫn', icon: guidesIcon },
     ],
   },
