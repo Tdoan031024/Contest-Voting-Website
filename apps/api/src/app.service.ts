@@ -376,7 +376,7 @@ export class AppService implements OnModuleInit {
     const candidates = await this.prisma.candidate.findMany({
       orderBy: { votes: 'desc' },
     });
-    return candidates.map((candidate) => this.mergeCandidate(candidate));
+    return candidates.map((candidate: any) => this.mergeCandidate(candidate));
   }
 
   async getCandidateBySbd(sbd: string): Promise<Candidate> {
