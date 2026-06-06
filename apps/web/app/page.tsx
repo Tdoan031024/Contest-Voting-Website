@@ -482,7 +482,7 @@ export default function HomePage() {
             </div>
 
             {/* 2 Columns Content */}
-            <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16 w-full px-4 sm:px-0">
+            <div className="flex flex-col md:flex-row items-start gap-10 md:gap-16 w-full px-4 sm:px-0">
 
               {/* Left Column: Information */}
               <div
@@ -698,7 +698,7 @@ export default function HomePage() {
                         className={`h-full group w-full transform transition-all duration-[2500ms] ${candidatesVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
                           }`}
                       >
-                        <div className="relative h-full backdrop-blur-[8px] rounded-[24px] border border-white/10 bg-[rgba(222,222,222,0.13)] group-hover:bg-[rgb(222,222,222)]/35 group-hover:dark:bg-[rgb(222,222,222)]/18 group-hover:shadow-2xl group-hover:shadow-black/20 group-hover:dark:shadow-[#79BCC2]/15 cursor-pointer transition-all duration-300 hover-shine-effect overflow-hidden">
+                        <div className="relative h-full backdrop-blur-[8px] rounded-[24px] border border-white/10 bg-[rgba(222,222,222,0.13)] group-hover:bg-[rgba(222,222,222,0.18)] group-hover:dark:bg-[rgba(222,222,222,0.15)] group-hover:border-[#79BCC2]/40 group-hover:shadow-[0_20px_40px_rgba(121,188,194,0.15)] group-hover:-translate-y-2 group-hover:scale-[1.02] cursor-pointer transition-all duration-300 hover-shine-effect overflow-hidden">
 
                           {/* Project banner image */}
                           <Link className="focus:outline-none relative block cursor-pointer w-full aspect-[16/9]" href={`/thi-sinh/${c.sbd}`}>
@@ -708,10 +708,22 @@ export default function HomePage() {
                                 className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
                                 src={c.imageUrl}
                               />
-                              <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white/90 backdrop-blur-md">
+                              
+                              {/* Hover overlay with detail indicator */}
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 pointer-events-none z-10">
+                                <span className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[12px] font-bold uppercase tracking-wider px-4 py-2 rounded-full flex items-center gap-1.5 shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                  </svg>
+                                  Xem chi tiết
+                                </span>
+                              </div>
+
+                              <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white/90 backdrop-blur-md z-20">
                                 MDB {c.sbd}
                               </div>
-                              <div className="absolute right-3 top-3 rounded-full border border-[#79BCC2]/30 bg-[#0A2FFF]/45 px-3 py-1 text-[11px] font-bold text-[#CFFAFE] backdrop-blur-md">
+                              <div className="absolute right-3 top-3 rounded-full border border-[#79BCC2]/30 bg-[#0A2FFF]/45 px-3 py-1 text-[11px] font-bold text-[#CFFAFE] backdrop-blur-md z-20">
                                 #{rank}
                               </div>
                             </div>
@@ -723,7 +735,9 @@ export default function HomePage() {
                               <div className="min-w-0">
                                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#79BCC2]">Dự án khởi nghiệp</p>
                                 <h4 className="mt-1 line-clamp-2 text-[18px] sm:text-[20px] font-extrabold text-neutral-neutral1 dark:text-neutral-white leading-snug group-hover:text-[#79BCC2] transition-colors duration-300">
-                                  {c.name}
+                                  <Link href={`/thi-sinh/${c.sbd}`} className="hover:underline focus:outline-none">
+                                    {c.name}
+                                  </Link>
                                 </h4>
                               </div>
                               <div className="shrink-0 rounded-[14px] bg-white/10 px-3 py-2 text-right border border-white/10">

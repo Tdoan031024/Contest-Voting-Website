@@ -353,7 +353,7 @@ export class AppService implements OnModuleInit {
       const adminCount = await this.prisma.adminUser.count();
       if (adminCount === 0) {
         console.log('Seeding default admin user...');
-        const hashedPassword = await bcrypt.hash('HuitMedia2026', 10);
+        const hashedPassword = await bcrypt.hash('1', 10);
         await this.prisma.adminUser.create({
           data: {
             username: 'admin',

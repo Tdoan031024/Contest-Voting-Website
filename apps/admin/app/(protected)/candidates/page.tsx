@@ -202,13 +202,36 @@ function ProjectModal({
             <span className={labelText}>Cố vấn</span>
             <input className={inputClass} value={form.advisorName || ''} onChange={(event) => update('advisorName', event.target.value)} />
           </label>
+          <label className="space-y-1.5">
+            <span className={labelText}>Thành viên nhóm</span>
+            <input className={inputClass} value={form.members || ''} onChange={(event) => update('members', event.target.value)} placeholder="Tên các thành viên..." />
+          </label>
+          <label className="space-y-1.5">
+            <span className={labelText}>Địa điểm triển khai</span>
+            <input className={inputClass} value={form.implementationLocation || ''} onChange={(event) => update('implementationLocation', event.target.value)} placeholder="Ví dụ: TP. Hồ Chí Minh" />
+          </label>
+          <label className="space-y-1.5">
+            <span className={labelText}>Cam kết sở hữu trí tuệ</span>
+            <select className={inputClass} value={form.intellectualPropertyCommitment === false ? 'false' : 'true'} onChange={(event) => update('intellectualPropertyCommitment', event.target.value === 'true')}>
+              <option value="true">Có cam kết</option>
+              <option value="false">Không cam kết</option>
+            </select>
+          </label>
           <label className="space-y-1.5 md:col-span-3">
             <span className={labelText}>Mô tả ngắn</span>
-            <textarea className="h-20 w-full resize-none rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-medium text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white" value={form.description || ''} onChange={(event) => update('description', event.target.value)} required />
+            <textarea className="h-20 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-medium text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white" value={form.description || ''} onChange={(event) => update('description', event.target.value)} required />
           </label>
           <label className="space-y-1.5 md:col-span-3">
             <span className={labelText}>Thuyết minh / nội dung chi tiết</span>
-            <textarea className="h-24 w-full resize-none rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-medium text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white" value={form.biography || ''} onChange={(event) => update('biography', event.target.value)} />
+            <textarea className="h-28 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-medium text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white" value={form.biography || ''} onChange={(event) => update('biography', event.target.value)} />
+          </label>
+          <label className="space-y-1.5 md:col-span-3">
+            <span className={labelText}>Nhu cầu hỗ trợ</span>
+            <textarea className="h-20 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-medium text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white" value={form.supportNeeds || ''} onChange={(event) => update('supportNeeds', event.target.value)} placeholder="Nhu cầu về vốn, công nghệ, mentor, mặt bằng..." />
+          </label>
+          <label className="space-y-1.5 md:col-span-3">
+            <span className={labelText}>Kỳ vọng sau cuộc thi</span>
+            <textarea className="h-20 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-medium text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white" value={form.expectations || ''} onChange={(event) => update('expectations', event.target.value)} placeholder="Kết nối đầu tư, thương mại hóa sản phẩm, truyền thông..." />
           </label>
         </div>
 
@@ -303,8 +326,8 @@ export default function CandidatesAdminPage() {
   };
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="w-full max-w-full space-y-5">
+      <section className="w-full rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col gap-5 border-b border-slate-100 p-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Quản lý cuộc thi</p>
@@ -325,7 +348,7 @@ export default function CandidatesAdminPage() {
             ['Tổng điểm', totalVotes.toLocaleString(), 'Điểm bình chọn toàn hệ thống'],
             ['Dẫn đầu', leadingProject?.name || 'Chưa có', leadingProject ? `Mã ${leadingProject.sbd}` : 'Chưa có dữ liệu'],
           ].map(([label, value, note]) => (
-            <div key={label} className="p-5">
+            <div key={label} className="p-5 min-w-0">
               <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">{label}</p>
               <p className="mt-2 truncate text-2xl font-black text-slate-950">{value}</p>
               <p className="mt-1 truncate text-xs font-semibold text-slate-500">{note}</p>
@@ -335,12 +358,12 @@ export default function CandidatesAdminPage() {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 lg:grid-cols-[minmax(360px,1fr)_220px_200px_110px]">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-[1fr_200px_180px_110px]">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Tìm theo tên dự án, mã, nhóm, trưởng nhóm hoặc đơn vị..."
-            className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white"
+            className="h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white"
           />
           <select value={tableFilter} onChange={(event) => setTableFilter(event.target.value)} className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 outline-none focus:border-emerald-600">
             <option value="ALL">Tất cả bảng thi</option>
@@ -361,9 +384,9 @@ export default function CandidatesAdminPage() {
         </div>
       </section>
 
-      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[1040px] border-collapse text-left">
+      <section className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="w-full overflow-x-auto">
+          <table className="w-full min-w-[800px] border-collapse text-left">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
                 <th className="px-5 py-4">Hồ sơ</th>
@@ -379,15 +402,15 @@ export default function CandidatesAdminPage() {
                 const rank = rankedProjects.findIndex((item) => item.id === project.id) + 1;
                 const hasMissingInfo = !project.teamName || !project.leaderName || !project.contestTable;
                 const projectTableLabel = project.contestTableLabel || tableLabels[project.contestTable || ''] || 'Chưa phân bảng';
-
+ 
                 return (
                   <tr key={project.id} className="align-middle transition hover:bg-emerald-50/35">
                     <td className="px-5 py-4">
-                      <div className="flex min-w-[330px] items-center gap-3">
+                      <div className="flex min-w-[240px] items-center gap-3">
                         <img src={formatAssetUrl(project.imageUrl)} alt={project.name} className="h-14 w-14 shrink-0 rounded-xl border border-slate-200 object-cover" />
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="max-w-[260px] truncate font-black text-slate-950">{project.name}</p>
+                            <p className="max-w-[150px] truncate font-black text-slate-950">{project.name}</p>
                             <Pill>Mã {project.sbd}</Pill>
                           </div>
                           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -398,13 +421,13 @@ export default function CandidatesAdminPage() {
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <div className="max-w-[210px]">
+                      <div className="max-w-[150px]">
                         <p className="truncate font-bold text-slate-900">{projectTableLabel}</p>
                         <p className="mt-1 truncate text-xs font-semibold text-slate-500">{project.sector || 'Chưa cập nhật lĩnh vực'}</p>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <div className="max-w-[230px]">
+                      <div className="max-w-[160px]">
                         <p className="truncate font-bold text-slate-900">{project.teamName || 'Chưa cập nhật nhóm'}</p>
                         <p className="mt-1 truncate text-xs text-slate-500">{project.leaderName || 'Chưa có trưởng nhóm'}</p>
                         <p className="mt-1 truncate text-xs text-slate-500">{project.representativeSchool || 'Chưa cập nhật đơn vị'}</p>
@@ -413,7 +436,7 @@ export default function CandidatesAdminPage() {
                     <td className="px-5 py-4">
                       <div className="space-y-2">
                         <Pill tone={roundTone(project.currentRound)}>{project.currentRound || 'Vòng loại'}</Pill>
-                        <p className="max-w-[150px] truncate text-xs font-semibold text-slate-600">{project.status || 'Đang cập nhật'}</p>
+                        <p className="max-w-[110px] truncate text-xs font-semibold text-slate-600">{project.status || 'Đang cập nhật'}</p>
                       </div>
                     </td>
                     <td className="px-5 py-4 text-right">
