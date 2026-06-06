@@ -59,8 +59,8 @@ function loadGoogleIdentityScript(): Promise<void> {
 
 export default function LoginPage() {
   const { showAlert } = useAlert();
-  const [email, setEmail] = useState('abcxyz@mail.com');
-  const [password, setPassword] = useState('Mật khẩu');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -372,7 +372,7 @@ export default function LoginPage() {
             <h1 className="text-[28px] sm:text-[36px] font-extrabold text-white uppercase tracking-[0.06em] mb-1">
               Đăng nhập
             </h1>
-            <p className="text-[13px] text-white/40 tracking-wider">HUIT STARTUP 2024 — Cổng bình chọn chính thức</p>
+            <p className="text-[13px] text-white/40 tracking-wider">HUIT STARTUP 2026 — Cổng bình chọn chính thức</p>
             <div className="h-[2.5px] w-[50px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-4 transition-all duration-[1000ms]" style={{ width: mounted ? '50px' : '0px' }} />
           </div>
 
@@ -395,6 +395,7 @@ export default function LoginPage() {
                   className="login-input w-full h-[48px] px-4 rounded-[14px] bg-white/90 text-neutral-800 border-2 border-transparent text-[15px]"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
+                  placeholder="Nhập địa chỉ email"
                   required
                 />
               </div>
@@ -414,8 +415,7 @@ export default function LoginPage() {
                     className="login-input w-full h-full pl-4 pr-12 rounded-[14px] bg-white/90 text-neutral-800 border-2 border-transparent text-[15px]"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
-                    onFocus={() => { if (password === 'Mật khẩu') setPassword(''); }}
-                    onBlur={() => { if (password === '') setPassword('Mật khẩu'); }}
+                    placeholder="Nhập mật khẩu"
                     required
                   />
                   <button
@@ -517,8 +517,8 @@ export default function LoginPage() {
                   <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
                     <div>
                       <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#79BCC2]">Tạo tài khoản</p>
-                      <h2 className="mt-1 text-[24px] font-extrabold uppercase tracking-wide text-white">Đăng ký bình chọn</h2>
-                      <p className="mt-1 text-[12px] text-white/45">Tài khoản dùng để nhận lượt miễn phí và lưu lịch sử bình chọn.</p>
+                      <h2 className="mt-1 text-[24px] font-extrabold uppercase tracking-wide text-white">Đăng ký bình chọn khán giả</h2>
+                      <p className="mt-1 text-[12px] text-white/45">Tài khoản khán giả dùng để nhận lượt miễn phí hằng ngày và lưu lịch sử bình chọn.</p>
                     </div>
                     <button
                       type="button"
@@ -554,60 +554,73 @@ export default function LoginPage() {
                 <div className="space-y-5">
                   <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2 sm:col-span-2">
-                  <span className="text-[12px] font-semibold text-white/75">Họ và tên</span>
+                  <span className="text-[12px] font-semibold text-white/75 flex items-center gap-1">
+                    Họ và tên <span className="text-red-500 font-bold">*</span>
+                  </span>
                   <input
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.fullName}
                     onChange={(event) => updateRegisterForm('fullName', event.target.value)}
+                    placeholder="Nhập họ và tên đầy đủ"
                     required
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-[12px] font-semibold text-white/75">Email</span>
+                  <span className="text-[12px] font-semibold text-white/75 flex items-center gap-1">
+                    Số điện thoại <span className="text-red-500 font-bold">*</span>
+                  </span>
+                  <input
+                    className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
+                    value={registerForm.phone}
+                    onChange={(event) => updateRegisterForm('phone', event.target.value)}
+                    placeholder="Nhập số điện thoại"
+                    required
+                  />
+                </label>
+
+                <label className="space-y-2">
+                  <span className="text-[12px] font-semibold text-white/75 flex items-center gap-1">
+                    Email {registerMode === 'normal' && <span className="text-red-500 font-bold">*</span>}
+                  </span>
                   <input
                     type="email"
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.email}
                     onChange={(event) => updateRegisterForm('email', event.target.value)}
+                    placeholder={registerMode === 'normal' ? "Nhập địa chỉ email" : "Nhập email (tùy chọn)"}
                     required={registerMode === 'normal'}
-                  />
-                </label>
-
-                <label className="space-y-2">
-                  <span className="text-[12px] font-semibold text-white/75">Số điện thoại</span>
-                  <input
-                    className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
-                    value={registerForm.phone}
-                    onChange={(event) => updateRegisterForm('phone', event.target.value)}
-                    required={registerMode === 'quick'}
                   />
                 </label>
 
                 {registerMode === 'normal' && (
                   <label className="space-y-2 sm:col-span-2">
-                    <span className="text-[12px] font-semibold text-white/75">Mật khẩu</span>
+                    <span className="text-[12px] font-semibold text-white/75 flex items-center gap-1">
+                      Mật khẩu <span className="text-red-500 font-bold">*</span>
+                    </span>
                     <input
                       type="password"
                       className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                       value={registerForm.password}
                       onChange={(event) => updateRegisterForm('password', event.target.value)}
+                      placeholder="Tạo mật khẩu (tối thiểu 6 ký tự)"
                       required
                     />
                   </label>
                 )}
 
                 <label className="space-y-2">
-                  <span className="text-[12px] font-semibold text-white/75">Đơn vị / trường</span>
+                  <span className="text-[12px] font-semibold text-white/75">Trường học / Đơn vị</span>
                   <input
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.schoolOrCompany}
                     onChange={(event) => updateRegisterForm('schoolOrCompany', event.target.value)}
+                    placeholder="Nhập tên trường/đơn vị"
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-[12px] font-semibold text-white/75">Bảng quan tâm</span>
+                  <span className="text-[12px] font-semibold text-white/75">Bảng dự án quan tâm</span>
                   <select
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.contestTable}

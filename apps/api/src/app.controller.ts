@@ -159,7 +159,7 @@ export class AppController {
   }
 
   @Get('admin/web-users')
-  getWebUsers(): WebUser[] {
+  async getWebUsers(): Promise<WebUser[]> {
     return this.appService.getWebUsers();
   }
 

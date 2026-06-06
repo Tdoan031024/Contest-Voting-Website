@@ -62,6 +62,17 @@ function RichContent({ value, fallback, className }: { value?: string | null; fa
   return <div className={`${className} whitespace-pre-line`}>{content}</div>;
 }
 
+function getStoredUser() {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem('huit_web_user');
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 export default function HomePage() {
   const { showAlert } = useAlert();
   const ABOUT_FALLBACK_TITLE = 'HUIT STARTUP LẦN THỨ VII 2026';
@@ -328,24 +339,40 @@ export default function HomePage() {
       showAlert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!", "warning", "Cổng bình chọn");
       return;
     }
+
+    const user = getStoredUser();
+    if (!user) {
+      showAlert("Bạn cần đăng nhập tài khoản khán giả trước khi thực hiện bình chọn.", "warning", "Yêu cầu đăng nhập");
+      window.location.href = `/dang-nhap?redirect=/`;
+      return;
+    }
+
     try {
       const res = await fetch(apiUrl(`/api/candidates/${sbd}/vote`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: '0987654321' }),
+        body: JSON.stringify({ 
+          phone: user.phone,
+          userId: user.id,
+          packageId: 'free-5'
+        }),
       });
       if (res.ok) {
         const updated = await res.json();
         setCandidates(prev => prev.map(c => c.sbd === sbd ? updated : c));
         showAlert(`Bình chọn thành công cho ${name}!`, "success", "Bình chọn thành công");
         return;
+      } else {
+        const errorData = await res.json().catch(() => null);
+        showAlert(errorData?.message || "Không thể thực hiện bình chọn.", "error", "Lỗi bình chọn");
+        return;
       }
     } catch (err) {
-      console.log('NestJS Backend API offline, executing client-side mock vote.');
+      console.log('NestJS Backend API offline, executing client-side mock vote.', err);
     }
 
     setCandidates(prev =>
-      prev.map(c => c.sbd === sbd ? { ...c, votes: c.votes + 1 } : c)
+      prev.map(c => c.sbd === sbd ? { ...c, votes: c.votes + 5 } : c)
     );
     showAlert(`Bình chọn offline thành công cho ${name}!`, "success", "Bình chọn thành công");
   };
@@ -377,7 +404,7 @@ export default function HomePage() {
         {slides.length > 0 && (
           <div className="sc-1a037b37-0 fgDcug relative flex flex-col group select-none">
             <div
-              className="relative w-full h-[35vh] sm:h-[80vh] max-h-[1500px] overflow-hidden cursor-grab active:cursor-grabbing"
+              className="relative w-full h-auto aspect-[12/5] sm:h-[80vh] sm:aspect-auto max-h-[1500px] overflow-hidden cursor-grab active:cursor-grabbing"
               onMouseDown={handleDragStart}
               onMouseMove={handleDragMove}
               onMouseUp={handleDragEnd}
