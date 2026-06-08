@@ -36,3 +36,6 @@ pnpm-debug.log*
 # System Files
 .DS_Store
 Thumbs.db
+
+# OAuth credentials
+docs/ggOuth.json
