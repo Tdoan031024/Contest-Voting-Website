@@ -698,7 +698,7 @@ export default function HomePage() {
                         className={`h-full group w-full transform transition-all duration-[2500ms] ${candidatesVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
                           }`}
                       >
-                        <div className="relative h-full backdrop-blur-[8px] rounded-[24px] border border-white/10 bg-[rgba(222,222,222,0.13)] group-hover:bg-[rgb(222,222,222)]/35 group-hover:dark:bg-[rgb(222,222,222)]/18 group-hover:shadow-2xl group-hover:shadow-black/20 group-hover:dark:shadow-[#79BCC2]/15 cursor-pointer transition-all duration-300 hover-shine-effect overflow-hidden">
+                        <div className="relative h-full backdrop-blur-[8px] rounded-[24px] border border-white/10 bg-white/[0.08] hover:border-[#79BCC2]/30 group-hover:bg-white/[0.15] group-hover:shadow-2xl group-hover:shadow-[#79BCC2]/10 group-hover:-translate-y-1.5 group-hover:scale-[1.015] cursor-pointer transition-all duration-300 ease-out hover-shine-effect overflow-hidden">
 
                           {/* Project banner image */}
                           <Link className="focus:outline-none relative block cursor-pointer w-full aspect-[16/9]" href={`/thi-sinh/${c.sbd}`}>
