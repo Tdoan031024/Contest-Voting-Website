@@ -62,6 +62,17 @@ function RichContent({ value, fallback, className }: { value?: string | null; fa
   return <div className={`${className} whitespace-pre-line`}>{content}</div>;
 }
 
+function getStoredUser() {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem('huit_web_user');
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 export default function HomePage() {
   const { showAlert } = useAlert();
   const ABOUT_FALLBACK_TITLE = 'HUIT STARTUP LẦN THỨ VII 2026';
@@ -328,24 +339,40 @@ export default function HomePage() {
       showAlert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!", "warning", "Cổng bình chọn");
       return;
     }
+
+    const user = getStoredUser();
+    if (!user) {
+      showAlert("Bạn cần đăng nhập tài khoản khán giả trước khi thực hiện bình chọn.", "warning", "Yêu cầu đăng nhập");
+      window.location.href = `/dang-nhap?redirect=/`;
+      return;
+    }
+
     try {
       const res = await fetch(apiUrl(`/api/candidates/${sbd}/vote`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: '0987654321' }),
+        body: JSON.stringify({ 
+          phone: user.phone,
+          userId: user.id,
+          packageId: 'free-5'
+        }),
       });
       if (res.ok) {
         const updated = await res.json();
         setCandidates(prev => prev.map(c => c.sbd === sbd ? updated : c));
         showAlert(`Bình chọn thành công cho ${name}!`, "success", "Bình chọn thành công");
         return;
+      } else {
+        const errorData = await res.json().catch(() => null);
+        showAlert(errorData?.message || "Không thể thực hiện bình chọn.", "error", "Lỗi bình chọn");
+        return;
       }
     } catch (err) {
-      console.log('NestJS Backend API offline, executing client-side mock vote.');
+      console.log('NestJS Backend API offline, executing client-side mock vote.', err);
     }
 
     setCandidates(prev =>
-      prev.map(c => c.sbd === sbd ? { ...c, votes: c.votes + 1 } : c)
+      prev.map(c => c.sbd === sbd ? { ...c, votes: c.votes + 5 } : c)
     );
     showAlert(`Bình chọn offline thành công cho ${name}!`, "success", "Bình chọn thành công");
   };
@@ -377,7 +404,7 @@ export default function HomePage() {
         {slides.length > 0 && (
           <div className="sc-1a037b37-0 fgDcug relative flex flex-col group select-none">
             <div
-              className="relative w-full h-[35vh] sm:h-[80vh] max-h-[1500px] overflow-hidden cursor-grab active:cursor-grabbing"
+              className="relative w-full h-auto aspect-[12/5] sm:h-[80vh] sm:aspect-auto max-h-[1500px] overflow-hidden cursor-grab active:cursor-grabbing"
               onMouseDown={handleDragStart}
               onMouseMove={handleDragMove}
               onMouseUp={handleDragEnd}
@@ -482,7 +509,7 @@ export default function HomePage() {
             </div>
 
             {/* 2 Columns Content */}
-            <div className="flex flex-col md:flex-row items-center gap-10 md:gap-16 w-full px-4 sm:px-0">
+            <div className="flex flex-col md:flex-row items-start gap-10 md:gap-16 w-full px-4 sm:px-0">
 
               {/* Left Column: Information */}
               <div
@@ -698,7 +725,7 @@ export default function HomePage() {
                         className={`h-full group w-full transform transition-all duration-[2500ms] ${candidatesVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
                           }`}
                       >
-                        <div className="relative h-full backdrop-blur-[8px] rounded-[24px] border border-white/10 bg-white/[0.08] hover:border-[#79BCC2]/30 group-hover:bg-white/[0.15] group-hover:shadow-2xl group-hover:shadow-[#79BCC2]/10 group-hover:-translate-y-1.5 group-hover:scale-[1.015] cursor-pointer transition-all duration-300 ease-out hover-shine-effect overflow-hidden">
+                        <div className="relative h-full backdrop-blur-[8px] rounded-[24px] border border-white/10 bg-[rgba(222,222,222,0.13)] group-hover:bg-[rgba(222,222,222,0.18)] group-hover:dark:bg-[rgba(222,222,222,0.15)] group-hover:border-[#79BCC2]/40 group-hover:shadow-[0_20px_40px_rgba(121,188,194,0.15)] group-hover:-translate-y-2 group-hover:scale-[1.02] cursor-pointer transition-all duration-300 hover-shine-effect overflow-hidden">
 
                           {/* Project banner image */}
                           <Link className="focus:outline-none relative block cursor-pointer w-full aspect-[16/9]" href={`/thi-sinh/${c.sbd}`}>
@@ -708,10 +735,22 @@ export default function HomePage() {
                                 className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
                                 src={c.imageUrl}
                               />
-                              <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white/90 backdrop-blur-md">
+                              
+                              {/* Hover overlay with detail indicator */}
+                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 pointer-events-none z-10">
+                                <span className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[12px] font-bold uppercase tracking-wider px-4 py-2 rounded-full flex items-center gap-1.5 shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                  </svg>
+                                  Xem chi tiết
+                                </span>
+                              </div>
+
+                              <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white/90 backdrop-blur-md z-20">
                                 MDB {c.sbd}
                               </div>
-                              <div className="absolute right-3 top-3 rounded-full border border-[#79BCC2]/30 bg-[#0A2FFF]/45 px-3 py-1 text-[11px] font-bold text-[#CFFAFE] backdrop-blur-md">
+                              <div className="absolute right-3 top-3 rounded-full border border-[#79BCC2]/30 bg-[#0A2FFF]/45 px-3 py-1 text-[11px] font-bold text-[#CFFAFE] backdrop-blur-md z-20">
                                 #{rank}
                               </div>
                             </div>
@@ -723,7 +762,9 @@ export default function HomePage() {
                               <div className="min-w-0">
                                 <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#79BCC2]">Dự án khởi nghiệp</p>
                                 <h4 className="mt-1 line-clamp-2 text-[18px] sm:text-[20px] font-extrabold text-neutral-neutral1 dark:text-neutral-white leading-snug group-hover:text-[#79BCC2] transition-colors duration-300">
-                                  {c.name}
+                                  <Link href={`/thi-sinh/${c.sbd}`} className="hover:underline focus:outline-none">
+                                    {c.name}
+                                  </Link>
                                 </h4>
                               </div>
                               <div className="shrink-0 rounded-[14px] bg-white/10 px-3 py-2 text-right border border-white/10">

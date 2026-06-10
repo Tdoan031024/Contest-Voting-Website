@@ -35,6 +35,17 @@ const LOCAL_MOCK_CANDIDATES: Candidate[] = [
   { id: '6', sbd: '095', name: 'Thương mại xanh cho SME', votes: 8410, imageUrl: '/original_assets/image4706.png', description: 'Giải pháp chuyển đổi số cho hộ kinh doanh và doanh nghiệp vừa và nhỏ.' },
 ];
 
+function getStoredUser() {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem('huit_web_user');
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
 export default function RankingPage() {
   const { showAlert } = useAlert();
   const [candidates, setCandidates] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
@@ -113,24 +124,40 @@ export default function RankingPage() {
       showAlert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!", "warning", "Cổng bình chọn");
       return;
     }
+
+    const user = getStoredUser();
+    if (!user) {
+      showAlert("Bạn cần đăng nhập tài khoản khán giả trước khi thực hiện bình chọn.", "warning", "Yêu cầu đăng nhập");
+      window.location.href = `/dang-nhap?redirect=/bang-xep-hang`;
+      return;
+    }
+
     try {
       const res = await fetch(apiUrl(`/api/candidates/${sbd}/vote`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: '0987654321' }),
+        body: JSON.stringify({ 
+          phone: user.phone,
+          userId: user.id,
+          packageId: 'free-5'
+        }),
       });
       if (res.ok) {
         const updated = await res.json();
         setCandidates(prev => prev.map(c => c.sbd === sbd ? updated : c));
         showAlert(`Bình chọn thành công cho ${name}!`, "success", "Bình chọn thành công");
         return;
+      } else {
+        const errorData = await res.json().catch(() => null);
+        showAlert(errorData?.message || "Không thể thực hiện bình chọn.", "error", "Lỗi bình chọn");
+        return;
       }
     } catch (err) {
-      console.log('NestJS Backend API offline, executing client-side mock vote.');
+      console.log('NestJS Backend API offline, executing client-side mock vote.', err);
     }
 
     setCandidates(prev =>
-      prev.map(c => c.sbd === sbd ? { ...c, votes: c.votes + 1 } : c)
+      prev.map(c => c.sbd === sbd ? { ...c, votes: c.votes + 5 } : c)
     );
     showAlert(`Bình chọn offline thành công cho ${name}!`, "success", "Bình chọn thành công");
   };

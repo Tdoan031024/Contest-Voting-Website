@@ -15,15 +15,30 @@ enum SponsorTier {
 }
 
 model Candidate {
-  id          String   @id @default(uuid())
-  sbd         String   @unique
-  name        String
-  votes       Int      @default(0)
-  imageUrl    String
-  description String   @db.Text
-  biography   String?  @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                             String   @id @default(uuid())
+  sbd                            String   @unique
+  name                           String
+  votes                          Int      @default(0)
+  imageUrl                       String
+  description                    String   @db.Text
+  biography                      String?  @db.Text
+  teamName                       String?
+  representativeSchool           String?
+  leaderName                     String?
+  leaderPhone                    String?
+  leaderEmail                    String?
+  advisorName                    String?
+  members                        String?  @db.Text
+  implementationLocation         String?
+  intellectualPropertyCommitment Boolean? @default(false)
+  supportNeeds                   String?  @db.Text
+  expectations                   String?  @db.Text
+  contestTable                   String?
+  contestTableLabel              String?
+  currentRound                   String?  @default("Vòng loại")
+  status                         String?  @default("Đủ hồ sơ")
+  createdAt                      DateTime @default(now())
+  updatedAt                      DateTime @updatedAt
 }
 
 model Sponsor {
@@ -73,4 +88,21 @@ model AdminUser {
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model WebUser {
+  id              String   @id @default(uuid())
+  fullName        String
+  email           String   @unique
+  phone           String?
+  passwordHash    String?
+  provider        String   @default("email")
+  role            String   @default("USER")
+  status          String   @default("ACTIVE")
+  schoolOrCompany String?
+  contestTable    String?
+  registeredAt    DateTime @default(now())
+  lastLoginAt     DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }

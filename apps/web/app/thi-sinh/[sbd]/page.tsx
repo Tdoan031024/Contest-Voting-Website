@@ -81,8 +81,8 @@ export default function CandidateDetailPage() {
       return;
     }
 
-    if (selectedPackage.packageType === 'FREE' && !currentUser) {
-      showAlert('Bạn cần đăng nhập để sử dụng lượt bình chọn miễn phí hằng ngày.', 'info', 'Yêu cầu đăng nhập');
+    if (!currentUser) {
+      showAlert('Bạn cần đăng nhập tài khoản khán giả trước khi thực hiện bình chọn.', 'info', 'Yêu cầu đăng nhập');
       window.location.href = `/dang-nhap?redirect=/thi-sinh/${candidate.sbd}`;
       return;
     }

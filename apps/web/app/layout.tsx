@@ -30,6 +30,36 @@ export default function RootLayout({
   const [lastScrollY, setLastScrollY] = useState(0);
   const [currentHash, setCurrentHash] = useState('');
   const [settings, setSettings] = useState<SystemSettings | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const readUser = () => {
+      if (typeof window !== 'undefined') {
+        const rawUser = localStorage.getItem('huit_web_user');
+        if (rawUser) {
+          try {
+            setCurrentUser(JSON.parse(rawUser));
+          } catch (e) {
+            setCurrentUser(null);
+          }
+        } else {
+          setCurrentUser(null);
+        }
+      }
+    };
+    readUser();
+    const interval = setInterval(readUser, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('huit_web_user');
+      localStorage.removeItem('huit_web_token');
+      setCurrentUser(null);
+      window.location.reload();
+    }
+  };
 
   useEffect(() => {
     async function fetchSettings() {
@@ -233,7 +263,7 @@ export default function RootLayout({
                 height: '80px'
               }}
             >
-              <div className="absolute h-[80px] top-0 left-0 right-0 w-full flex justify-center bg-[#030612]/75 backdrop-blur-[12px] border-b border-white/5 box-shadow-12">
+              <div className="absolute h-[80px] top-0 left-0 right-0 w-full flex justify-center bg-white border-b border-slate-200 shadow-sm">
                 <div className="sc-1a037b37-0 RKByV flex w-full md:justify-between items-center h-full">
                   <div className="flex-1 flex md:flex-auto items-center h-full">
 
@@ -241,12 +271,12 @@ export default function RootLayout({
                     <div className="flex items-center sm-desktop:hidden h-[80px]">
                       <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="focus:outline-none sc-f65501b1-0 eCoCwA fill-icon-brand-light dark:fill-icon-brand-dark h-[80px] pl-[20px] pr-1 w-[48px] flex justify-center items-center bg-transparent border-0 cursor-pointer"
+                        className="focus:outline-none sc-f65501b1-0 eCoCwA h-[80px] pl-[20px] pr-1 w-[48px] flex justify-center items-center bg-transparent border-0 cursor-pointer"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                          <path d="M2 6C2 5.44772 2.44772 5 3 5H21C21.5523 5 22 5.44772 22 6C22 6.55228 21.5523 7 21 7H3C2.44772 7 2 6.55228 2 6Z" fill="#79BCC2"></path>
-                          <path d="M2 12C2 11.4477 2.44772 11 3 11H21C21.5523 11 22 11.4477 22 12C22 12.5523 21.5523 13 21 13H3C2.44772 13 2 12.5523 2 12Z" fill="#79BCC2"></path>
-                          <path d="M3 17C2.44772 17 2 17.4477 2 18C2 18.5523 2.44772 19 3 19H21C21.5523 19 22 18.5523 22 18C22 17.4477 21.5523 17 21 17H3Z" fill="#79BCC2"></path>
+                          <path d="M2 6C2 5.44772 2.44772 5 3 5H21C21.5523 5 22 5.44772 22 6C22 6.55228 21.5523 7 21 7H3C2.44772 7 2 6.55228 2 6Z" fill="#334155"></path>
+                          <path d="M2 12C2 11.4477 2.44772 11 3 11H21C21.5523 11 22 11.4477 22 12C22 12.5523 21.5523 13 21 13H3C2.44772 13 2 12.5523 2 12Z" fill="#334155"></path>
+                          <path d="M3 17C2.44772 17 2 17.4477 2 18C2 18.5523 2.44772 19 3 19H21C21.5523 19 22 18.5523 22 18C22 17.4477 21.5523 17 21 17H3Z" fill="#334155"></path>
                         </svg>
                       </button>
                     </div>
@@ -264,72 +294,111 @@ export default function RootLayout({
                   <div className="flex items-center gap-1 md:gap-[28px] mobile:pr-1 h-full">
                     <div className="items-center hidden sm-desktop:flex h-full">
                       <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/">
-                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/' ? 'text-[#79BCC2] font-bold' : 'text-white/85 hover:text-[#79BCC2] font-normal'}`}>
+                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF] font-normal'}`}>
                           Trang chủ
                         </p>
-                        {pathname === '/' && <div className="h-[3.5px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] shadow-[0_0_8px_#79BCC2] bottom-3"></div>}
+                        {pathname === '/' && <div className="h-[3px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#00C6FF] bottom-3"></div>}
                       </Link>
                       <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/gioi-thieu">
-                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/gioi-thieu' ? 'text-[#79BCC2] font-bold' : 'text-white/85 hover:text-[#79BCC2] font-normal'}`}>
+                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/gioi-thieu' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF] font-normal'}`}>
                           Giới thiệu
                         </p>
-                        {pathname === '/gioi-thieu' && <div className="h-[3.5px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] shadow-[0_0_8px_#79BCC2] bottom-3"></div>}
+                        {pathname === '/gioi-thieu' && <div className="h-[3px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#00C6FF] bottom-3"></div>}
                       </Link>
                       <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/thoi-gian">
-                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/thoi-gian' ? 'text-[#79BCC2] font-bold' : 'text-white/85 hover:text-[#79BCC2] font-normal'}`}>
+                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/thoi-gian' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF] font-normal'}`}>
                           Thời gian
                         </p>
-                        {pathname === '/thoi-gian' && <div className="h-[3.5px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] shadow-[0_0_8px_#79BCC2] bottom-3"></div>}
+                        {pathname === '/thoi-gian' && <div className="h-[3px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#00C6FF] bottom-3"></div>}
                       </Link>
                       <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/bang-xep-hang">
-                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/bang-xep-hang' ? 'text-[#79BCC2] font-bold' : 'text-white/85 hover:text-[#79BCC2] font-normal'}`}>
+                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/bang-xep-hang' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF] font-normal'}`}>
                           Bảng xếp hạng
                         </p>
-                        {pathname === '/bang-xep-hang' && <div className="h-[3.5px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] shadow-[0_0_8px_#79BCC2] bottom-3"></div>}
+                        {pathname === '/bang-xep-hang' && <div className="h-[3px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#00C6FF] bottom-3"></div>}
                       </Link>
                       <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/the-le">
-                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/the-le' ? 'text-[#79BCC2] font-bold' : 'text-white/85 hover:text-[#79BCC2] font-normal'}`}>
+                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/the-le' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF] font-normal'}`}>
                           Hướng dẫn
                         </p>
-                        {pathname === '/the-le' && <div className="h-[3.5px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] shadow-[0_0_8px_#79BCC2] bottom-3"></div>}
+                        {pathname === '/the-le' && <div className="h-[3px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#00C6FF] bottom-3"></div>}
                       </Link>
                     </div>
 
-                    {/* Desktop Login Button */}
-                    <Link id="loginHeaderBtn" href="/dang-nhap" className="group hidden sm:flex cursor-pointer gap-2 relative justify-center items-center fill-white hover:text-[#79BCC2] transition-colors h-full">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                      <p className="text-caption1 font-medium leading-[23px] text-white group-hover:text-[#79BCC2] transition-colors">Đăng nhập</p>
-                    </Link>
+                    {/* Desktop User Status/Login Button */}
+                    {currentUser ? (
+                      <div className="hidden sm:flex items-center gap-3 h-full">
+                        <div className="flex items-center gap-2 text-slate-800">
+                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A2FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" style={{ stroke: '#0A2FFF' }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                          <span className="text-caption1 font-bold leading-[23px] text-slate-800 max-w-[150px] truncate">{currentUser.fullName}</span>
+                        </div>
+                        <button onClick={handleLogout} className="text-caption1 font-medium text-red-600 hover:text-red-800 hover:underline transition-colors bg-transparent border-0 outline-none cursor-pointer">
+                          Đăng xuất
+                        </button>
+                      </div>
+                    ) : (
+                      <Link id="loginHeaderBtn" href="/dang-nhap" className="group hidden sm:flex cursor-pointer gap-2 relative justify-center items-center text-slate-800 hover:text-[#0A2FFF] transition-colors h-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" style={{ stroke: 'currentColor' }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                        <p className="text-caption1 font-medium leading-[23px] text-slate-800 group-hover:text-[#0A2FFF] transition-colors">Đăng nhập</p>
+                      </Link>
+                    )}
 
-                    {/* Mobile Login Button */}
-                    <Link id="loginHeaderBtnMobile" href="/dang-nhap" className="flex sm:hidden cursor-pointer justify-center items-center fill-white p-2 hover:border-[#79BCC2]/50 hover:bg-[#79BCC2]/10 transition-all rounded-full" style={{ height: '36px', width: '36px', border: '1px solid rgba(255,255,255,0.2)' }}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                    </Link>
+                    {/* Mobile User Status/Login Button */}
+                    {currentUser ? (
+                      <button
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        className="flex sm:hidden cursor-pointer justify-center items-center p-2 hover:border-[#0A2FFF]/50 hover:bg-[#0A2FFF]/10 transition-all rounded-full text-[#0A2FFF] border-[#0A2FFF]/30 bg-[#0A2FFF]/5"
+                        style={{ height: '36px', width: '36px', border: '1px solid rgba(10, 47, 255, 0.3)' }}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" style={{ stroke: 'currentColor' }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      </button>
+                    ) : (
+                      <Link id="loginHeaderBtnMobile" href="/dang-nhap" className="flex sm:hidden cursor-pointer justify-center items-center p-2 hover:border-[#0A2FFF]/50 hover:bg-[#0A2FFF]/10 transition-all rounded-full text-slate-800 hover:text-[#0A2FFF]" style={{ height: '36px', width: '36px', border: '1px solid rgba(0,0,0,0.15)' }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" style={{ stroke: 'currentColor' }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
 
               {/* Mobile Dropdown Navigation Menu */}
               {mobileMenuOpen && (
-                <div className="flex flex-col absolute top-[80px] left-0 right-0 bg-[#030612]/95 backdrop-blur-[16px] p-4 z-50 w-full sm-desktop:hidden border-b border-white/10 space-y-3">
-                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/' ? 'text-[#79BCC2] font-bold' : 'text-white/80 hover:text-[#79BCC2]'}`} href="/" onClick={() => setMobileMenuOpen(false)}>
+                <div className="flex flex-col absolute top-[80px] left-0 right-0 bg-white/95 backdrop-blur-[16px] p-4 z-50 w-full sm-desktop:hidden border-b border-black/10 space-y-3">
+                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/" onClick={() => setMobileMenuOpen(false)}>
                     Trang chủ
                   </Link>
-                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/gioi-thieu' ? 'text-[#79BCC2] font-bold' : 'text-white/80 hover:text-[#79BCC2]'}`} href="/gioi-thieu" onClick={() => setMobileMenuOpen(false)}>
+                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/gioi-thieu' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/gioi-thieu" onClick={() => setMobileMenuOpen(false)}>
                     Giới thiệu
                   </Link>
-                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/thoi-gian' ? 'text-[#79BCC2] font-bold' : 'text-white/80 hover:text-[#79BCC2]'}`} href="/thoi-gian" onClick={() => setMobileMenuOpen(false)}>
+                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/thoi-gian' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/thoi-gian" onClick={() => setMobileMenuOpen(false)}>
                     Thời gian
                   </Link>
-                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/bang-xep-hang' ? 'text-[#79BCC2] font-bold' : 'text-white/80 hover:text-[#79BCC2]'}`} href="/bang-xep-hang" onClick={() => setMobileMenuOpen(false)}>
+                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/bang-xep-hang' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/bang-xep-hang" onClick={() => setMobileMenuOpen(false)}>
                     Bảng xếp hạng
                   </Link>
-                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/the-le' ? 'text-[#79BCC2] font-bold' : 'text-white/80 hover:text-[#79BCC2]'}`} href="/the-le" onClick={() => setMobileMenuOpen(false)}>
+                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/the-le' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/the-le" onClick={() => setMobileMenuOpen(false)}>
                     Hướng dẫn
                   </Link>
-                  <Link className={`focus:outline-none py-2 block text-center font-bold transition-all ${pathname === '/dang-nhap' ? 'text-[#79BCC2]' : 'text-white hover:text-[#79BCC2]'}`} href="/dang-nhap" onClick={() => setMobileMenuOpen(false)}>
-                    Đăng nhập
-                  </Link>
+                  {currentUser ? (
+                    <>
+                      <div className="py-2 text-center text-slate-800 font-semibold border-t border-slate-100">
+                        Xin chào, <span className="text-[#0A2FFF]">{currentUser.fullName}</span>
+                      </div>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="py-2 block w-full text-center text-red-600 hover:text-red-800 font-bold transition-all border-b border-slate-100 bg-transparent border-0 cursor-pointer"
+                      >
+                        Đăng xuất
+                      </button>
+                    </>
+                  ) : (
+                    <Link className={`focus:outline-none py-2 block text-center font-bold transition-all ${pathname === '/dang-nhap' ? 'text-[#0A2FFF]' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/dang-nhap" onClick={() => setMobileMenuOpen(false)}>
+                      Đăng nhập
+                    </Link>
+                  )}
                 </div>
               )}
             </div>

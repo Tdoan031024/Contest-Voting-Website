@@ -191,63 +191,58 @@ export class AppService implements OnModuleInit {
     fs.writeFileSync(this.dbFilePath, JSON.stringify(data, null, 2), 'utf8');
   }
 
-  private getCandidateMetadata(candidate: any): Record<string, any> {
-    if (!candidate?.biography || typeof candidate.biography !== 'string') {
-      return {};
-    }
-
-    try {
-      const parsed = JSON.parse(candidate.biography);
-      return parsed && typeof parsed === 'object' && parsed.__projectMeta ? parsed : {};
-    } catch {
-      return {};
-    }
-  }
-
   private mergeCandidate(candidate: any): Candidate {
-    const metadata = this.getCandidateMetadata(candidate);
-    if (!metadata.__projectMeta) {
-      return candidate as Candidate;
-    }
-
-    const { __projectMeta, longDescription, ...projectFields } = metadata;
     return {
       ...candidate,
-      ...projectFields,
-      biography: longDescription || candidate.description || '',
+      intellectualPropertyCommitment: candidate.intellectualPropertyCommitment ?? false,
     } as Candidate;
   }
 
-  private prepareCandidateData(input: Partial<Candidate>, existing?: any) {
-    const baseKeys = new Set(['sbd', 'name', 'votes', 'imageUrl', 'description', 'biography']);
-    const metadata = {
-      ...this.getCandidateMetadata(existing),
-      __projectMeta: true,
-    };
-
-    Object.entries(input || {}).forEach(([key, value]) => {
-      if (!baseKeys.has(key) && value !== undefined) {
-        (metadata as any)[key] = value;
-      }
-    });
-
-    if (input.biography !== undefined) {
-      (metadata as any).longDescription = input.biography;
-    }
-
+  private prepareCandidateData(input: Partial<Candidate>) {
     const data: any = {};
     if (input.sbd !== undefined) data.sbd = input.sbd;
     if (input.name !== undefined) data.name = input.name;
     if (input.votes !== undefined) data.votes = Number(input.votes) || 0;
     if (input.imageUrl !== undefined) data.imageUrl = input.imageUrl;
     if (input.description !== undefined) data.description = input.description;
-    data.biography = JSON.stringify(metadata);
+    if (input.biography !== undefined) data.biography = input.biography;
+
+    // Startup metadata columns
+    if (input.teamName !== undefined) data.teamName = input.teamName;
+    if (input.representativeSchool !== undefined) data.representativeSchool = input.representativeSchool;
+    if (input.leaderName !== undefined) data.leaderName = input.leaderName;
+    if (input.leaderPhone !== undefined) data.leaderPhone = input.leaderPhone;
+    if (input.leaderEmail !== undefined) data.leaderEmail = input.leaderEmail;
+    if (input.advisorName !== undefined) data.advisorName = input.advisorName;
+    if (input.members !== undefined) data.members = input.members;
+    if (input.implementationLocation !== undefined) data.implementationLocation = input.implementationLocation;
+    if (input.intellectualPropertyCommitment !== undefined) {
+      data.intellectualPropertyCommitment = input.intellectualPropertyCommitment !== null ? Boolean(input.intellectualPropertyCommitment) : false;
+    }
+    if (input.supportNeeds !== undefined) data.supportNeeds = input.supportNeeds;
+    if (input.expectations !== undefined) data.expectations = input.expectations;
+    if (input.contestTable !== undefined) data.contestTable = input.contestTable;
+    if (input.contestTableLabel !== undefined) data.contestTableLabel = input.contestTableLabel;
+    if (input.currentRound !== undefined) data.currentRound = input.currentRound;
+    if (input.status !== undefined) data.status = input.status;
+
     return data;
   }
 
-  private publicWebUser(user: WebUser): WebUser {
-    const { passwordHash, ...publicUser } = user;
-    return publicUser as WebUser;
+  private publicWebUser(user: any): WebUser {
+    return {
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone ?? undefined,
+      provider: user.provider as any,
+      role: user.role as any,
+      status: user.status as any,
+      schoolOrCompany: user.schoolOrCompany ?? undefined,
+      contestTable: user.contestTable ?? undefined,
+      registeredAt: typeof user.registeredAt === 'string' ? user.registeredAt : user.registeredAt?.toISOString(),
+      lastLoginAt: typeof user.lastLoginAt === 'string' ? user.lastLoginAt : user.lastLoginAt?.toISOString(),
+    };
   }
 
   private async seedDataIfNeeded() {
@@ -264,8 +259,20 @@ export class AppService implements OnModuleInit {
       // Seed Candidates
       const candidatesCount = await this.prisma.candidate.count();
       if (candidatesCount === 0 && data.candidates && Array.isArray(data.candidates)) {
-        console.log('Seeding candidates...');
+        console.log('Seeding candidates from JSON file into columns...');
         for (const c of data.candidates) {
+          let biographyText = c.biography || '';
+          let meta: any = {};
+          try {
+            const parsed = JSON.parse(c.biography);
+            if (parsed && typeof parsed === 'object' && parsed.__projectMeta) {
+              meta = parsed;
+              biographyText = parsed.longDescription || c.description || '';
+            }
+          } catch {
+            // Keep as is
+          }
+
           await this.prisma.candidate.create({
             data: {
               id: c.id,
@@ -274,11 +281,64 @@ export class AppService implements OnModuleInit {
               votes: c.votes || 0,
               imageUrl: c.imageUrl,
               description: c.description || '',
-              biography: c.biography || '',
+              biography: biographyText,
+              
+              // Seed from parsed metadata columns
+              teamName: meta.teamName || c.teamName || null,
+              representativeSchool: meta.representativeSchool || c.representativeSchool || null,
+              leaderName: meta.leaderName || c.leaderName || null,
+              leaderPhone: meta.leaderPhone || c.leaderPhone || null,
+              leaderEmail: meta.leaderEmail || c.leaderEmail || null,
+              advisorName: meta.advisorName || c.advisorName || null,
+              members: meta.members || c.members || null,
+              implementationLocation: meta.implementationLocation || c.implementationLocation || null,
+              intellectualPropertyCommitment: meta.intellectualPropertyCommitment !== undefined ? Boolean(meta.intellectualPropertyCommitment) : false,
+              supportNeeds: meta.supportNeeds || c.supportNeeds || null,
+              expectations: meta.expectations || c.expectations || null,
+              contestTable: meta.contestTable || c.contestTable || null,
+              contestTableLabel: meta.contestTableLabel || c.contestTableLabel || null,
+              currentRound: meta.currentRound || c.currentRound || 'Vòng loại',
+              status: meta.status || c.status || 'Đủ hồ sơ',
             }
           });
         }
         console.log(`✅ Seeded ${data.candidates.length} candidates.`);
+      } else {
+        // Migrate existing Candidates if columns are empty
+        const existingCandidates = await this.prisma.candidate.findMany();
+        for (const c of existingCandidates) {
+          if (!c.teamName && c.biography && c.biography.includes('__projectMeta')) {
+            try {
+              const parsed = JSON.parse(c.biography);
+              if (parsed && typeof parsed === 'object' && parsed.__projectMeta) {
+                console.log(`Migrating biography JSON to columns for candidate ${c.sbd}...`);
+                await this.prisma.candidate.update({
+                  where: { id: c.id },
+                  data: {
+                    biography: parsed.longDescription || c.description || '',
+                    teamName: parsed.teamName || null,
+                    representativeSchool: parsed.representativeSchool || null,
+                    leaderName: parsed.leaderName || null,
+                    leaderPhone: parsed.leaderPhone || null,
+                    leaderEmail: parsed.leaderEmail || null,
+                    advisorName: parsed.advisorName || null,
+                    members: parsed.members || null,
+                    implementationLocation: parsed.implementationLocation || null,
+                    intellectualPropertyCommitment: parsed.intellectualPropertyCommitment !== undefined ? Boolean(parsed.intellectualPropertyCommitment) : false,
+                    supportNeeds: parsed.supportNeeds || null,
+                    expectations: parsed.expectations || null,
+                    contestTable: parsed.contestTable || null,
+                    contestTableLabel: parsed.contestTableLabel || null,
+                    currentRound: parsed.currentRound || 'Vòng loại',
+                    status: parsed.status || 'Đủ hồ sơ',
+                  }
+                });
+              }
+            } catch (e) {
+              console.error(`Failed to migrate biography JSON for candidate ${c.sbd}:`, e);
+            }
+          }
+        }
       }
 
       // Seed Sponsors
@@ -353,7 +413,7 @@ export class AppService implements OnModuleInit {
       const adminCount = await this.prisma.adminUser.count();
       if (adminCount === 0) {
         console.log('Seeding default admin user...');
-        const hashedPassword = await bcrypt.hash('HuitMedia2026', 10);
+        const hashedPassword = await bcrypt.hash('1', 10);
         await this.prisma.adminUser.create({
           data: {
             username: 'admin',
@@ -363,6 +423,35 @@ export class AppService implements OnModuleInit {
           }
         });
         console.log('✅ Seeded default admin user.');
+      }
+
+      // Seed Web Users from JSON
+      const webUsersCount = await this.prisma.webUser.count();
+      if (webUsersCount === 0 && data.webUsers && Array.isArray(data.webUsers)) {
+        console.log('Seeding web users from JSON file...');
+        for (const u of data.webUsers) {
+          try {
+            await this.prisma.webUser.create({
+              data: {
+                id: u.id,
+                fullName: u.fullName,
+                email: u.email,
+                phone: u.phone,
+                passwordHash: u.passwordHash,
+                provider: u.provider || 'email',
+                role: u.role || 'USER',
+                status: u.status || 'ACTIVE',
+                schoolOrCompany: u.schoolOrCompany,
+                contestTable: u.contestTable,
+                registeredAt: u.registeredAt ? new Date(u.registeredAt) : new Date(),
+                lastLoginAt: u.lastLoginAt ? new Date(u.lastLoginAt) : new Date(),
+              }
+            });
+          } catch (e) {
+            console.error(`Failed to seed web user ${u.email}:`, e);
+          }
+        }
+        console.log(`✅ Seeded ${data.webUsers.length} web users.`);
       }
 
       console.log('🎉 Database check & seeding completed!');
@@ -517,7 +606,7 @@ export class AppService implements OnModuleInit {
 
     const updated = await this.prisma.candidate.update({
       where: { id },
-      data: this.prepareCandidateData(cleanFields, existing),
+      data: this.prepareCandidateData(cleanFields),
     });
     return this.mergeCandidate(updated);
   }
@@ -646,79 +735,87 @@ export class AppService implements OnModuleInit {
   }
 
   // --- WEB USERS & AUTH ---
-  getWebUsers(): WebUser[] {
-    const data = this.readLocalData();
-    return (data.webUsers || []).map((user) => this.publicWebUser(user));
+  async getWebUsers(): Promise<WebUser[]> {
+    const users = await this.prisma.webUser.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return users.map((user: any) => this.publicWebUser(user));
   }
 
   async registerWebUser(payload: Partial<WebUser> & { password?: string }): Promise<{ ok: boolean; user: WebUser; token: string }> {
-    const data = this.readLocalData();
-    const users = data.webUsers || [];
     const email = String(payload.email || '').trim().toLowerCase();
 
     if (!email || !payload.fullName || !payload.password) {
       throw new UnauthorizedException('Thiếu họ tên, email hoặc mật khẩu.');
     }
 
-    if (users.some((user) => user.email.toLowerCase() === email)) {
+    const existing = await this.prisma.webUser.findUnique({
+      where: { email },
+    });
+    if (existing) {
       throw new UnauthorizedException('Email đã được đăng ký.');
     }
 
-    const user: WebUser = {
-      id: `user-${Date.now()}`,
-      fullName: payload.fullName,
-      email,
-      phone: payload.phone,
-      passwordHash: await bcrypt.hash(payload.password, 10),
-      provider: 'email',
-      role: 'USER',
-      status: 'ACTIVE',
-      schoolOrCompany: payload.schoolOrCompany,
-      contestTable: payload.contestTable,
-      registeredAt: new Date().toISOString(),
-      lastLoginAt: new Date().toISOString(),
-    };
+    const user = await this.prisma.webUser.create({
+      data: {
+        fullName: payload.fullName,
+        email,
+        phone: payload.phone,
+        passwordHash: await bcrypt.hash(payload.password, 10),
+        provider: 'email',
+        role: 'USER',
+        status: 'ACTIVE',
+        schoolOrCompany: payload.schoolOrCompany,
+        contestTable: payload.contestTable,
+        registeredAt: new Date(),
+        lastLoginAt: new Date(),
+      },
+    });
 
-    data.webUsers = [user, ...users];
-    this.writeLocalData(data);
     return { ok: true, user: this.publicWebUser(user), token: `local-${user.id}` };
   }
 
   async quickRegisterWebUser(payload: Partial<WebUser>): Promise<{ ok: boolean; user: WebUser; token: string }> {
-    const data = this.readLocalData();
-    const users = data.webUsers || [];
     const email = String(payload.email || `${payload.phone || Date.now()}@quick.huit.local`).trim().toLowerCase();
-    const existing = users.find((user) => user.email.toLowerCase() === email || (payload.phone && user.phone === payload.phone));
+    const existing = await this.prisma.webUser.findFirst({
+      where: {
+        OR: [
+          { email },
+          { phone: payload.phone || undefined },
+        ],
+      },
+    });
 
     if (existing) {
-      existing.lastLoginAt = new Date().toISOString();
-      this.writeLocalData({ ...data, webUsers: users });
-      return { ok: true, user: this.publicWebUser(existing), token: `local-${existing.id}` };
+      const updated = await this.prisma.webUser.update({
+        where: { id: existing.id },
+        data: { lastLoginAt: new Date() },
+      });
+      return { ok: true, user: this.publicWebUser(updated), token: `local-${updated.id}` };
     }
 
-    const user: WebUser = {
-      id: `user-${Date.now()}`,
-      fullName: payload.fullName || 'Người dùng bình chọn',
-      email,
-      phone: payload.phone,
-      provider: 'quick',
-      role: 'USER',
-      status: 'ACTIVE',
-      schoolOrCompany: payload.schoolOrCompany,
-      contestTable: payload.contestTable,
-      registeredAt: new Date().toISOString(),
-      lastLoginAt: new Date().toISOString(),
-    };
+    const user = await this.prisma.webUser.create({
+      data: {
+        fullName: payload.fullName || 'Người dùng bình chọn',
+        email,
+        phone: payload.phone,
+        provider: 'quick',
+        role: 'USER',
+        status: 'ACTIVE',
+        schoolOrCompany: payload.schoolOrCompany,
+        contestTable: payload.contestTable,
+        registeredAt: new Date(),
+        lastLoginAt: new Date(),
+      },
+    });
 
-    data.webUsers = [user, ...users];
-    this.writeLocalData(data);
     return { ok: true, user: this.publicWebUser(user), token: `local-${user.id}` };
   }
 
   async loginWebUser(email: string, password: string): Promise<{ ok: boolean; user: WebUser; token: string }> {
-    const data = this.readLocalData();
-    const users = data.webUsers || [];
-    const user = users.find((item) => item.email.toLowerCase() === String(email || '').trim().toLowerCase());
+    const user = await this.prisma.webUser.findUnique({
+      where: { email: String(email || '').trim().toLowerCase() },
+    });
 
     if (!user || user.status === 'LOCKED' || !user.passwordHash) {
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác.');
@@ -729,14 +826,15 @@ export class AppService implements OnModuleInit {
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác.');
     }
 
-    user.lastLoginAt = new Date().toISOString();
-    this.writeLocalData({ ...data, webUsers: users });
-    return { ok: true, user: this.publicWebUser(user), token: `local-${user.id}` };
+    const updated = await this.prisma.webUser.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
+
+    return { ok: true, user: this.publicWebUser(updated), token: `local-${updated.id}` };
   }
 
   async googleLogin(payload: Partial<WebUser> & { googleId?: string; accessToken?: string }): Promise<{ ok: boolean; user: WebUser; token: string }> {
-    const data = this.readLocalData();
-    const users = data.webUsers || [];
     let googleProfile: any = null;
 
     if (payload.accessToken) {
@@ -761,25 +859,32 @@ export class AppService implements OnModuleInit {
       throw new UnauthorizedException('Thiếu email Google.');
     }
 
-    let user = users.find((item) => item.email.toLowerCase() === email);
+    let user = await this.prisma.webUser.findUnique({
+      where: { email },
+    });
+
     if (!user) {
-      user = {
-        id: `user-${Date.now()}`,
-        fullName: googleProfile?.name || payload.fullName || email.split('@')[0],
-        email,
-        phone: payload.phone,
-        provider: 'google',
-        role: 'USER',
-        status: 'ACTIVE',
-        schoolOrCompany: payload.schoolOrCompany,
-        contestTable: payload.contestTable,
-        registeredAt: new Date().toISOString(),
-      };
-      users.unshift(user);
+      user = await this.prisma.webUser.create({
+        data: {
+          fullName: googleProfile?.name || payload.fullName || email.split('@')[0],
+          email,
+          phone: payload.phone,
+          provider: 'google',
+          role: 'USER',
+          status: 'ACTIVE',
+          schoolOrCompany: payload.schoolOrCompany,
+          contestTable: payload.contestTable,
+          registeredAt: new Date(),
+          lastLoginAt: new Date(),
+        },
+      });
+    } else {
+      user = await this.prisma.webUser.update({
+        where: { id: user.id },
+        data: { lastLoginAt: new Date() },
+      });
     }
 
-    user.lastLoginAt = new Date().toISOString();
-    this.writeLocalData({ ...data, webUsers: users });
     return { ok: true, user: this.publicWebUser(user), token: `local-${user.id}` };
   }
 
