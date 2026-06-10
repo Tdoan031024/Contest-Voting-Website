@@ -37,17 +37,24 @@ model Candidate {
   contestTableLabel              String?
   currentRound                   String?  @default("Vòng loại")
   status                         String?  @default("Đủ hồ sơ")
+  sector                         String?
+  showcaseImages                 String?  @db.Text
   createdAt                      DateTime @default(now())
   updatedAt                      DateTime @updatedAt
 }
 
 model Sponsor {
-  id        String      @id @default(uuid())
-  name      String
-  logoUrl   String
-  tier      SponsorTier @default(PARTNER)
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  id            String      @id @default(uuid())
+  name          String
+  logoUrl       String
+  tier          SponsorTier @default(PARTNER)
+  description   String?     @db.Text
+  websiteUrl    String?
+  email         String?
+  phone         String?
+  contactPerson String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 }
 
 model Banner {

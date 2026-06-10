@@ -207,7 +207,7 @@ export default function LoginPage() {
       <style>{`
         @media (min-width: 812px) {
           .iUzfqH {
-            background-image: url(/media-platform.1vote.vn/uploads/tAtj0/1727187460437.jpg);
+            background-image: url(/background/background.png);
             background-color: white;
             background-attachment: fixed;
             background-size: cover;

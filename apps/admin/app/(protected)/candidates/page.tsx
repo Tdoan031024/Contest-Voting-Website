@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { Candidate } from '@huitfest/shared';
 import { apiUrl, formatAssetUrl } from '../../api';
@@ -15,7 +15,7 @@ const emptyProject: Partial<Candidate> = {
   sbd: '',
   name: '',
   votes: 0,
-  imageUrl: '/original_assets/image389b.png',
+  imageUrl: '/duan/anhmauduan.png',
   description: '',
   biography: '',
   contestTable: 'STUDENT',
@@ -34,6 +34,7 @@ const emptyProject: Partial<Candidate> = {
   expectations: '',
   implementationLocation: '',
   intellectualPropertyCommitment: true,
+  showcaseImages: '',
 };
 
 function Pill({
@@ -101,6 +102,58 @@ function roundTone(round?: string): 'green' | 'blue' | 'orange' | 'slate' {
   return 'slate';
 }
 
+function parseMembers(membersStr: string, isEnterprise: boolean): any[] {
+  if (!membersStr || !membersStr.trim()) return [];
+  const lines = membersStr.split('\n').map(line => line.trim()).filter(Boolean);
+  return lines.map((line) => {
+    let cleanLine = line.replace(/^\d+[\.\/\-\s]*/, '').trim();
+    const parts = cleanLine.split(/\s*-\s*/).map(p => p.trim());
+    if (isEnterprise) {
+      return {
+        fullName: parts[0] || '',
+        dob: parts[1] || '',
+        role: parts[2] || '',
+        company: parts[3] || '',
+        phone: parts[4] || '',
+        email: parts[5] || '',
+        experience: parts[6] || '',
+      };
+    } else {
+      return {
+        fullName: parts[0] || '',
+        studentId: parts[1] || '',
+        school: parts[2] || '',
+        phone: parts[3] || '',
+        email: parts[4] || '',
+      };
+    }
+  });
+}
+
+function serializeMembers(membersList: any[], isEnterprise: boolean): string {
+  return membersList
+    .map((m, index) => {
+      const parts = isEnterprise ? [
+        m.fullName || '',
+        m.dob || '',
+        m.role || '',
+        m.company || '',
+        m.phone || '',
+        m.email || '',
+        m.experience || ''
+      ] : [
+        m.fullName || '',
+        m.studentId || '',
+        m.school || '',
+        m.phone || '',
+        m.email || ''
+      ];
+      const content = parts.map(p => p.trim()).join(' - ');
+      return `${index + 1}. ${content}`;
+    })
+    .join('\n');
+}
+
 function ProjectModal({
   title,
   form,
@@ -117,10 +170,122 @@ function ProjectModal({
   const update = (key: keyof Candidate, value: any) => {
     const next = { ...form, [key]: value };
     if (key === 'contestTable') next.contestTableLabel = tableLabels[value] || value;
+    if (key === 'sbd') {
+      const sbdVal = value?.trim();
+      if (sbdVal && (!form.imageUrl || form.imageUrl === '/duan/anhmauduan.png' || form.imageUrl.startsWith('/duan/'))) {
+        next.imageUrl = `/duan/${sbdVal}/main.jpg`;
+      }
+    }
     setForm(next);
   };
 
+  const modalFileRef = useRef<HTMLInputElement>(null);
+  const [uploadingIndex, setUploadingIndex] = useState<number | 'main' | null>(null);
+
+  const handleModalFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || uploadingIndex === null) return;
+    const sbd = form.sbd?.trim() || 'temp';
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const uploadRes = await fetch(apiUrl(`/api/admin/candidates/${sbd}/upload`), {
+      method: 'POST',
+      body: formData,
+    });
+    if (uploadRes.ok) {
+      const { url } = await uploadRes.json();
+      if (uploadingIndex === 'main') {
+        update('imageUrl', url);
+      } else {
+        const indexToUpdate = uploadingIndex as number;
+        // Cập nhật cục bộ và lưu
+        const newList = [...showcaseList];
+        newList[indexToUpdate] = url;
+        setShowcaseList(newList);
+        update('showcaseImages', newList.filter(Boolean).join(','));
+      }
+      alert('Tải ảnh lên thành công!');
+    } else {
+      alert('Tải ảnh thất bại. Vui lòng kiểm tra backend.');
+    }
+    setUploadingIndex(null);
+    if (modalFileRef.current) modalFileRef.current.value = '';
+  };
+
+  const isEnterprise = form.contestTable === 'ENTERPRISE';
+  const [membersList, setMembersList] = useState<any[]>(() => {
+    return parseMembers(form.members || '', isEnterprise);
+  });
+
+  const handleMemberFieldChange = (index: number, field: string, value: string) => {
+    const newList = membersList.map((m, idx) => {
+      if (idx === index) {
+        return { ...m, [field]: value };
+      }
+      return m;
+    });
+    setMembersList(newList);
+    update('members', serializeMembers(newList, form.contestTable === 'ENTERPRISE'));
+  };
+
+  const handleAddMember = () => {
+    const isEnt = form.contestTable === 'ENTERPRISE';
+    const newMember = isEnt ? {
+      fullName: '',
+      dob: '',
+      role: '',
+      company: '',
+      phone: '',
+      email: '',
+      experience: '',
+    } : {
+      fullName: '',
+      studentId: '',
+      school: '',
+      phone: '',
+      email: '',
+    };
+    const newList = [...membersList, newMember];
+    setMembersList(newList);
+    update('members', serializeMembers(newList, isEnt));
+  };
+
+  const handleRemoveMember = (index: number) => {
+    const newList = membersList.filter((_, idx) => idx !== index);
+    setMembersList(newList);
+    update('members', serializeMembers(newList, form.contestTable === 'ENTERPRISE'));
+  };
+
+  const [showcaseList, setShowcaseList] = useState<string[]>(() => {
+    return (form.showcaseImages || '').split(',').map(img => img.trim()).filter(Boolean);
+  });
+
+  const handleShowcaseChange = (index: number, value: string) => {
+    const newList = [...showcaseList];
+    newList[index] = value;
+    setShowcaseList(newList);
+    update('showcaseImages', newList.filter(Boolean).join(','));
+  };
+
+  const handleAddShowcase = () => {
+    if (showcaseList.length >= 5) return;
+    const sbd = form.sbd?.trim() || 'TEMP';
+    const nextIndex = showcaseList.length + 1;
+    const newUrl = `/duan/${sbd}/${nextIndex}.jpg`;
+    const newList = [...showcaseList, newUrl];
+    setShowcaseList(newList);
+    update('showcaseImages', newList.filter(Boolean).join(','));
+  };
+
+  const handleRemoveShowcase = (index: number) => {
+    const newList = showcaseList.filter((_, idx) => idx !== index);
+    setShowcaseList(newList);
+    update('showcaseImages', newList.filter(Boolean).join(','));
+  };
+
   const inputClass = 'h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white';
+  const rowInputClass = 'h-9 w-full rounded-md border border-slate-200 bg-slate-50 px-2.5 text-xs font-semibold text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white';
   const labelText = 'text-[10px] font-black uppercase tracking-[0.12em] text-slate-500';
 
   return (
@@ -138,16 +303,30 @@ function ProjectModal({
 
         <div className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-3">
           <label className="space-y-1.5 md:col-span-2">
-            <span className={labelText}>Tên dự án</span>
+            <span className={labelText}>Tên dự án <span className="text-red-500 font-bold">*</span></span>
             <input className={inputClass} value={form.name || ''} onChange={(event) => update('name', event.target.value)} required />
           </label>
           <label className="space-y-1.5">
-            <span className={labelText}>Mã dự án / SBD</span>
+            <span className={labelText}>Mã dự án / SBD <span className="text-red-500 font-bold">*</span></span>
             <input className={inputClass} value={form.sbd || ''} onChange={(event) => update('sbd', event.target.value)} required />
           </label>
           <label className="space-y-1.5">
             <span className={labelText}>Bảng thi</span>
-            <select className={inputClass} value={form.contestTable || 'STUDENT'} onChange={(event) => update('contestTable', event.target.value)}>
+            <select
+              className={inputClass}
+              value={form.contestTable || 'STUDENT'}
+              onChange={(event) => {
+                const val = event.target.value;
+                const oldIsEnterprise = form.contestTable === 'ENTERPRISE';
+                const newIsEnterprise = val === 'ENTERPRISE';
+                update('contestTable', val);
+                
+                const currentSerialized = serializeMembers(membersList, oldIsEnterprise);
+                const newParsed = parseMembers(currentSerialized, newIsEnterprise);
+                setMembersList(newParsed);
+                update('members', serializeMembers(newParsed, newIsEnterprise));
+              }}
+            >
               <option value="HIGH_SCHOOL">Bảng học sinh</option>
               <option value="STUDENT">Bảng sinh viên, học viên</option>
               <option value="ENTERPRISE">Bảng cá nhân, tổ chức, doanh nghiệp</option>
@@ -163,7 +342,6 @@ function ProjectModal({
               <option>Vòng loại</option>
               <option>Vòng bán kết</option>
               <option>Vòng chung kết</option>
-              <option>Bình chọn online</option>
             </select>
           </label>
           <label className="space-y-1.5">
@@ -174,10 +352,22 @@ function ProjectModal({
             <span className={labelText}>Điểm bình chọn</span>
             <input type="number" min={0} className={inputClass} value={form.votes || 0} onChange={(event) => update('votes', Number(event.target.value))} />
           </label>
-          <label className="space-y-1.5">
+          <div className="space-y-1.5">
             <span className={labelText}>Đường dẫn ảnh</span>
-            <input className={inputClass} value={form.imageUrl || ''} onChange={(event) => update('imageUrl', event.target.value)} />
-          </label>
+            <div className="flex gap-2">
+              <input className={inputClass} value={form.imageUrl || ''} onChange={(event) => update('imageUrl', event.target.value)} />
+              <button
+                type="button"
+                onClick={() => {
+                  setUploadingIndex('main');
+                  modalFileRef.current?.click();
+                }}
+                className="h-10 shrink-0 rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 hover:border-emerald-500 hover:text-emerald-700 transition"
+              >
+                Tải lên
+              </button>
+            </div>
+          </div>
           <label className="space-y-1.5">
             <span className={labelText}>Tên nhóm</span>
             <input className={inputClass} value={form.teamName || ''} onChange={(event) => update('teamName', event.target.value)} />
@@ -192,20 +382,283 @@ function ProjectModal({
           </label>
           <label className="space-y-1.5">
             <span className={labelText}>SĐT trưởng nhóm</span>
-            <input className={inputClass} value={form.leaderPhone || ''} onChange={(event) => update('leaderPhone', event.target.value)} />
+            <input type="tel" pattern="0[0-9]{9,10}" title="Số điện thoại phải gồm 10 hoặc 11 chữ số và bắt đầu bằng số 0" placeholder="Ví dụ: 0987654321" className={inputClass} value={form.leaderPhone || ''} onChange={(event) => update('leaderPhone', event.target.value)} />
           </label>
           <label className="space-y-1.5">
             <span className={labelText}>Email trưởng nhóm</span>
-            <input type="email" className={inputClass} value={form.leaderEmail || ''} onChange={(event) => update('leaderEmail', event.target.value)} />
+            <input type="email" placeholder="Ví dụ: email@domain.com" className={inputClass} value={form.leaderEmail || ''} onChange={(event) => update('leaderEmail', event.target.value)} />
           </label>
           <label className="space-y-1.5">
             <span className={labelText}>Cố vấn</span>
             <input className={inputClass} value={form.advisorName || ''} onChange={(event) => update('advisorName', event.target.value)} />
           </label>
-          <label className="space-y-1.5">
-            <span className={labelText}>Thành viên nhóm</span>
-            <input className={inputClass} value={form.members || ''} onChange={(event) => update('members', event.target.value)} placeholder="Tên các thành viên..." />
-          </label>
+
+          {/* Showcase Images Gallery */}
+          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 md:col-span-3 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className={labelText}>Hình ảnh trưng bày dự án</span>
+                <span className="text-[10px] font-bold text-slate-400 italic">Tối đa 5 hình ảnh để trưng bày trên trang chi tiết</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  disabled={showcaseList.length >= 5}
+                  onClick={handleAddShowcase}
+                  className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-slate-700 transition duration-150 ease-in-out active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14" />
+                    <path d="M12 5v14" />
+                  </svg>
+                  Thêm ảnh ({showcaseList.length}/5)
+                </button>
+              </div>
+            </div>
+
+            {showcaseList.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-white py-6 px-4 text-center">
+                <p className="text-xs font-semibold text-slate-400">Chưa có hình ảnh trưng bày nào.</p>
+                <p className="mt-1 text-[10px] text-slate-400">Nhấn nút "Thêm ảnh" ở trên để tải lên tối đa 5 hình ảnh.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {showcaseList.map((url, index) => (
+                  <div key={index} className="flex items-center gap-3 bg-white p-3 rounded-lg border border-slate-200 shadow-sm relative hover:border-slate-300 transition">
+                    <div className="h-12 w-16 shrink-0 border border-slate-100 rounded-lg overflow-hidden bg-slate-50 flex items-center justify-center">
+                      {url ? (
+                        <img src={formatAssetUrl(url)} alt={`Trưng bày ${index + 1}`} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="text-[9px] text-slate-400 font-bold text-center px-1">Chưa có ảnh</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-[9px] font-black text-slate-500 uppercase tracking-wider block mb-1">Đường dẫn ảnh #{index + 1}</span>
+                      <div className="flex gap-1.5">
+                        <input
+                          type="text"
+                          placeholder="Ví dụ: /duan/anh1.png hoặc link ảnh online"
+                          className={rowInputClass}
+                          value={url}
+                          onChange={(e) => handleShowcaseChange(index, e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUploadingIndex(index);
+                            modalFileRef.current?.click();
+                          }}
+                          className="h-9 shrink-0 rounded-md border border-slate-200 bg-slate-50 px-2 text-xs font-bold text-slate-700 hover:border-emerald-500 hover:text-emerald-700 transition"
+                        >
+                          Tải lên
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveShowcase(index)}
+                      className="rounded-lg border border-slate-100 bg-slate-50 p-1.5 text-slate-400 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition"
+                      title="Xóa ảnh"
+                    >
+                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M18 6 6 18" />
+                        <path d="m6 6 12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50/50 p-4 md:col-span-3 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col">
+                <span className={labelText}>Thành viên nhóm</span>
+                <span className="text-[10px] font-bold text-slate-400 italic">Không bao gồm Trưởng nhóm</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddMember}
+                className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition duration-150 ease-in-out active:scale-95"
+              >
+                <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14" />
+                  <path d="M12 5v14" />
+                </svg>
+                Thêm thành viên
+              </button>
+            </div>
+
+            {membersList.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-slate-300 bg-white py-8 px-4 text-center">
+                <p className="text-xs font-semibold text-slate-400">Chưa có thành viên nào trong danh sách.</p>
+                <p className="mt-1 text-[10px] text-slate-400">Nhấn nút "Thêm thành viên" ở trên để bắt đầu.</p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+                {membersList.map((member, index) => (
+                  <div key={index} className="relative rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-slate-300 hover:shadow transition duration-150">
+                    <div className="absolute right-3 top-3">
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveMember(index)}
+                        className="rounded-lg border border-slate-100 bg-slate-50 p-1.5 text-slate-400 hover:border-red-200 hover:bg-red-50 hover:text-red-600 transition"
+                        title="Xóa thành viên"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M18 6 6 18" />
+                          <path d="m6 6 12 12" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <p className="text-[11px] font-black text-emerald-700 mb-3 flex items-center gap-1.5">
+                      <span className="grid h-5 w-5 place-items-center rounded-full bg-emerald-50 text-[10px] font-bold text-emerald-700">
+                        {index + 1}
+                      </span>
+                      Thành viên #{index + 1}
+                    </p>
+
+                    {form.contestTable === 'ENTERPRISE' ? (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-4">
+                        <label className="space-y-1 col-span-1 sm:col-span-2 md:col-span-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Họ và tên <span className="text-red-500 font-bold">*</span></span>
+                          <input
+                            required
+                            type="text"
+                            placeholder="Ví dụ: Nguyễn Văn A"
+                            className={rowInputClass}
+                            value={member.fullName || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'fullName', e.target.value)}
+                          />
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Ngày sinh</span>
+                          <input
+                            type="text"
+                            placeholder="Ví dụ: 01/01/1990"
+                            className={rowInputClass}
+                            value={member.dob || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'dob', e.target.value)}
+                          />
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Chức vụ trong dự án</span>
+                          <input
+                            type="text"
+                            placeholder="Ví dụ: Lập trình viên"
+                            className={rowInputClass}
+                            value={member.role || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'role', e.target.value)}
+                          />
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Đơn vị công tác</span>
+                          <input
+                            type="text"
+                            placeholder="Ví dụ: Công ty A"
+                            className={rowInputClass}
+                            value={member.company || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'company', e.target.value)}
+                          />
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số điện thoại</span>
+                          <input
+                            type="tel"
+                            pattern="0[0-9]{9,10}"
+                            title="Số điện thoại phải gồm 10 hoặc 11 chữ số và bắt đầu bằng số 0"
+                            placeholder="Ví dụ: 0987654321"
+                            className={rowInputClass}
+                            value={member.phone || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'phone', e.target.value)}
+                          />
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Email</span>
+                          <input
+                            type="email"
+                            placeholder="Ví dụ: email@domain.com"
+                            className={rowInputClass}
+                            value={member.email || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'email', e.target.value)}
+                          />
+                        </label>
+                        <label className="space-y-1 col-span-1 sm:col-span-2 md:col-span-2">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Chuyên môn/kinh nghiệm</span>
+                          <input
+                            type="text"
+                            placeholder="Ví dụ: 3 năm kinh nghiệm lập trình React"
+                            className={rowInputClass}
+                            value={member.experience || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'experience', e.target.value)}
+                          />
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-5">
+                        <label className="space-y-1 col-span-1 sm:col-span-2 md:col-span-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Họ và tên <span className="text-red-500 font-bold">*</span></span>
+                          <input
+                            required
+                            type="text"
+                            placeholder="Ví dụ: Nguyễn Văn A"
+                            className={rowInputClass}
+                            value={member.fullName || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'fullName', e.target.value)}
+                          />
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">MSHS/MSSV</span>
+                          <input
+                            type="text"
+                            placeholder="Ví dụ: 2001211234"
+                            className={rowInputClass}
+                            value={member.studentId || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'studentId', e.target.value)}
+                          />
+                        </label>
+                        <label className="space-y-1 col-span-1 sm:col-span-2 md:col-span-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Trường học</span>
+                          <input
+                            type="text"
+                            placeholder="Ví dụ: ĐH Công Thương"
+                            className={rowInputClass}
+                            value={member.school || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'school', e.target.value)}
+                          />
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Số điện thoại</span>
+                          <input
+                            type="tel"
+                            pattern="0[0-9]{9,10}"
+                            title="Số điện thoại phải gồm 10 hoặc 11 chữ số và bắt đầu bằng số 0"
+                            placeholder="Ví dụ: 0987654321"
+                            className={rowInputClass}
+                            value={member.phone || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'phone', e.target.value)}
+                          />
+                        </label>
+                        <label className="space-y-1">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Email</span>
+                          <input
+                            type="email"
+                            placeholder="Ví dụ: email@domain.com"
+                            className={rowInputClass}
+                            value={member.email || ''}
+                            onChange={(e) => handleMemberFieldChange(index, 'email', e.target.value)}
+                          />
+                        </label>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <label className="space-y-1.5">
             <span className={labelText}>Địa điểm triển khai</span>
             <input className={inputClass} value={form.implementationLocation || ''} onChange={(event) => update('implementationLocation', event.target.value)} placeholder="Ví dụ: TP. Hồ Chí Minh" />
@@ -218,7 +671,7 @@ function ProjectModal({
             </select>
           </label>
           <label className="space-y-1.5 md:col-span-3">
-            <span className={labelText}>Mô tả ngắn</span>
+            <span className={labelText}>Mô tả ngắn <span className="text-red-500 font-bold">*</span></span>
             <textarea className="h-20 w-full resize-y rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs font-medium text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white" value={form.description || ''} onChange={(event) => update('description', event.target.value)} required />
           </label>
           <label className="space-y-1.5 md:col-span-3">
@@ -243,6 +696,13 @@ function ProjectModal({
             Lưu hồ sơ
           </button>
         </div>
+        <input
+          type="file"
+          ref={modalFileRef}
+          onChange={handleModalFileUpload}
+          accept="image/*"
+          className="hidden"
+        />
       </form>
     </div>
   );
@@ -316,6 +776,13 @@ export default function CandidatesAdminPage() {
 
     const saved = await res.json();
     setProjects((prev) => isEdit ? prev.map((project) => project.id === saved.id ? saved : project) : [saved, ...prev]);
+    
+    if (isEdit) {
+      alert('Cập nhật hồ sơ dự án thành công!');
+    } else {
+      alert('Thêm dự án mới thành công!');
+    }
+    
     setModalMode(null);
   };
 
@@ -332,9 +799,6 @@ export default function CandidatesAdminPage() {
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Quản lý cuộc thi</p>
             <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">Danh sách dự án tham gia HUIT Startup</h2>
-            <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-500">
-              Quản lý hồ sơ dự án, nhóm dự thi, vòng thi và điểm bình chọn. Ưu tiên xem nhanh trạng thái, điểm và thao tác xử lý.
-            </p>
           </div>
           <button onClick={openAddModal} className="h-11 rounded-xl bg-[#e45136] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#c83f28]">
             Thêm dự án mới
@@ -376,7 +840,6 @@ export default function CandidatesAdminPage() {
             <option>Vòng loại</option>
             <option>Vòng bán kết</option>
             <option>Vòng chung kết</option>
-            <option>Bình chọn online</option>
           </select>
           <div className="flex h-11 items-center justify-center rounded-xl bg-slate-50 text-xs font-black text-slate-500">
             {filteredProjects.length.toLocaleString()} kết quả
@@ -389,59 +852,46 @@ export default function CandidatesAdminPage() {
           <table className="w-full min-w-[800px] border-collapse text-left">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
-                <th className="px-5 py-4">Hồ sơ</th>
-                <th className="px-5 py-4">Phân loại</th>
+                <th className="px-5 py-4">Dự án</th>
                 <th className="px-5 py-4">Đại diện</th>
-                <th className="px-5 py-4">Trạng thái</th>
-                <th className="px-5 py-4 text-right">Điểm</th>
+                <th className="px-5 py-4">Vòng thi</th>
+                <th className="px-5 py-4 text-right">Điểm bình chọn</th>
                 <th className="px-5 py-4 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
               {filteredProjects.map((project) => {
-                const rank = rankedProjects.findIndex((item) => item.id === project.id) + 1;
-                const hasMissingInfo = !project.teamName || !project.leaderName || !project.contestTable;
                 const projectTableLabel = project.contestTableLabel || tableLabels[project.contestTable || ''] || 'Chưa phân bảng';
  
                 return (
                   <tr key={project.id} className="align-middle transition hover:bg-emerald-50/35">
                     <td className="px-5 py-4">
                       <div className="flex min-w-[240px] items-center gap-3">
-                        <img src={formatAssetUrl(project.imageUrl)} alt={project.name} className="h-14 w-14 shrink-0 rounded-xl border border-slate-200 object-cover" />
+                        <img src={formatAssetUrl(project.imageUrl)} alt={project.name} className="h-12 w-12 shrink-0 rounded-xl border border-slate-200 object-cover" />
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="max-w-[150px] truncate font-black text-slate-950">{project.name}</p>
-                            <Pill>Mã {project.sbd}</Pill>
-                          </div>
-                          <div className="mt-2 flex flex-wrap items-center gap-2">
-                            <Pill tone="green">Hạng #{rank}</Pill>
-                            {hasMissingInfo ? <Pill tone="red">Thiếu thông tin</Pill> : <Pill tone="blue">Đủ hồ sơ</Pill>}
+                          <p className="truncate font-black text-slate-950 text-sm">{project.name}</p>
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                            <span className="text-[10px] bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded">
+                              {project.sbd}
+                            </span>
+                            <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded">
+                              {projectTableLabel}
+                            </span>
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <div className="max-w-[150px]">
-                        <p className="truncate font-bold text-slate-900">{projectTableLabel}</p>
-                        <p className="mt-1 truncate text-xs font-semibold text-slate-500">{project.sector || 'Chưa cập nhật lĩnh vực'}</p>
+                      <div className="max-w-[180px]">
+                        <p className="truncate font-bold text-slate-900">{project.leaderName || 'Chưa có đại diện'}</p>
+                        <p className="mt-1 truncate text-xs text-slate-500 font-medium">{project.representativeSchool || 'Chưa cập nhật đơn vị'}</p>
                       </div>
                     </td>
                     <td className="px-5 py-4">
-                      <div className="max-w-[160px]">
-                        <p className="truncate font-bold text-slate-900">{project.teamName || 'Chưa cập nhật nhóm'}</p>
-                        <p className="mt-1 truncate text-xs text-slate-500">{project.leaderName || 'Chưa có trưởng nhóm'}</p>
-                        <p className="mt-1 truncate text-xs text-slate-500">{project.representativeSchool || 'Chưa cập nhật đơn vị'}</p>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4">
-                      <div className="space-y-2">
-                        <Pill tone={roundTone(project.currentRound)}>{project.currentRound || 'Vòng loại'}</Pill>
-                        <p className="max-w-[110px] truncate text-xs font-semibold text-slate-600">{project.status || 'Đang cập nhật'}</p>
-                      </div>
+                      <Pill tone={roundTone(project.currentRound)}>{project.currentRound || 'Vòng loại'}</Pill>
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <p className="text-xl font-black tabular-nums text-[#e45136]">{project.votes.toLocaleString()}</p>
-                      <p className="text-[11px] font-semibold text-slate-400">điểm</p>
+                      <p className="text-lg font-black tabular-nums text-[#e45136]">{project.votes.toLocaleString()}</p>
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-1.5">
@@ -474,7 +924,7 @@ export default function CandidatesAdminPage() {
 
               {filteredProjects.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-sm font-semibold text-slate-500">
+                  <td colSpan={5} className="px-5 py-12 text-center text-sm font-semibold text-slate-500">
                     Không có dự án phù hợp bộ lọc hiện tại.
                   </td>
                 </tr>

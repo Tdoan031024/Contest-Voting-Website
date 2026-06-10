@@ -448,11 +448,16 @@ export default function RootLayout({
                   <div className="flex flex-col space-y-2 max-w-[300px] w-full">
                     <span className="text-button text-white text-[18px] font-bold">Phương thức thanh toán</span>
                     <div className="flex flex-wrap gap-2">
-                      <img alt="Momo" width="32" height="32" src="/images/imagedd52.png" />
-                      <img alt="Vnpay" width="32" height="32" src="/images/image37ad.png" />
-                      <img alt="Zalopay" width="32" height="32" src="/images/image0667.png" />
-                      <img alt="Visa" width="32" height="32" src="/images/image19f4.png" />
-                      <img alt="Mastercard" width="32" height="32" src="/images/image3a16.png" />
+                      <div className="flex items-center space-x-2.5 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-[13px] text-white/90 font-medium hover:bg-white/10 hover:border-[#79BCC2]/30 transition-all duration-300 select-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
+                          <rect x="2" y="2" width="20" height="20" rx="3" />
+                          <rect x="6" y="6" width="4" height="4" />
+                          <rect x="14" y="6" width="4" height="4" />
+                          <rect x="6" y="14" width="4" height="4" />
+                          <rect x="14" y="14" width="4" height="4" />
+                        </svg>
+                        <span>Chuyển khoản QR (Sepay)</span>
+                      </div>
                     </div>
                   </div>
                 </div>

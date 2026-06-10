@@ -21,18 +21,323 @@ function formatDate(value?: string) {
   }).format(new Date(value));
 }
 
+function UserModal({
+  title,
+  form,
+  setForm,
+  onClose,
+  onSubmit,
+}: {
+  title: string;
+  form: Partial<WebUser> & { password?: string };
+  setForm: (value: Partial<WebUser> & { password?: string }) => void;
+  onClose: () => void;
+  onSubmit: (event: React.FormEvent) => void;
+}) {
+  const update = (key: string, value: any) => {
+    setForm({ ...form, [key]: value });
+  };
+
+  const inputClass = 'h-10 w-full rounded-lg border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white';
+  const labelText = 'text-[10px] font-black uppercase tracking-[0.12em] text-slate-500';
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm">
+      <form onSubmit={onSubmit} className="mx-auto my-6 w-full max-w-xl rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl animate-in fade-in zoom-in duration-200">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Tài khoản người dùng</p>
+            <h3 className="mt-1 text-lg font-black text-slate-900">{title}</h3>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-emerald-600 hover:text-emerald-700">
+            Đóng
+          </button>
+        </div>
+
+        <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <label className="space-y-1.5 col-span-2">
+            <span className={labelText}>Họ và tên <span className="text-red-500 font-bold">*</span></span>
+            <input className={inputClass} value={form.fullName || ''} onChange={(event) => update('fullName', event.target.value)} required />
+          </label>
+          
+          <label className="space-y-1.5 col-span-2 sm:col-span-1">
+            <span className={labelText}>Email <span className="text-red-500 font-bold">*</span></span>
+            <input type="email" className={inputClass} value={form.email || ''} onChange={(event) => update('email', event.target.value)} required />
+          </label>
+          
+          <label className="space-y-1.5 col-span-2 sm:col-span-1">
+            <span className={labelText}>Số điện thoại</span>
+            <input type="tel" className={inputClass} value={form.phone || ''} onChange={(event) => update('phone', event.target.value)} placeholder="Ví dụ: 0987654321" />
+          </label>
+
+          <label className="space-y-1.5 col-span-2 sm:col-span-1">
+            <span className={labelText}>Mật khẩu {title.includes('Thêm') && <span className="text-red-500 font-bold">*</span>}</span>
+            <input 
+              type="password" 
+              className={inputClass} 
+              value={form.password || ''} 
+              onChange={(event) => update('password', event.target.value)} 
+              placeholder={title.includes('Cập nhật') ? 'Để trống nếu không muốn đổi' : 'Nhập mật khẩu'} 
+              required={title.includes('Thêm')} 
+            />
+          </label>
+
+          <label className="space-y-1.5 col-span-2 sm:col-span-1">
+            <span className={labelText}>Hình thức đăng ký</span>
+            <select className={inputClass} value={form.provider || 'email'} onChange={(event) => update('provider', event.target.value)}>
+              <option value="email">Đăng ký thường (email)</option>
+              <option value="google">Đăng nhập Google</option>
+              <option value="quick">Đăng ký nhanh (quick)</option>
+            </select>
+          </label>
+
+          <label className="space-y-1.5 col-span-2 sm:col-span-1">
+            <span className={labelText}>Trạng thái tài khoản</span>
+            <select className={inputClass} value={form.status || 'ACTIVE'} onChange={(event) => update('status', event.target.value)}>
+              <option value="ACTIVE">Đang hoạt động</option>
+              <option value="LOCKED">Đã khóa</option>
+            </select>
+          </label>
+
+          <label className="space-y-1.5 col-span-2 sm:col-span-1">
+            <span className={labelText}>Bảng quan tâm</span>
+            <select className={inputClass} value={form.contestTable || ''} onChange={(event) => update('contestTable', event.target.value)}>
+              <option value="">Chưa chọn bảng</option>
+              <option value="HIGH_SCHOOL">Bảng học sinh</option>
+              <option value="STUDENT">Bảng sinh viên, học viên</option>
+              <option value="ENTERPRISE">Bảng doanh nghiệp/tổ chức</option>
+            </select>
+          </label>
+
+          <label className="space-y-1.5 col-span-2">
+            <span className={labelText}>Đơn vị công tác / Trường học</span>
+            <input className={inputClass} value={form.schoolOrCompany || ''} onChange={(event) => update('schoolOrCompany', event.target.value)} placeholder="Ví dụ: Đại học Công Thương" />
+          </label>
+        </div>
+
+        <div className="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4">
+          <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:border-[#0f766e] hover:text-[#0f766e]">
+            Hủy
+          </button>
+          <button type="submit" className="rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow hover:bg-emerald-700">
+            Lưu tài khoản
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
+
+function DetailModal({
+  user,
+  onClose,
+}: {
+  user: WebUser;
+  onClose: () => void;
+}) {
+  const labelText = 'text-[9px] font-black uppercase tracking-[0.14em] text-slate-400';
+  const valText = 'text-xs font-bold text-slate-800 mt-1';
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm">
+      <div className="mx-auto my-12 w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+          <div className="flex items-center gap-3">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-[#123c34] text-sm font-black text-white shadow">
+              {user.fullName.slice(0, 2).toUpperCase()}
+            </span>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Chi tiết tài khoản</p>
+              <h3 className="text-base font-black text-slate-900">{user.fullName}</h3>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-bold text-slate-600 hover:border-emerald-600 hover:text-emerald-700">
+            Đóng
+          </button>
+        </div>
+
+        <div className="mt-5 grid grid-cols-2 gap-4">
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3">
+            <p className={labelText}>ID Tài khoản</p>
+            <p className="text-[11px] font-mono font-bold text-slate-700 mt-1">{user.id}</p>
+          </div>
+          <div className="rounded-xl border border-[#fceee9] bg-[#fff5f2] p-3">
+            <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#e45136]">Điểm đã bình chọn</p>
+            <p className="text-lg font-black text-[#e45136] mt-0.5">{(user.votedPoints || 0).toLocaleString()} điểm</p>
+          </div>
+
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 col-span-2 sm:col-span-1">
+            <p className={labelText}>Địa chỉ Email</p>
+            <p className={valText}>{user.email}</p>
+          </div>
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 col-span-2 sm:col-span-1">
+            <p className={labelText}>Số điện thoại</p>
+            <p className={valText}>{user.phone || 'Chưa cập nhật'}</p>
+          </div>
+
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 col-span-2 sm:col-span-1">
+            <p className={labelText}>Hình thức đăng ký</p>
+            <span className="inline-block mt-2 rounded-full border border-[#b9d8cf] bg-[#edf8f4] px-2.5 py-0.5 text-[10px] font-bold text-[#0f766e]">
+              {providerLabel[user.provider] || user.provider}
+            </span>
+          </div>
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 col-span-2 sm:col-span-1">
+            <p className={labelText}>Trạng thái hoạt động</p>
+            <span className={`inline-block mt-2 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${user.status === 'ACTIVE' ? 'border-[#b9d8cf] bg-[#edf8f4] text-[#0f766e]' : 'border-[#f0c9bd] bg-[#fff5f2] text-[#c83f28]'}`}>
+              {user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa'}
+            </span>
+          </div>
+
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 col-span-2 sm:col-span-1">
+            <p className={labelText}>Bảng đấu quan tâm</p>
+            <p className={valText}>
+              {user.contestTable === 'HIGH_SCHOOL' && 'Bảng học sinh'}
+              {user.contestTable === 'STUDENT' && 'Bảng sinh viên, học viên'}
+              {user.contestTable === 'ENTERPRISE' && 'Bảng doanh nghiệp/tổ chức'}
+              {!user.contestTable && 'Chưa chọn bảng'}
+            </p>
+          </div>
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 col-span-2 sm:col-span-1">
+            <p className={labelText}>Đơn vị / Trường học</p>
+            <p className={valText}>{user.schoolOrCompany || 'Chưa cập nhật'}</p>
+          </div>
+
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 col-span-2 sm:col-span-1">
+            <p className={labelText}>Ngày đăng ký tài khoản</p>
+            <p className="text-[11px] font-semibold text-slate-600 mt-1">{formatDate(user.registeredAt)}</p>
+          </div>
+          <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 col-span-2 sm:col-span-1">
+            <p className={labelText}>Lần đăng nhập cuối</p>
+            <p className="text-[11px] font-semibold text-slate-600 mt-1">{formatDate(user.lastLoginAt)}</p>
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end border-t border-slate-100 pt-4">
+          <button type="button" onClick={onClose} className="rounded-xl bg-slate-900 px-5 py-2 text-xs font-black text-white hover:bg-emerald-700 transition">
+            Đóng chi tiết
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function UsersAdminPage() {
   const [users, setUsers] = useState<WebUser[]>([]);
   const [search, setSearch] = useState('');
   const [provider, setProvider] = useState('ALL');
 
-  useEffect(() => {
-    async function loadUsers() {
+  // CRUD States
+  const [modalMode, setModalMode] = useState<'add' | 'edit' | 'detail' | null>(null);
+  const [selectedUser, setSelectedUser] = useState<WebUser | null>(null);
+  const [form, setForm] = useState<Partial<WebUser> & { password?: string }>({});
+
+  const loadUsers = async () => {
+    try {
       const res = await fetch(apiUrl('/api/admin/web-users'));
-      if (res.ok) setUsers(await res.json());
+      if (res.ok) {
+        setUsers(await res.json());
+      }
+    } catch (err) {
+      console.error('Lỗi tải danh sách người dùng:', err);
+      setUsers([]);
     }
-    loadUsers().catch(() => setUsers([]));
+  };
+
+  useEffect(() => {
+    loadUsers();
   }, []);
+
+  const openAddModal = () => {
+    setForm({
+      fullName: '',
+      email: '',
+      phone: '',
+      password: '',
+      provider: 'email',
+      status: 'ACTIVE',
+      contestTable: '',
+      schoolOrCompany: '',
+    });
+    setModalMode('add');
+  };
+
+  const openEditModal = (user: WebUser) => {
+    setSelectedUser(user);
+    setForm({
+      fullName: user.fullName,
+      email: user.email,
+      phone: user.phone || '',
+      password: '',
+      provider: user.provider,
+      status: user.status,
+      contestTable: user.contestTable || '',
+      schoolOrCompany: user.schoolOrCompany || '',
+    });
+    setModalMode('edit');
+  };
+
+  const openDetailModal = (user: WebUser) => {
+    setSelectedUser(user);
+    setModalMode('detail');
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Bạn có chắc chắn muốn xóa người dùng này không? Hành động này không thể hoàn tác.')) {
+      return;
+    }
+    try {
+      const res = await fetch(apiUrl(`/api/admin/web-users/${id}`), {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        alert('Xóa người dùng thành công!');
+        loadUsers();
+      } else {
+        const errorData = await res.json();
+        alert(errorData.message || 'Xóa người dùng thất bại.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Đã xảy ra lỗi kết nối đến server.');
+    }
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    try {
+      const isAdd = modalMode === 'add';
+      const url = isAdd 
+        ? apiUrl('/api/admin/web-users') 
+        : apiUrl(`/api/admin/web-users/${selectedUser?.id}`);
+      const method = isAdd ? 'POST' : 'PUT';
+
+      const bodyPayload = { ...form };
+      if (!isAdd && !bodyPayload.password) {
+        delete bodyPayload.password;
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bodyPayload),
+      });
+
+      if (res.ok) {
+        alert(isAdd ? 'Thêm người dùng mới thành công!' : 'Cập nhật thông tin người dùng thành công!');
+        setModalMode(null);
+        loadUsers();
+      } else {
+        const errorData = await res.json();
+        alert(errorData.message || 'Thao tác thất bại. Vui lòng kiểm tra lại thông tin.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Đã xảy ra lỗi kết nối đến server.');
+    }
+  };
 
   const filteredUsers = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -52,10 +357,19 @@ export default function UsersAdminPage() {
 
   return (
     <div className="space-y-4">
-      <section className="rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm">
-        <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Quản lý người dùng web</p>
-        <h2 className="mt-1 text-xl font-black text-[#123c34]">Người dùng đã đăng ký ở website chính</h2>
-        <p className="mt-1 text-xs text-[#6b7773]">Theo dõi tài khoản bình chọn, hình thức đăng ký, thông tin liên hệ và lịch sử đăng nhập gần nhất.</p>
+      <section className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Quản lý người dùng web</p>
+          <h2 className="mt-0.5 text-lg font-black text-[#123c34]">Người dùng đã đăng ký ở website chính</h2>
+          <p className="text-xs text-[#6b7773] mt-0.5">Theo dõi tài khoản bình chọn, hình thức đăng ký, thông tin liên hệ và lịch sử đăng nhập gần nhất.</p>
+        </div>
+        <button 
+          onClick={openAddModal} 
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#e45136] px-3.5 py-2 text-xs font-bold text-white shadow transition hover:bg-[#c83f28] active:scale-[0.98] shrink-0"
+        >
+          <span className="text-lg leading-none">+</span>
+          Thêm người dùng mới
+        </button>
       </section>
 
       <section className="grid grid-cols-1 gap-3 md:grid-cols-4">
@@ -92,27 +406,21 @@ export default function UsersAdminPage() {
           <table className="w-full min-w-[1100px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#edf2f0] bg-[#fbfdfc] text-[10px] font-black uppercase tracking-[0.12em] text-[#7a8b85]">
-                <th className="px-5 py-3">Người dùng</th>
+                <th className="px-5 py-3 min-w-[220px]">Tên Người dùng</th>
                 <th className="px-5 py-3">Liên hệ</th>
-                <th className="px-5 py-3">Đơn vị / bảng quan tâm</th>
+                <th className="px-5 py-3">Đơn vị / bảng</th>
                 <th className="px-5 py-3">Hình thức</th>
-                <th className="px-5 py-3">Trạng thái</th>
+                <th className="px-5 py-3 text-right">Đã bình chọn</th>
                 <th className="px-5 py-3">Ngày đăng ký</th>
-                <th className="px-5 py-3">Đăng nhập gần nhất</th>
+                <th className="px-5 py-3 text-center">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#edf2f0] text-xs">
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-[#edf4f1]/25">
                   <td className="px-5 py-3">
-                    <div className="flex items-center gap-3">
-                      <span className="grid h-10 w-10 place-items-center rounded-full bg-[#123c34] text-xs font-black text-white">
-                        {user.fullName.slice(0, 2).toUpperCase()}
-                      </span>
-                      <div>
-                        <p className="font-black text-[#123c34]">{user.fullName}</p>
-                        <p className="mt-0.5 text-[11px] text-[#7a8b85]">ID: {user.id}</p>
-                      </div>
+                    <div>
+                      <p className="font-black text-[#123c34] whitespace-nowrap">{user.fullName}</p>
                     </div>
                   </td>
                   <td className="px-5 py-3">
@@ -128,13 +436,48 @@ export default function UsersAdminPage() {
                       {providerLabel[user.provider] || user.provider}
                     </span>
                   </td>
-                  <td className="px-5 py-3">
-                    <span className={`rounded-full border px-3 py-1 text-[11px] font-bold ${user.status === 'ACTIVE' ? 'border-[#b9d8cf] bg-[#edf8f4] text-[#0f766e]' : 'border-[#f0c9bd] bg-[#fff5f2] text-[#c83f28]'}`}>
-                      {user.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa'}
-                    </span>
+                  <td className="px-5 py-3 text-right font-black text-[#e45136] text-sm tabular-nums">
+                    {(user.votedPoints || 0).toLocaleString()}
                   </td>
                   <td className="px-5 py-3 font-semibold text-[#52605b]">{formatDate(user.registeredAt)}</td>
-                  <td className="px-5 py-3 font-semibold text-[#52605b]">{formatDate(user.lastLoginAt)}</td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center justify-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => openDetailModal(user)}
+                        className="grid h-7 w-7 place-items-center rounded-md border border-slate-200 bg-white text-slate-500 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 transition"
+                        title="Xem chi tiết"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                          <circle cx="12" cy="12" r="3" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(user)}
+                        className="grid h-7 w-7 place-items-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100 transition"
+                        title="Chỉnh sửa"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(user.id)}
+                        className="grid h-7 w-7 place-items-center rounded-md border border-red-200 bg-red-50 text-red-600 hover:border-red-400 hover:bg-red-100 transition"
+                        title="Xóa tài khoản"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18" />
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
               {filteredUsers.length === 0 && (
@@ -148,6 +491,23 @@ export default function UsersAdminPage() {
           </table>
         </div>
       </section>
+
+      {(modalMode === 'add' || modalMode === 'edit') && (
+        <UserModal
+          title={modalMode === 'add' ? 'Thêm người dùng mới' : 'Cập nhật tài khoản'}
+          form={form}
+          setForm={setForm}
+          onClose={() => setModalMode(null)}
+          onSubmit={handleSubmit}
+        />
+      )}
+
+      {modalMode === 'detail' && selectedUser && (
+        <DetailModal
+          user={selectedUser}
+          onClose={() => setModalMode(null)}
+        />
+      )}
     </div>
   );
 }

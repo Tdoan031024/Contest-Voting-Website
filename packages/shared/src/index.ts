@@ -24,6 +24,7 @@ export interface Candidate {
   expectations?: string;
   implementationLocation?: string;
   intellectualPropertyCommitment?: boolean;
+  showcaseImages?: string;
 }
 
 export interface Sponsor {
@@ -31,6 +32,11 @@ export interface Sponsor {
   name: string;
   logoUrl: string;
   tier: 'PLATINUM' | 'GOLD' | 'SILVER' | 'PARTNER';
+  description?: string;
+  websiteUrl?: string;
+  email?: string;
+  phone?: string;
+  contactPerson?: string;
 }
 
 export interface Banner {
@@ -84,6 +90,7 @@ export interface WebUser {
   contestTable?: string;
   registeredAt: string;
   lastLoginAt?: string;
+  votedPoints?: number;
 }
 
 export interface VotePackage {

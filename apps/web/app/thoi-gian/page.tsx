@@ -61,7 +61,7 @@ export default function TimelinePage() {
   ];
 
   if (events && events.length > 0) {
-    events.forEach((event: any) => {
+    events.filter((event: any) => event.isActive).forEach((event: any) => {
       const roundObj = roundsList.find(r => r.title === event.round);
       if (roundObj) {
         roundObj.steps.push(event);
@@ -118,7 +118,7 @@ export default function TimelinePage() {
 
   const keyMilestones = events && events.length > 0
     ? events
-        .filter((e: any) => e.isImportant)
+        .filter((e: any) => e.isActive && e.isImportant)
         .map((e: any) => {
           let displayDate = e.date;
           if (displayDate.includes('/2026')) {
@@ -145,7 +145,7 @@ export default function TimelinePage() {
     <>
       <style>{`
         .iUzfqH {
-          background-image: url(/media-platform.1vote.vn/uploads/tAtj0/1727187460437.jpg);
+          background-image: url(/background/background.png);
           background-color: #030612;
           background-attachment: fixed;
           background-size: cover;

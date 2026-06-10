@@ -7,6 +7,19 @@ import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 
+function getProjectRootDir() {
+  let currentDir = __dirname;
+  for (let i = 0; i < 5; i++) {
+    if (fs.existsSync(path.join(currentDir, 'apps')) && fs.existsSync(path.join(currentDir, 'package.json'))) {
+      return currentDir;
+    }
+    const parent = path.dirname(currentDir);
+    if (parent === currentDir) break;
+    currentDir = parent;
+  }
+  return process.cwd();
+}
+
 function normalizeUploadFilename(originalName: string) {
   const basename = path.basename(originalName).replace(/[\\/]/g, '');
   return basename || `upload${path.extname(originalName)}`;
@@ -47,7 +60,8 @@ export class AppController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (req: any, file: any, cb: any) => {
-          const uploadDirWeb = path.join(process.cwd(), '../web/public/uploads');
+          const rootDir = getProjectRootDir();
+          const uploadDirWeb = path.join(rootDir, 'apps/web/public/uploads');
           if (!fs.existsSync(uploadDirWeb)) {
             fs.mkdirSync(uploadDirWeb, { recursive: true });
           }
@@ -66,7 +80,8 @@ export class AppController {
     
     // Copy file to admin public uploads so it displays correctly on localhost:3001
     try {
-      const adminUploadDir = path.join(process.cwd(), '../admin/public/uploads');
+      const rootDir = getProjectRootDir();
+      const adminUploadDir = path.join(rootDir, 'apps/admin/public/uploads');
       if (!fs.existsSync(adminUploadDir)) {
         fs.mkdirSync(adminUploadDir, { recursive: true });
       }
@@ -77,6 +92,53 @@ export class AppController {
     }
     
     return { url: `/uploads/${file.filename}` };
+  }
+
+  @Post('admin/candidates/:sbd/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (req: any, file: any, cb: any) => {
+          const url = req.originalUrl || req.url || '';
+          const match = url.match(/\/candidates\/([^\/]+)\/upload/);
+          const sbd = match ? match[1] : 'temp';
+          const rootDir = getProjectRootDir();
+          const uploadDirWeb = path.join(rootDir, 'apps/web/public/duan', sbd);
+          if (!fs.existsSync(uploadDirWeb)) {
+            fs.mkdirSync(uploadDirWeb, { recursive: true });
+          }
+          cb(null, uploadDirWeb);
+        },
+        filename: (req: any, file: any, cb: any) => {
+          const ext = path.extname(file.originalname);
+          const filename = `${Date.now()}${ext}`;
+          cb(null, filename);
+        },
+      }),
+    }),
+  )
+  async uploadCandidateFile(
+    @Param('sbd') sbd: string,
+    @UploadedFile() file: any
+  ): Promise<{ url: string }> {
+    if (!file) {
+      throw new Error('File upload failed');
+    }
+    
+    // Copy file to admin static folder under /duan/<sbd>
+    try {
+      const rootDir = getProjectRootDir();
+      const adminUploadDir = path.join(rootDir, 'apps/admin/public/duan', sbd);
+      if (!fs.existsSync(adminUploadDir)) {
+        fs.mkdirSync(adminUploadDir, { recursive: true });
+      }
+      fs.copyFileSync(file.path, path.join(adminUploadDir, file.filename));
+      console.log(`✅ Uploaded candidate file copied to admin static: /duan/${sbd}/${file.filename}`);
+    } catch (e) {
+      console.error('⚠️ Failed to copy uploaded candidate file to admin public:', e);
+    }
+    
+    return { url: `/duan/${sbd}/${file.filename}` };
   }
 
   // --- CANDIDATES ---
@@ -161,6 +223,24 @@ export class AppController {
   @Get('admin/web-users')
   async getWebUsers(): Promise<WebUser[]> {
     return this.appService.getWebUsers();
+  }
+
+  @Post('admin/web-users')
+  async addWebUser(@Body() payload: any): Promise<WebUser> {
+    return this.appService.addWebUser(payload);
+  }
+
+  @Put('admin/web-users/:id')
+  async updateWebUser(
+    @Param('id') id: string,
+    @Body() payload: any
+  ): Promise<WebUser> {
+    return this.appService.updateWebUser(id, payload);
+  }
+
+  @Delete('admin/web-users/:id')
+  async deleteWebUser(@Param('id') id: string): Promise<{ success: boolean }> {
+    return this.appService.deleteWebUser(id);
   }
 
   // --- SPONSORS ---

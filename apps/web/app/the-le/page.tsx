@@ -25,35 +25,17 @@ const defaultSections: SectionConfig[] = [
     steps: [
       { number: '01', description: 'Tạo tài khoản mới hoặc đăng nhập nhanh bằng tài khoản Google.', image: '/original_assets/imagefca6.png' },
       { number: '02', description: 'Đăng nhập tài khoản để nhận lượt bình chọn miễn phí hằng ngày.', image: '/original_assets/imagef1be.png' },
-      { number: '03', description: 'Tìm kiếm và lựa chọn dự án hoặc thí sinh bạn muốn bình chọn.', image: '/original_assets/image81d3.png' },
+      { number: '03', description: 'Tìm kiếm và lựa chọn dự án bạn muốn bình chọn.', image: '/original_assets/image81d3.png' },
       { number: '04', description: 'Chọn gói 5 điểm miễn phí, hệ thống ghi nhận điểm sau khi xác nhận thành công.', image: '/original_assets/image20da.png' },
     ],
   },
   {
-    title: 'Thanh toán qua cổng VNPay',
+    title: 'Thanh toán chuyển khoản tự động qua Sepay',
     steps: [
-      { number: '01', description: 'Truy cập danh sách dự án, chọn hồ sơ bạn muốn ủng hộ.', image: '/original_assets/image17ae.png' },
-      { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm thanh toán qua VNPay.', image: '/original_assets/imageefc9.png' },
-      { number: '03', description: 'Quét mã QR hoặc nhập thông tin thanh toán theo hướng dẫn của cổng VNPay.', image: '/original_assets/image837f.png' },
-      { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động cộng điểm và lưu lịch sử bình chọn.', image: '/original_assets/image20da.png' },
-    ],
-  },
-  {
-    title: 'Thanh toán qua ví điện tử MOMO',
-    steps: [
-      { number: '01', description: 'Truy cập danh sách dự án, chọn hồ sơ bạn muốn ủng hộ.', image: '/original_assets/image17ae.png' },
-      { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm thanh toán qua ví MOMO.', image: '/original_assets/image8ca3.png' },
-      { number: '03', description: 'Sử dụng ứng dụng MOMO trên điện thoại để quét mã QR thanh toán.', image: '/original_assets/imagebf6f.png' },
-      { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động cộng điểm và lưu lịch sử bình chọn.', image: '/original_assets/image20da.png' },
-    ],
-  },
-  {
-    title: 'Thanh toán qua cổng PayPal',
-    steps: [
-      { number: '01', description: 'Truy cập danh sách dự án, chọn hồ sơ bạn muốn ủng hộ.', image: '/original_assets/image17ae.png' },
-      { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm thanh toán qua PayPal.', image: '/original_assets/image9d6d.png' },
-      { number: '03', description: 'Nhập thông tin tài khoản PayPal để xác thực giao dịch.', image: '/original_assets/image1206.png' },
-      { number: '04', description: 'Giao dịch hoàn tất, hệ thống tự động cộng điểm và lưu lịch sử bình chọn.', image: '/original_assets/image20da.png' },
+      { number: '01', description: 'Truy cập danh sách dự án, chọn dự án bạn muốn ủng hộ.', image: '/original_assets/image17ae.png' },
+      { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm thanh toán.', image: '/original_assets/imageefc9.png' },
+      { number: '03', description: 'Quét mã QR thanh toán hiển thị trên màn hình hoặc chuyển khoản đúng cú pháp, số tiền qua cổng Sepay.', image: '/original_assets/image837f.png' },
+      { number: '04', description: 'Giao dịch hoàn tất, hệ thống Sepay tự động xác nhận và cộng điểm bình chọn sau vài giây.', image: '/original_assets/image20da.png' },
     ],
   },
 ];
@@ -95,17 +77,10 @@ const sectionIcons = [
     </svg>
   ),
   (
-    <svg key="card" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
-      <rect x="2" y="5" width="20" height="14" rx="2" ry="2" />
-      <line x1="2" y1="10" x2="22" y2="10" />
-    </svg>
-  ),
-  (
-    <svg key="wallet" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
-      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-      <circle cx="9" cy="12" r="1.5" />
-      <circle cx="15" cy="12" r="1.5" />
-      <path d="M8 15h8" />
+    <svg key="qr" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
+      <rect x="3" y="3" width="16" height="16" rx="2" />
+      <rect x="7" y="7" width="8" height="8" />
+      <rect x="10" y="10" width="2" height="2" />
     </svg>
   ),
 ];
@@ -138,7 +113,7 @@ export default function TheLePage() {
     <>
       <style>{`
         .iUzfqH {
-          background-image: url(/media-platform.1vote.vn/uploads/tAtj0/1727187460437.jpg);
+          background-image: url(/background/background.png);
           background-color: #030612;
           background-attachment: fixed;
           background-size: cover;

@@ -170,41 +170,41 @@ export default function TimelineAdminPage() {
       </div>
 
       {/* Timeline Table */}
-      <div className="w-full bg-white border border-[#dce5e1] rounded-xl overflow-hidden shadow-sm">
-        <table className="w-full border-collapse text-left text-[#18211f]">
+      <div className="w-full bg-white border border-[#dce5e1] rounded-xl overflow-hidden shadow-sm overflow-x-auto">
+        <table className="w-full min-w-[1100px] border-collapse text-left text-[#18211f]">
           <thead className="bg-[#fbfdfc] text-[10px] font-black uppercase tracking-wider text-[#7a8b85] border-b border-[#edf2f0]">
             <tr>
-              <th className="px-5 py-3">Vòng thi / Tiêu đề</th>
-              <th className="px-5 py-3">Phân loại vòng</th>
-              <th className="px-5 py-3">Thời gian diễn ra</th>
-              <th className="px-5 py-3">Mô tả chi tiết</th>
-              <th className="px-5 py-3">Mốc quan trọng</th>
-              <th className="px-5 py-3">Trạng thái hoạt động</th>
-              <th className="px-5 py-3 text-right">Thao tác</th>
+              <th className="px-5 py-3 whitespace-nowrap min-w-[280px]">Vòng thi / Tiêu đề</th>
+              <th className="px-5 py-3 whitespace-nowrap">Phân loại vòng</th>
+              <th className="px-5 py-3 whitespace-nowrap">Thời gian diễn ra</th>
+              <th className="px-5 py-3 whitespace-nowrap min-w-[300px]">Mô tả chi tiết</th>
+              <th className="px-5 py-3 whitespace-nowrap">Mốc quan trọng</th>
+              <th className="px-5 py-3 whitespace-nowrap">Trạng thái hoạt động</th>
+              <th className="px-5 py-3 text-right whitespace-nowrap">Thao tác</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#edf2f0] text-xs">
             {filteredEvents.map(ev => (
               <tr key={ev.id} className="hover:bg-[#edf4f1]/20 transition-colors">
-                <td className="px-5 py-2.5 font-bold text-[#123c34]">{ev.title}</td>
+                <td className="px-5 py-2.5 font-bold text-[#123c34] min-w-[280px]">{ev.title}</td>
                 <td className="px-5 py-2.5">
-                  <span className="rounded bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700">
+                  <span className="rounded bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700 whitespace-nowrap">
                     {ev.round || 'Vòng loại'}
                   </span>
                 </td>
-                <td className="px-5 py-2.5 text-[#0f766e] font-semibold">{ev.date}</td>
-                <td className="px-5 py-2.5 max-w-[300px] truncate text-[#6b7773] font-medium">{ev.description}</td>
+                <td className="px-5 py-2.5 text-[#0f766e] font-semibold whitespace-nowrap">{ev.date}</td>
+                <td className="px-5 py-2.5 min-w-[300px] max-w-[450px] whitespace-normal break-words text-[#6b7773] font-medium">{ev.description}</td>
                 <td className="px-5 py-2.5">
                   {ev.isImportant ? (
-                    <span className="rounded bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide">
+                    <span className="rounded bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide whitespace-nowrap">
                       Mốc quan trọng
                     </span>
                   ) : (
-                    <span className="text-slate-400 font-semibold text-[10px]">Lộ trình thường</span>
+                    <span className="text-slate-400 font-semibold text-[10px] whitespace-nowrap">Lộ trình thường</span>
                   )}
                 </td>
                 <td className="px-5 py-2.5">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border whitespace-nowrap ${
                     ev.isActive 
                       ? 'bg-green-50 text-green-700 border-green-200' 
                       : 'bg-slate-50 text-slate-400 border-slate-200'

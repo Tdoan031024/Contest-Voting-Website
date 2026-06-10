@@ -41,6 +41,11 @@ export interface SystemSettings {
   guideSections?: Array<{ title: string; content: string; imageUrl?: string }>;
   exchangeRates?: Array<{ points: number; price: number; label: string }>;
   votePackages?: VotePackage[];
+  sepayBankName?: string;
+  sepayAccountNo?: string;
+  sepayAccountName?: string;
+  sepayPrefix?: string;
+  sepayApiKey?: string;
 }
 
 type LocalData = {
@@ -93,6 +98,11 @@ export class AppService implements OnModuleInit {
     detailUrl: 'https://khoinghiep.huit.edu.vn',
     supportZaloUrl: 'https://zalo.me/0975702463',
     freeVotesPerAccountPerDay: 1,
+    sepayBankName: 'KienLongBank',
+    sepayAccountNo: '101499100004001667',
+    sepayAccountName: 'DANG XUAN DUONG',
+    sepayPrefix: 'MD',
+    sepayApiKey: '1dcd4e6cd52fde1e4bf0510a9b406476322d811f3bbae785',
     guideSections: [
       {
         title: 'Đối tượng và bảng thi',
@@ -123,13 +133,13 @@ export class AppService implements OnModuleInit {
     ],
     votePackages: [
       { id: 'free-5', code: 'FREE_5', name: '5 điểm miễn phí', points: 5, price: 0, currency: 'VND', vatRate: 10, packageType: 'FREE', isActive: true },
-      { id: 'vote-10', code: 'VOTE_10', name: '10 điểm', points: 10, price: 10000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
-      { id: 'vote-20', code: 'VOTE_20', name: '20 điểm', points: 20, price: 20000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
-      { id: 'vote-50', code: 'VOTE_50', name: '50 điểm', points: 50, price: 50000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
-      { id: 'vote-220', code: 'VOTE_220', name: '220 điểm', points: 220, price: 100000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
-      { id: 'vote-1050', code: 'VOTE_1050', name: '1.050 điểm', points: 1050, price: 500000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
-      { id: 'vote-2300', code: 'VOTE_2300', name: '2.300 điểm', points: 2300, price: 1000000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
-      { id: 'vote-7000', code: 'VOTE_7000', name: '7.000 điểm', points: 7000, price: 3000000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true }
+      { id: 'vote-10', code: 'PAID_10', name: '10 điểm', points: 10, price: 10000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
+      { id: 'vote-20', code: 'PAID_20', name: '20 điểm', points: 20, price: 20000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
+      { id: 'vote-50', code: 'PAID_50', name: '50 điểm', points: 50, price: 50000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
+      { id: 'vote-220', code: 'PAID_220', name: '220 điểm', points: 220, price: 100000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
+      { id: 'vote-1050', code: 'PAID_1050', name: '1.050 điểm', points: 1050, price: 500000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
+      { id: 'vote-2300', code: 'PAID_2300', name: '2.300 điểm', points: 2300, price: 1000000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
+      { id: 'vote-7000', code: 'PAID_7000', name: '7.000 điểm', points: 7000, price: 3000000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true }
     ]
   };
 
@@ -225,6 +235,8 @@ export class AppService implements OnModuleInit {
     if (input.contestTableLabel !== undefined) data.contestTableLabel = input.contestTableLabel;
     if (input.currentRound !== undefined) data.currentRound = input.currentRound;
     if (input.status !== undefined) data.status = input.status;
+    if (input.sector !== undefined) data.sector = input.sector;
+    if (input.showcaseImages !== undefined) data.showcaseImages = input.showcaseImages;
 
     return data;
   }
@@ -246,6 +258,7 @@ export class AppService implements OnModuleInit {
   }
 
   private async seedDataIfNeeded() {
+    // Trigger NestJS reload: synch all candidates images to /duan/anhmauduan.png
     try {
       if (!fs.existsSync(this.dbFilePath)) {
         console.log('⚠️ contest_voting_db.json not found. No seeding data available.');
@@ -257,52 +270,57 @@ export class AppService implements OnModuleInit {
       const data = JSON.parse(fileContent);
 
       // Seed Candidates
-      const candidatesCount = await this.prisma.candidate.count();
-      if (candidatesCount === 0 && data.candidates && Array.isArray(data.candidates)) {
-        console.log('Seeding candidates from JSON file into columns...');
+      if (data.candidates && Array.isArray(data.candidates)) {
         for (const c of data.candidates) {
-          let biographyText = c.biography || '';
-          let meta: any = {};
-          try {
-            const parsed = JSON.parse(c.biography);
-            if (parsed && typeof parsed === 'object' && parsed.__projectMeta) {
-              meta = parsed;
-              biographyText = parsed.longDescription || c.description || '';
-            }
-          } catch {
-            // Keep as is
-          }
-
-          await this.prisma.candidate.create({
-            data: {
-              id: c.id,
-              sbd: c.sbd,
-              name: c.name,
-              votes: c.votes || 0,
-              imageUrl: c.imageUrl,
-              description: c.description || '',
-              biography: biographyText,
-              
-              // Seed from parsed metadata columns
-              teamName: meta.teamName || c.teamName || null,
-              representativeSchool: meta.representativeSchool || c.representativeSchool || null,
-              leaderName: meta.leaderName || c.leaderName || null,
-              leaderPhone: meta.leaderPhone || c.leaderPhone || null,
-              leaderEmail: meta.leaderEmail || c.leaderEmail || null,
-              advisorName: meta.advisorName || c.advisorName || null,
-              members: meta.members || c.members || null,
-              implementationLocation: meta.implementationLocation || c.implementationLocation || null,
-              intellectualPropertyCommitment: meta.intellectualPropertyCommitment !== undefined ? Boolean(meta.intellectualPropertyCommitment) : false,
-              supportNeeds: meta.supportNeeds || c.supportNeeds || null,
-              expectations: meta.expectations || c.expectations || null,
-              contestTable: meta.contestTable || c.contestTable || null,
-              contestTableLabel: meta.contestTableLabel || c.contestTableLabel || null,
-              currentRound: meta.currentRound || c.currentRound || 'Vòng loại',
-              status: meta.status || c.status || 'Đủ hồ sơ',
-            }
+          const existing = await this.prisma.candidate.findUnique({
+            where: { sbd: c.sbd }
           });
+          
+          if (!existing) {
+            console.log(`Seeding missing candidate ${c.sbd} - ${c.name} into database...`);
+            let biographyText = c.biography || '';
+            let meta: any = {};
+            try {
+              const parsed = JSON.parse(c.biography);
+              if (parsed && typeof parsed === 'object' && parsed.__projectMeta) {
+                meta = parsed;
+                biographyText = parsed.longDescription || c.description || '';
+              }
+            } catch {
+              // Keep as is
+            }
+
+            await this.prisma.candidate.create({
+              data: {
+                id: c.id,
+                sbd: c.sbd,
+                name: c.name,
+                votes: c.votes || 0,
+                imageUrl: c.imageUrl,
+                description: c.description || '',
+                biography: biographyText,
+                
+                // Seed from parsed metadata columns
+                teamName: meta.teamName || c.teamName || null,
+                representativeSchool: meta.representativeSchool || c.representativeSchool || null,
+                leaderName: meta.leaderName || c.leaderName || null,
+                leaderPhone: meta.leaderPhone || c.leaderPhone || null,
+                leaderEmail: meta.leaderEmail || c.leaderEmail || null,
+                advisorName: meta.advisorName || c.advisorName || null,
+                members: meta.members || c.members || null,
+                implementationLocation: meta.implementationLocation || c.implementationLocation || null,
+                intellectualPropertyCommitment: meta.intellectualPropertyCommitment !== undefined ? Boolean(meta.intellectualPropertyCommitment) : false,
+                supportNeeds: meta.supportNeeds || c.supportNeeds || null,
+                expectations: meta.expectations || c.expectations || null,
+                contestTable: meta.contestTable || c.contestTable || null,
+                contestTableLabel: meta.contestTableLabel || c.contestTableLabel || null,
+                currentRound: meta.currentRound || c.currentRound || 'Vòng loại',
+                status: meta.status || c.status || 'Đủ hồ sơ',
+              }
+            });
+            console.log(`✅ Seeded candidate ${c.sbd} - ${c.name}`);
+          }
         }
-        console.log(`✅ Seeded ${data.candidates.length} candidates.`);
       } else {
         // Migrate existing Candidates if columns are empty
         const existingCandidates = await this.prisma.candidate.findMany();
@@ -361,27 +379,133 @@ export class AppService implements OnModuleInit {
       }
 
       // Seed Timeline
+      const openDayEvent = await this.prisma.timelineEvent.findFirst({
+        where: { title: { contains: 'HUIT Startup Open Day' } }
+      });
+      if (!openDayEvent) {
+        console.log('Old timeline detected. Clearing and seeding complete HUIT Startup 2026 timeline...');
+        await this.prisma.timelineEvent.deleteMany();
+      }
+
       const timelineCount = await this.prisma.timelineEvent.count();
       if (timelineCount === 0) {
         console.log('Seeding timeline events...');
         const initialTimeline = [
           // Vòng loại
-          { date: '15/5 - 15/6/2026', title: 'Nhận hồ sơ đăng ký dự thi', description: 'Các đội thi hoàn thiện hồ sơ, thông tin ý tưởng hoặc dự án khởi nghiệp sáng tạo để đăng ký tham gia cuộc thi.', isActive: true, round: 'Vòng loại', isImportant: true },
-          { date: '17/06/2026', title: 'Tập huấn định hướng', description: 'Các đội thi được định hướng, tập huấn kỹ năng khởi nghiệp và chuẩn bị cho quá trình phát triển dự án.', isActive: false, round: 'Vòng loại', isImportant: false },
-          { date: '20/6/2026', title: 'Hạn chót nộp hồ sơ vòng loại', description: 'Các đội thi hoàn tất việc nộp hồ sơ ý tưởng/dự án của mình về ban tổ chức đúng thời gian quy định.', isActive: true, round: 'Vòng loại', isImportant: true },
-          { date: '27/6 - 28/6/2026', title: 'Chấm hồ sơ vòng loại', description: 'Hội đồng chuyên môn đánh giá, chọn lọc các ý tưởng và dự án phù hợp để tiếp tục bước vào vòng tiếp theo.', isActive: false, round: 'Vòng loại', isImportant: false },
-          { date: '30/6/2026', title: 'Công bố kết quả vòng loại', description: 'Công bố danh sách các dự án xuất sắc vượt qua vòng loại để chuẩn bị cho giai đoạn tiếp theo.', isActive: true, round: 'Vòng loại', isImportant: true },
+          { 
+            date: '15/5 - 15/6/2026', 
+            title: 'Nhận hồ sơ đăng ký dự thi', 
+            description: 'Các đội thi hoàn thiện hồ sơ, thông tin ý tưởng hoặc dự án khởi nghiệp sáng tạo để đăng ký tham gia cuộc thi.', 
+            isActive: true, 
+            round: 'Vòng loại', 
+            isImportant: true 
+          },
+          { 
+            date: '17/06/2026', 
+            title: 'Tập huấn định hướng', 
+            description: 'Các đội thi được định hướng, tập huấn kỹ năng khởi nghiệp và chuẩn bị cho quá trình phát triển dự án.', 
+            isActive: true, 
+            round: 'Vòng loại', 
+            isImportant: false 
+          },
+          { 
+            date: '20/6/2026', 
+            title: 'Hạn chốt nộp hồ sơ vòng loại', 
+            description: 'Các đội thi hoàn tất việc nộp hồ sơ ý tưởng/dự án của mình về ban tổ chức đúng thời gian quy định.', 
+            isActive: true, 
+            round: 'Vòng loại', 
+            isImportant: true 
+          },
+          { 
+            date: '27/6 - 28/6/2026', 
+            title: 'Chấm hồ sơ vòng loại', 
+            description: 'Hội đồng chuyên môn đánh giá, chọn lọc các ý tưởng và dự án phù hợp để tiếp tục bước vào vòng tiếp theo.', 
+            isActive: true, 
+            round: 'Vòng loại', 
+            isImportant: false 
+          },
+          { 
+            date: '30/6/2026', 
+            title: 'Công bố kết quả vòng loại', 
+            description: 'Công bố danh sách các dự án xuất sắc vượt qua vòng loại để chuẩn bị cho giai đoạn tiếp theo.', 
+            isActive: true, 
+            round: 'Vòng loại', 
+            isImportant: true 
+          },
           // Vòng bán kết
-          { date: '04/7 - 05/7/2026', title: 'Đào tạo, huấn luyện kỹ năng khởi nghiệp đổi mới sáng tạo', description: 'Huấn luyện chuyên sâu về kỹ năng thuyết trình, hoàn thiện sản phẩm và định hình mô hình kinh doanh.', isActive: false, round: 'Vòng bán kết', isImportant: false },
-          { date: '19/7/2026', title: 'Hạn chót nộp bản thuyết minh dự án hoàn chỉnh', description: 'Nộp tài liệu thuyết minh dự án chi tiết đã hoàn thiện sau tập huấn.', isActive: true, round: 'Vòng bán kết', isImportant: true },
-          { date: '25/7/2026', title: 'Thi bán kết, trưng bày sản phẩm hoặc dịch vụ', description: 'Các đội thi trình bày, phản biện và hoàn thiện mô hình dự án dưới sự đánh giá của hội đồng chuyên môn.', isActive: true, round: 'Vòng bán kết', isImportant: true },
-          { date: '25/7/2026', title: 'Chọn Top 10 đội mỗi bảng vào vòng chung kết', description: 'Hội đồng ban giám khảo lựa chọn ra những đại diện xuất sắc nhất bước tiếp vào chung kết.', isActive: true, round: 'Vòng bán kết', isImportant: true },
+          { 
+            date: '04/7 - 05/7/2026', 
+            title: 'Đào tạo, huấn luyện kỹ năng khởi nghiệp đổi mới sáng tạo; bảng Doanh nghiệp tham gia cố vấn chuyên sâu 1:1', 
+            description: 'Huấn luyện chuyên sâu về kỹ năng thuyết trình, hoàn thiện sản phẩm và định hình mô hình kinh doanh; bảng Doanh nghiệp tham gia cố vấn 1:1.', 
+            isActive: true, 
+            round: 'Vòng bán kết', 
+            isImportant: false 
+          },
+          { 
+            date: '19/7/2026', 
+            title: 'Hạn chót nộp bản thuyết minh dự án hoàn chỉnh', 
+            description: 'Nộp tài liệu thuyết minh dự án chi tiết đã hoàn thiện sau tập huấn.', 
+            isActive: true, 
+            round: 'Vòng bán kết', 
+            isImportant: true 
+          },
+          { 
+            date: '25/7/2026', 
+            title: 'Thi bán kết với hình thức trưng bày sản phẩm/dịch vụ, thuyết trình tại gian hàng', 
+            description: 'Các đội thi trình bày, phản biện và hoàn thiện mô hình dự án dưới sự đánh giá của hội đồng chuyên môn.', 
+            isActive: true, 
+            round: 'Vòng bán kết', 
+            isImportant: true 
+          },
+          { 
+            date: '25/7/2026', 
+            title: 'HUIT Startup Open Day, chọn Top 10 đội/mỗi bảng vào chung kết', 
+            description: 'Hội đồng ban giám khảo lựa chọn ra những đại diện xuất sắc nhất bước tiếp vào chung kết.', 
+            isActive: true, 
+            round: 'Vòng bán kết', 
+            isImportant: true 
+          },
           // Vòng chung kết
-          { date: '01/8 - 16/8/2026', title: 'HUIT Startup Tour và kiểm chứng thực tế dự án', description: 'Các dự án trải qua các chuyến tham quan thực tế doanh nghiệp và thử nghiệm thị trường thực tế.', isActive: false, round: 'Vòng chung kết', isImportant: false },
-          { date: '17/8 - 17/9/2026', title: 'Kết nối nhà đầu tư, cố vấn và hoàn thiện định hướng phát triển', description: 'Nhận sự cố vấn chuyên sâu từ các chuyên gia hàng đầu và kết nối gọi vốn.', isActive: false, round: 'Vòng chung kết', isImportant: false },
-          { date: '20/9/2026', title: 'Hỗ trợ hoàn thiện thuyết minh dự án và kế hoạch kinh doanh', description: 'Các chuyên gia đồng hành hỗ trợ hoàn thành kế hoạch kinh doanh chi tiết cuối cùng.', isActive: false, round: 'Vòng chung kết', isImportant: false },
-          { date: '21/9 - 28/9/2026', title: 'Vòng chung kết online', description: 'Cổng bình chọn trực tuyến mở công khai để khán giả tham gia bình chọn cho dự án yêu thích nhất.', isActive: true, round: 'Vòng chung kết', isImportant: true },
-          { date: '03/10/2026', title: 'Trưng bày sản phẩm, dịch vụ và thuyết trình chung kết', description: 'Các dự án xuất sắc nhất tranh tài, kết nối chuyên gia, nhà đầu tư và cơ hội ươm tạo sau cuộc thi.', isActive: true, round: 'Vòng chung kết', isImportant: true }
+          { 
+            date: '01/8 - 16/8/2026', 
+            title: 'HUIT Startup Tour, tham quan thị trường/doanh nghiệp và kiểm chứng thực tế dự án', 
+            description: 'Các dự án trải qua các chuyến tham quan thực tế doanh nghiệp và thử nghiệm thị trường thực tế.', 
+            isActive: true, 
+            round: 'Vòng chung kết', 
+            isImportant: false 
+          },
+          { 
+            date: '17/8 - 17/9/2026', 
+            title: 'Kết nối nhà đầu tư, cố vấn và hoàn thiện định hướng phát triển dự án', 
+            description: 'Nhận sự cố vấn chuyên sâu từ các chuyên gia hàng đầu và kết nối gọi vốn.', 
+            isActive: true, 
+            round: 'Vòng chung kết', 
+            isImportant: false 
+          },
+          { 
+            date: '20/9/2026', 
+            title: 'Hỗ trợ hoàn thiện thuyết minh dự án và kế hoạch kinh doanh', 
+            description: 'Các chuyên gia đồng hành hỗ trợ hoàn thành kế hoạch kinh doanh chi tiết cuối cùng.', 
+            isActive: true, 
+            round: 'Vòng chung kết', 
+            isImportant: false 
+          },
+          { 
+            date: '21/9 - 28/9/2026', 
+            title: 'Vòng chung kết online', 
+            description: 'Cổng bình chọn trực tuyến mở công khai để khán giả tham gia bình chọn cho dự án yêu thích nhất.', 
+            isActive: true, 
+            round: 'Vòng chung kết', 
+            isImportant: true 
+          },
+          { 
+            date: '03/10/2026', 
+            title: 'Trưng bày sản phẩm/dịch vụ và thuyết trình chung kết', 
+            description: 'Các dự án xuất sắc nhất tranh tài, kết nối chuyên gia, nhà đầu tư và cơ hội ươm tạo sau cuộc thi.', 
+            isActive: true, 
+            round: 'Vòng chung kết', 
+            isImportant: true 
+          }
         ];
         for (const t of initialTimeline) {
           await this.prisma.timelineEvent.create({
@@ -581,14 +705,28 @@ export class AppService implements OnModuleInit {
     };
   }
 
+  private ensureCandidateDir(sbd: string) {
+    if (!sbd) return;
+    try {
+      const targetDir = path.join(process.cwd(), '../web/public/duan', sbd);
+      if (!fs.existsSync(targetDir)) {
+        fs.mkdirSync(targetDir, { recursive: true });
+        console.log(`✅ Created candidate image directory for SBD ${sbd}: ${targetDir}`);
+      }
+    } catch (err) {
+      console.error(`⚠️ Failed to create candidate image directory for SBD ${sbd}:`, err);
+    }
+  }
+
   async addCandidate(newCandidate: Partial<Candidate>): Promise<Candidate> {
     const sbd = newCandidate.sbd || Math.floor(Math.random() * 100).toString().padStart(3, '0');
+    this.ensureCandidateDir(sbd);
     const candidate = await this.prisma.candidate.create({
       data: this.prepareCandidateData({
         sbd,
         name: newCandidate.name || 'Thí sinh mới',
         votes: newCandidate.votes || 0,
-        imageUrl: newCandidate.imageUrl || '/original_assets/image389b.png',
+        imageUrl: newCandidate.imageUrl || '/duan/anhmauduan.png',
         description: newCandidate.description || 'Thí sinh mới của HUIT\'s Iconic.',
         biography: newCandidate.biography || 'Thông tin tiểu sử đang được cập nhật.',
         ...newCandidate,
@@ -599,6 +737,9 @@ export class AppService implements OnModuleInit {
 
   async updateCandidate(id: string, updatedFields: Partial<Candidate>): Promise<Candidate> {
     const existing = await this.prisma.candidate.findUnique({ where: { id } });
+    const sbd = updatedFields.sbd || (existing ? existing.sbd : '');
+    this.ensureCandidateDir(sbd);
+
     const cleanFields: any = { ...updatedFields };
     delete cleanFields.id;
     delete (cleanFields as any).createdAt;
@@ -632,6 +773,11 @@ export class AppService implements OnModuleInit {
         name: newSponsor.name || 'Nhà tài trợ mới',
         logoUrl: newSponsor.logoUrl || '/images/eventista.7a1126d5.svg',
         tier: tier as any,
+        description: newSponsor.description || null,
+        websiteUrl: newSponsor.websiteUrl || null,
+        email: newSponsor.email || null,
+        phone: newSponsor.phone || null,
+        contactPerson: newSponsor.contactPerson || null,
       },
     }) as any;
   }
@@ -651,7 +797,16 @@ export class AppService implements OnModuleInit {
 
     return this.prisma.sponsor.update({
       where: { id },
-      data: cleanFields as any,
+      data: {
+        name: cleanFields.name,
+        logoUrl: cleanFields.logoUrl,
+        tier: cleanFields.tier as any,
+        description: cleanFields.description !== undefined ? cleanFields.description : undefined,
+        websiteUrl: cleanFields.websiteUrl !== undefined ? cleanFields.websiteUrl : undefined,
+        email: cleanFields.email !== undefined ? cleanFields.email : undefined,
+        phone: cleanFields.phone !== undefined ? cleanFields.phone : undefined,
+        contactPerson: cleanFields.contactPerson !== undefined ? cleanFields.contactPerson : undefined,
+      },
     }) as any;
   }
 
@@ -739,7 +894,74 @@ export class AppService implements OnModuleInit {
     const users = await this.prisma.webUser.findMany({
       orderBy: { createdAt: 'desc' },
     });
-    return users.map((user: any) => this.publicWebUser(user));
+    const localData = this.readLocalData();
+    const voteHistory = localData.voteHistory || [];
+    const pointsMap: Record<string, number> = {};
+    for (const record of voteHistory) {
+      if (record.userId && record.points) {
+        pointsMap[record.userId] = (pointsMap[record.userId] || 0) + record.points;
+      }
+    }
+    return users.map((user: any) => {
+      const publicUser = this.publicWebUser(user);
+      publicUser.votedPoints = pointsMap[user.id] || 0;
+      return publicUser;
+    });
+  }
+
+  async addWebUser(payload: any): Promise<WebUser> {
+    const email = String(payload.email || '').trim().toLowerCase();
+    if (!email || !payload.fullName) {
+      throw new Error('Thiếu email hoặc họ tên.');
+    }
+    const existing = await this.prisma.webUser.findUnique({
+      where: { email },
+    });
+    if (existing) {
+      throw new Error('Email đã được đăng ký.');
+    }
+    const password = payload.password || '123456';
+    const passwordHash = await bcrypt.hash(password, 10);
+    const user = await this.prisma.webUser.create({
+      data: {
+        fullName: payload.fullName,
+        email,
+        phone: payload.phone || null,
+        passwordHash,
+        provider: payload.provider || 'email',
+        role: payload.role || 'USER',
+        status: payload.status || 'ACTIVE',
+        schoolOrCompany: payload.schoolOrCompany || null,
+        contestTable: payload.contestTable || null,
+      }
+    });
+    return this.publicWebUser(user);
+  }
+
+  async updateWebUser(id: string, payload: any): Promise<WebUser> {
+    const data: any = {};
+    if (payload.fullName !== undefined) data.fullName = payload.fullName;
+    if (payload.email !== undefined) data.email = String(payload.email || '').trim().toLowerCase();
+    if (payload.phone !== undefined) data.phone = payload.phone || null;
+    if (payload.provider !== undefined) data.provider = payload.provider;
+    if (payload.status !== undefined) data.status = payload.status;
+    if (payload.schoolOrCompany !== undefined) data.schoolOrCompany = payload.schoolOrCompany || null;
+    if (payload.contestTable !== undefined) data.contestTable = payload.contestTable || null;
+    if (payload.password) {
+      data.passwordHash = await bcrypt.hash(payload.password, 10);
+    }
+    const user = await this.prisma.webUser.update({
+      where: { id },
+      data,
+    });
+    return this.publicWebUser(user);
+  }
+
+  async deleteWebUser(id: string): Promise<{ success: boolean }> {
+    await this.prisma.webUser.delete({
+      where: { id },
+    });
+    return { success: true };
   }
 
   async registerWebUser(payload: Partial<WebUser> & { password?: string }): Promise<{ ok: boolean; user: WebUser; token: string }> {

@@ -196,7 +196,7 @@ export default function GioiThieuPage() {
   ];
 
   const displayTimeline = timelineEvents && timelineEvents.length > 0
-    ? timelineEvents.filter((e: any) => e.isActive).map((event: any, idx: number) => ({
+    ? timelineEvents.filter((e: any) => e.isActive && e.isImportant).map((event: any, idx: number) => ({
         phase: event.title,
         date: event.date,
         desc: event.description,
@@ -262,7 +262,7 @@ export default function GioiThieuPage() {
     <>
       <style>{`
         .iUzfqH {
-          background-image: url(/media-platform.1vote.vn/uploads/tAtj0/1727187460437.jpg);
+          background-image: url(/background/background.png);
           background-color: #030612;
           background-attachment: fixed;
           background-size: cover;

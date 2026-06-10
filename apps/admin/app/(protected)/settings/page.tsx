@@ -20,6 +20,11 @@ export default function SettingsAdminPage() {
   const [detailUrl, setDetailUrl] = useState('https://khoinghiep.huit.edu.vn');
   const [supportZaloUrl, setSupportZaloUrl] = useState('https://zalo.me/0975702463');
   const [freeVotesPerAccountPerDay, setFreeVotesPerAccountPerDay] = useState(1);
+  const [sepayBankName, setSepayBankName] = useState('VietinBank');
+  const [sepayAccountNo, setSepayAccountNo] = useState('110632156888');
+  const [sepayAccountName, setSepayAccountName] = useState('TRUONG DAI HOC CONG THUONG TP.HCM');
+  const [sepayPrefix, setSepayPrefix] = useState('HUIT');
+  const [sepayApiKey, setSepayApiKey] = useState('sepay_api_key_placeholder');
 
   // Maintenance state
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
@@ -44,6 +49,11 @@ export default function SettingsAdminPage() {
           setDetailUrl(data.detailUrl || 'https://khoinghiep.huit.edu.vn');
           setSupportZaloUrl(data.supportZaloUrl || 'https://zalo.me/0975702463');
           setFreeVotesPerAccountPerDay(data.freeVotesPerAccountPerDay || 1);
+          setSepayBankName(data.sepayBankName || 'VietinBank');
+          setSepayAccountNo(data.sepayAccountNo || '110632156888');
+          setSepayAccountName(data.sepayAccountName || 'TRUONG DAI HOC CONG THUONG TP.HCM');
+          setSepayPrefix(data.sepayPrefix || 'HUIT');
+          setSepayApiKey(data.sepayApiKey || 'sepay_api_key_placeholder');
         }
       } catch (err) {
         console.error('Failed to load system settings from backend, using defaults.', err);
@@ -68,7 +78,12 @@ export default function SettingsAdminPage() {
       registrationUrl,
       detailUrl,
       supportZaloUrl,
-      freeVotesPerAccountPerDay
+      freeVotesPerAccountPerDay,
+      sepayBankName,
+      sepayAccountNo,
+      sepayAccountName,
+      sepayPrefix,
+      sepayApiKey
     };
 
     try {
@@ -256,6 +271,75 @@ export default function SettingsAdminPage() {
             <div className="flex flex-col space-y-1.5 md:col-span-2">
               <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Link hỗ trợ Zalo</label>
               <input className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={supportZaloUrl} onChange={e => setSupportZaloUrl(e.target.value)} />
+            </div>
+          </div>
+        </div>
+
+        {/* Sepay Integration Settings Block */}
+        <div className="bg-white border border-[#dce5e1] rounded-xl p-5 shadow-sm space-y-4">
+          <h3 className="text-sm font-bold text-[#123c34] border-b border-[#edf2f0] pb-2 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#0f766e]">
+              <rect x="2" y="2" width="20" height="20" rx="3" />
+              <rect x="6" y="6" width="4" height="4" />
+              <rect x="14" y="6" width="4" height="4" />
+              <rect x="6" y="14" width="4" height="4" />
+              <rect x="14" y="14" width="4" height="4" />
+            </svg>
+            Tích hợp Cổng thanh toán Sepay (Chuyển khoản QR tự động)
+          </h3>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Ngân hàng thụ hưởng</label>
+              <input 
+                type="text" 
+                className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                value={sepayBankName} 
+                onChange={e => setSepayBankName(e.target.value)} 
+                required
+              />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Số tài khoản ngân hàng</label>
+              <input 
+                type="text" 
+                className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                value={sepayAccountNo} 
+                onChange={e => setSepayAccountNo(e.target.value)} 
+                required
+              />
+            </div>
+            <div className="flex flex-col space-y-1.5 md:col-span-2">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Tên chủ tài khoản (Không dấu)</label>
+              <input 
+                type="text" 
+                className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                value={sepayAccountName} 
+                onChange={e => setSepayAccountName(e.target.value.toUpperCase())} 
+                required
+              />
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Cú pháp chuyển khoản mặc định (Prefix)</label>
+              <input 
+                type="text" 
+                className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                value={sepayPrefix} 
+                onChange={e => setSepayPrefix(e.target.value.toUpperCase())} 
+                required
+              />
+              <p className="text-[10px] text-[#6b7773]">Ví dụ: HUIT (Nội dung chuyển khoản dạng: HUIT [Mã_Dự_Án])</p>
+            </div>
+            <div className="flex flex-col space-y-1.5">
+              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Sepay API Token (Kết nối tự động)</label>
+              <input 
+                type="password" 
+                className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                value={sepayApiKey} 
+                onChange={e => setSepayApiKey(e.target.value)} 
+                required
+              />
+              <p className="text-[10px] text-[#6b7773]">Dùng để đồng bộ lịch sử giao dịch chuyển khoản ngân hàng tự động.</p>
             </div>
           </div>
         </div>
