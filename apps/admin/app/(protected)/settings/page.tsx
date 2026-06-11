@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { apiUrl } from '../../api';
+import { apiUrl, formatAssetUrl } from '../../api';
 
 export default function SettingsAdminPage() {
   // Gate settings state
@@ -25,6 +25,8 @@ export default function SettingsAdminPage() {
   const [sepayAccountName, setSepayAccountName] = useState('TRUONG DAI HOC CONG THUONG TP.HCM');
   const [sepayPrefix, setSepayPrefix] = useState('HUIT');
   const [sepayApiKey, setSepayApiKey] = useState('sepay_api_key_placeholder');
+  const [sponsorBannerUrl, setSponsorBannerUrl] = useState('/original_assets/image4b12.png');
+  const [isTestMode, setIsTestMode] = useState(true);
 
   // Maintenance state
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
@@ -54,6 +56,8 @@ export default function SettingsAdminPage() {
           setSepayAccountName(data.sepayAccountName || 'TRUONG DAI HOC CONG THUONG TP.HCM');
           setSepayPrefix(data.sepayPrefix || 'HUIT');
           setSepayApiKey(data.sepayApiKey || 'sepay_api_key_placeholder');
+          setSponsorBannerUrl(data.sponsorBannerUrl || '/original_assets/image4b12.png');
+          setIsTestMode(data.isTestMode !== false);
         }
       } catch (err) {
         console.error('Failed to load system settings from backend, using defaults.', err);
@@ -83,7 +87,9 @@ export default function SettingsAdminPage() {
       sepayAccountNo,
       sepayAccountName,
       sepayPrefix,
-      sepayApiKey
+      sepayApiKey,
+      isTestMode,
+      sponsorBannerUrl
     };
 
     try {
@@ -232,6 +238,73 @@ export default function SettingsAdminPage() {
           </div>
         </div>
 
+        {/* Sponsors Banner Settings Block */}
+        <div className="bg-white border border-[#dce5e1] rounded-xl p-5 shadow-sm space-y-4">
+          <h3 className="text-sm font-bold text-[#123c34] border-b border-[#edf2f0] pb-2 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#0f766e]">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <line x1="3" y1="9" x2="21" y2="9" />
+              <line x1="9" y1="21" x2="9" y2="9" />
+            </svg>
+            Hình ảnh Banner Nhà tài trợ &amp; Đối tác
+          </h3>
+
+          <div className="flex flex-col space-y-1.5">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-end">
+              <div className="flex flex-col space-y-1.5">
+                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Đường dẫn hình ảnh banner (URL)</label>
+                <input 
+                  type="text" 
+                  className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                  value={sponsorBannerUrl} 
+                  onChange={e => setSponsorBannerUrl(e.target.value)} 
+                />
+              </div>
+              <div className="flex flex-col space-y-1.5">
+                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Hoặc tải ảnh mới từ máy tính</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="w-full text-xs text-[#52605b] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-[#123c34] file:text-white hover:file:bg-[#0f766e] cursor-pointer"
+                  onChange={async (event) => {
+                    const file = event.target.files?.[0];
+                    if (!file) return;
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    try {
+                      const res = await fetch(apiUrl('/api/admin/upload'), {
+                        method: 'POST',
+                        body: formData,
+                      });
+                      if (res.ok) {
+                        const data = await res.json();
+                        setSponsorBannerUrl(data.url);
+                        alert('Tải ảnh banner lên thành công!');
+                      } else {
+                        alert('Tải ảnh banner lên thất bại.');
+                      }
+                    } catch (err) {
+                      console.error(err);
+                      alert('Có lỗi xảy ra khi tải ảnh banner.');
+                    }
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-3 p-3 bg-slate-50 border border-slate-100 rounded-xl">
+            <p className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider mb-2">Xem trước Banner Nhà tài trợ:</p>
+            <div className="border border-[#dce5e1] rounded-lg overflow-hidden bg-white p-2 flex items-center justify-center max-h-48">
+              <img 
+                src={formatAssetUrl(sponsorBannerUrl)} 
+                className="max-h-44 max-w-full object-contain" 
+                alt="Sponsors Banner Preview" 
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="bg-white border border-[#dce5e1] rounded-xl p-5 shadow-sm space-y-4">
           <h3 className="text-sm font-bold text-[#123c34] border-b border-[#edf2f0] pb-2 flex items-center gap-2">
             Cấu hình đăng ký & bình chọn miễn phí
@@ -341,6 +414,20 @@ export default function SettingsAdminPage() {
               />
               <p className="text-[10px] text-[#6b7773]">Dùng để đồng bộ lịch sử giao dịch chuyển khoản ngân hàng tự động.</p>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-amber-50 rounded-xl border border-amber-200 shadow-sm mt-4 select-none">
+            <div>
+              <p className="font-bold text-xs text-amber-900">Chế độ thử nghiệm thanh toán (Test Mode / Bypass Sepay)</p>
+              <p className="text-[10px] text-amber-700 font-medium">Bỏ qua xác thực Sepay, tự động hoàn thành thanh toán sau vài giây để kiểm thử.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsTestMode(!isTestMode)}
+              className={`w-12 h-6 rounded-full transition-colors duration-200 relative flex items-center ${isTestMode ? 'bg-amber-600' : 'bg-slate-200'}`}
+            >
+              <span className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 absolute ${isTestMode ? 'translate-x-7' : 'translate-x-1'}`} />
+            </button>
           </div>
         </div>
 

@@ -262,7 +262,7 @@ export default function GioiThieuPage() {
     <>
       <style>{`
         .iUzfqH {
-          background-image: url(/background/background.png);
+          background-image: url(/background/background2.png);
           background-color: #030612;
           background-attachment: fixed;
           background-size: cover;

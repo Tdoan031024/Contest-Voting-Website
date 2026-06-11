@@ -5,6 +5,7 @@ import { Candidate } from '@huitfest/shared';
 import Link from 'next/link';
 import { useAlert } from './AlertProvider';
 import { apiUrl } from './api';
+import VoteModal from './VoteModal';
 
 const LOCAL_MOCK_CANDIDATES: Candidate[] = [
   { id: '1', sbd: '085', name: 'Nguyễn Thanh Tân', votes: 106100, imageUrl: '/original_assets/image389b.png', description: 'Thí sinh tài năng của HUIT\'s Iconic 2024.' },
@@ -62,6 +63,18 @@ function RichContent({ value, fallback, className }: { value?: string | null; fa
   return <div className={`${className} whitespace-pre-line`}>{content}</div>;
 }
 
+function formatSponsorBannerUrl(url: string | undefined | null): string {
+  if (!url) return '/original_assets/image4b12.png';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
+    return url;
+  }
+  const cleanPath = url.startsWith('/') ? url : `/${url}`;
+  if (cleanPath.startsWith('/uploads/')) {
+    return apiUrl(cleanPath);
+  }
+  return cleanPath;
+}
+
 function getStoredUser() {
   if (typeof window === 'undefined') return null;
   const raw = localStorage.getItem('huit_web_user');
@@ -79,6 +92,7 @@ export default function HomePage() {
   const ABOUT_FALLBACK_DESCRIPTION = `Cuộc thi HUIT Startup lần 07 năm 2026 với chủ đề “Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững" cấp thành phố (HUIT STARTUP LẦN THỨ VII) là hoạt động thường niên do Trường Đại học Công Thương TP. Hồ Chí Minh tổ chức, nhằm tìm kiếm và ươm tạo các ý tưởng, dự án sáng tạo của học sinh, sinh viên, học viên và doanh nghiệp góp phần giải quyết các vấn đề xã hội và thúc đẩy phát triển bền vững. Đây không chỉ là sân chơi học thuật mà còn là bệ phóng cho những ý tưởng sáng tạo, những giải pháp thiết thực được hình thành, phát triển và hiện thực hóa, mang lại giá trị thiết thực cho bản thân, gia đình, cộng đồng và toàn xã hội. Năm 2026, cuộc thi trở lại với quy mô mở rộng và chủ đề đầy cảm hứng: "Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững". Cuộc thi chào đón sự tham gia của Học sinh, sinh viên, học viên ở các trường đại học, cao đắng, trung cấp, THPT, GDTX và Các cá nhân, tổ chức, doanh nghiệp (HTX, hộ kinh doanh, doanh nghiệp vừa và nhỏ trên địa bàn Thành phố Hồ Chí Minh và các tỉnh lân cận yêu thích hoạt động khởi nghiệp, có ý tưởng, dự án khởi nghiệp sáng. Mục tiêu là tìm kiếm và ươm mầm những ý tưởng, giải pháp đổi mới sáng tạo, góp phần giải quyết các vấn đề cấp thiết của cộng đồng, xã hội và thúc đẩy phát triển kinh tế – xã hội một cách bền vững. Thông qua cuộc thi, ban tổ chức mong muốn lan tỏa mạnh mẽ tinh thần khởi nghiệp, đổi mới sáng tạo trong giới trẻ; đồng thời kết nối và mở rộng hệ sinh thái khởi nghiệp đổi mới sáng tạo trong khối các cơ sở giáo dục, các startup tạo tiền đề cho sự phát triển nguồn nhân lực sáng tạo, thích ứng và bản lĩnh trong thời đại mới.`;
   const ABOUT_REGISTER_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdlRmaBRgPAl_rbLjDOY__ROcyZsCOnoxec2izDhRVJTcHBfA/viewform';
   const [candidates, setCandidates] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
+  const [activeVoteCandidate, setActiveVoteCandidate] = useState<Candidate | null>(null);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [banners, setBanners] = useState<Banner[]>([]);
@@ -334,47 +348,16 @@ export default function HomePage() {
     return now >= start && now <= end;
   };
 
-  const handleVote = async (sbd: string, name: string) => {
+  const handleVote = (sbd: string, name: string) => {
     if (!isGateCurrentlyOpen()) {
       showAlert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!", "warning", "Cổng bình chọn");
       return;
     }
 
-    const user = getStoredUser();
-    if (!user) {
-      showAlert("Bạn cần đăng nhập tài khoản khán giả trước khi thực hiện bình chọn.", "warning", "Yêu cầu đăng nhập");
-      window.location.href = `/dang-nhap?redirect=/`;
-      return;
+    const cand = candidates.find(c => c.sbd === sbd);
+    if (cand) {
+      setActiveVoteCandidate(cand);
     }
-
-    try {
-      const res = await fetch(apiUrl(`/api/candidates/${sbd}/vote`), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          phone: user.phone,
-          userId: user.id,
-          packageId: 'free-5'
-        }),
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setCandidates(prev => prev.map(c => c.sbd === sbd ? updated : c));
-        showAlert(`Bình chọn thành công cho ${name}!`, "success", "Bình chọn thành công");
-        return;
-      } else {
-        const errorData = await res.json().catch(() => null);
-        showAlert(errorData?.message || "Không thể thực hiện bình chọn.", "error", "Lỗi bình chọn");
-        return;
-      }
-    } catch (err) {
-      console.log('NestJS Backend API offline, executing client-side mock vote.', err);
-    }
-
-    setCandidates(prev =>
-      prev.map(c => c.sbd === sbd ? { ...c, votes: c.votes + 5 } : c)
-    );
-    showAlert(`Bình chọn offline thành công cho ${name}!`, "success", "Bình chọn thành công");
   };
 
   // Sort candidates by votes descending
@@ -389,7 +372,7 @@ export default function HomePage() {
       <style>{`
         @media (min-width: 812px) {
           .iUzfqH {
-            background-image: url(/background/background.png);
+            background-image: url(/background/background2.png);
             background-color: white;
             background-attachment: fixed;
             background-size: cover;
@@ -866,7 +849,7 @@ export default function HomePage() {
             >
               <div className="relative group hover-shine-effect rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-white/[0.01]">
                 <div className="absolute -inset-1 bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] rounded-2xl opacity-10 blur-sm pointer-events-none group-hover:opacity-20 transition-opacity duration-500" />
-                <img alt="Sponsors Logo" className="w-full h-auto object-contain rounded-xl relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]" src="/original_assets/image4b12.png" />
+                <img alt="Sponsors Logo" className="w-full h-auto object-contain rounded-xl relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]" src={formatSponsorBannerUrl(settings?.sponsorBannerUrl)} />
               </div>
             </div>
           </div>
@@ -878,6 +861,18 @@ export default function HomePage() {
         </div>
 
       </main>
+
+      {activeVoteCandidate && (
+        <VoteModal
+          candidate={activeVoteCandidate}
+          onClose={() => setActiveVoteCandidate(null)}
+          onSuccess={(updatedCandidate) => {
+            setCandidates((prev) =>
+              prev.map((c) => (c.sbd === updatedCandidate.sbd ? updatedCandidate : c))
+            );
+          }}
+        />
+      )}
     </>
   );
 }

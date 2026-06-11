@@ -6,6 +6,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAlert } from '../../AlertProvider';
 import { apiUrl } from '../../api';
+import VoteModal from '../../VoteModal';
 
 function formatMoney(value: number) {
   if (!value) return 'Miễn phí';
@@ -32,7 +33,7 @@ export default function CandidateDetailPage() {
   const [packages, setPackages] = useState<VotePackage[]>([]);
   const [selectedPackageId, setSelectedPackageId] = useState('free-5');
   const [isLoading, setIsLoading] = useState(true);
-  const [isVoting, setIsVoting] = useState(false);
+  const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
   const [settings, setSettings] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<WebUser | null>(null);
   const [activeImage, setActiveImage] = useState<string>('');
@@ -133,46 +134,13 @@ export default function CandidateDetailPage() {
     };
   }, [isLightboxOpen, allImages]);
 
-  const handleVote = async () => {
-    if (!candidate || !selectedPackage) return;
+  const handleVote = () => {
+    if (!candidate) return;
     if (!isGateOpen) {
       showAlert('Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng.', 'warning', 'Cổng bình chọn');
       return;
     }
-
-    if (!currentUser) {
-      showAlert('Bạn cần đăng nhập tài khoản khán giả trước khi thực hiện bình chọn.', 'info', 'Yêu cầu đăng nhập');
-      window.location.href = `/dang-nhap?redirect=/thi-sinh/${candidate.sbd}`;
-      return;
-    }
-
-    setIsVoting(true);
-    try {
-      const res = await fetch(apiUrl(`/api/voting/candidates/${candidate.sbd}`), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          packageId: selectedPackage.id,
-          userId: currentUser?.id,
-          phone: currentUser?.phone,
-          eventId: 'thi-sinh-duoc-yeu-thich-nhat',
-        }),
-      });
-
-      const data = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(data?.message || 'Không thể bình chọn.');
-
-      setCandidate(data.candidate);
-      showAlert(
-        `Đã cộng ${selectedPackage.points.toLocaleString()} điểm cho dự án ${data.candidate.name}.`,
-        'success',
-        selectedPackage.packageType === 'FREE' ? 'Bình chọn thành công' : 'Thanh toán thành công'
-      );
-    } catch (error: any) {
-      showAlert(error.message || 'Không thể bình chọn.', 'error', 'Lỗi bình chọn');
-    } finally {
-      setIsVoting(false);
-    }
+    setIsVoteModalOpen(true);
   };
 
   const copyLink = async () => {
@@ -333,8 +301,8 @@ export default function CandidateDetailPage() {
                 </div>
               )}
             </div>
-            <button onClick={handleVote} disabled={isVoting || !isGateOpen} className="mt-4 h-11 w-full rounded-lg bg-[#e45136] text-sm font-black text-white shadow transition hover:bg-[#c83f28] disabled:cursor-not-allowed disabled:opacity-60 animate-all duration-300">
-              {isVoting ? 'Đang xử lý...' : selectedPackage?.packageType === 'FREE' ? 'Bình chọn miễn phí' : 'Thanh toán QR (Sepay) & Bình chọn'}
+            <button onClick={handleVote} disabled={!isGateOpen} className="mt-4 h-11 w-full rounded-lg bg-[#e45136] text-sm font-black text-white shadow transition hover:bg-[#c83f28] disabled:cursor-not-allowed disabled:opacity-60 animate-all duration-300">
+              {selectedPackage?.packageType === 'FREE' ? 'Bình chọn miễn phí' : 'Thanh toán QR (Sepay) & Bình chọn'}
             </button>
             {!currentUser && selectedPackage?.packageType === 'FREE' && (
               <Link href={`/dang-nhap?redirect=/thi-sinh/${candidate.sbd}`} className="mt-3 block text-center text-xs font-bold text-[#0f766e]">
@@ -420,6 +388,17 @@ export default function CandidateDetailPage() {
             </p>
           </div>
         </div>
+      )}
+
+      {isVoteModalOpen && (
+        <VoteModal
+          candidate={candidate}
+          initialPackageId={selectedPackageId}
+          onClose={() => setIsVoteModalOpen(false)}
+          onSuccess={(updatedCandidate) => {
+            setCandidate(updatedCandidate);
+          }}
+        />
       )}
     </main>
   );

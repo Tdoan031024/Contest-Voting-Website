@@ -40,24 +40,44 @@ const defaultSections: GuideSection[] = [
   },
 ];
 
+function extractDigits(str: any): string {
+  if (str === undefined || str === null) return '';
+  const s = String(str).trim();
+  const match = s.match(/\d+/g);
+  if (!match) {
+    if (s.toLowerCase().includes('miễn phí')) return '0';
+    return '';
+  }
+  return match.join('');
+}
+
 const defaultExchangeRates: ExchangeRate[] = [
-  { points: '5 Điểm', price: 'Miễn phí (01 lượt / ngày)' },
-  { points: '10 Điểm', price: '10,000 VND' },
-  { points: '20 Điểm', price: '20,000 VND' },
-  { points: '50 Điểm', price: '50,000 VND' },
-  { points: '220 Điểm', price: '100,000 VND' },
-  { points: '1,050 Điểm', price: '500,000 VND' },
-  { points: '2,300 Điểm', price: '1,000,000 VND' },
-  { points: '7,000 Điểm', price: '3,000,000 VND' },
+  { points: '5', price: '0' },
+  { points: '10', price: '10000' },
+  { points: '20', price: '20000' },
+  { points: '50', price: '50000' },
+  { points: '220', price: '100000' },
+  { points: '1050', price: '500000' },
+  { points: '2300', price: '1000000' },
+  { points: '7000', price: '3000000' },
 ];
 
 function normalizeRates(rawRates: any[]): ExchangeRate[] {
   const rates = rawRates
-    .map((rate) => ({
-      points: String(rate.pointsLabel || rate.label || (rate.points ? `${Number(rate.points).toLocaleString('vi-VN')} Điểm` : '')),
-      price: String(rate.priceLabel || (Number(rate.price) > 0 ? `${Number(rate.price).toLocaleString('vi-VN')} VND` : 'Miễn phí (01 lượt / ngày)')),
-    }))
-    .filter((rate) => rate.points && rate.price);
+    .map((rate) => {
+      let points = extractDigits(rate.points);
+      if (!points && rate.label) {
+        points = extractDigits(rate.label);
+      }
+      
+      let price = extractDigits(rate.price);
+      if (!price && rate.priceLabel) {
+        price = extractDigits(rate.priceLabel);
+      }
+      
+      return { points, price };
+    })
+    .filter((rate) => rate.points !== '' && rate.price !== '');
   return rates.length > 0 ? rates : defaultExchangeRates;
 }
 
@@ -296,26 +316,35 @@ export default function GuidesAdminPage() {
                 <table className="w-full border-collapse text-left">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
-                      <th className="px-5 py-3">Gói bình chọn</th>
-                      <th className="px-5 py-3">Giá trị quy đổi</th>
+                      <th className="px-5 py-3">Gói bình chọn (Điểm)</th>
+                      <th className="px-5 py-3">Giá trị quy đổi (VND - Nhập 0 nếu Miễn phí)</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs">
                     {exchangeRates.map((rate, index) => (
                       <tr key={index} className="hover:bg-emerald-50/40">
                         <td className="px-5 py-3">
-                          <input
-                            value={rate.points}
-                            onChange={(event) => handleRateChange(index, 'points', event.target.value)}
-                            className="h-9 w-full max-w-[220px] rounded-xl border border-slate-200 bg-white px-3 font-bold text-slate-900 outline-none focus:border-emerald-600"
-                          />
+                          <div className="flex items-center gap-2 max-w-[220px]">
+                            <input
+                              type="number"
+                              value={rate.points}
+                              onChange={(event) => handleRateChange(index, 'points', event.target.value)}
+                              className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 font-bold text-slate-900 outline-none focus:border-emerald-600"
+                            />
+                            <span className="text-xs font-bold text-slate-500 shrink-0">Điểm</span>
+                          </div>
                         </td>
                         <td className="px-5 py-3">
-                          <input
-                            value={rate.price}
-                            onChange={(event) => handleRateChange(index, 'price', event.target.value)}
-                            className="h-9 w-full max-w-[320px] rounded-xl border border-slate-200 bg-white px-3 font-semibold text-slate-800 outline-none focus:border-emerald-600"
-                          />
+                          <div className="flex items-center gap-2 max-w-[320px]">
+                            <input
+                              type="number"
+                              value={rate.price}
+                              onChange={(event) => handleRateChange(index, 'price', event.target.value)}
+                              className="h-9 w-full rounded-xl border border-slate-200 bg-white px-3 font-semibold text-slate-800 outline-none focus:border-emerald-600"
+                              placeholder="Nhập 0 nếu Miễn phí"
+                            />
+                            <span className="text-xs font-bold text-slate-500 shrink-0">VND</span>
+                          </div>
                         </td>
                       </tr>
                     ))}

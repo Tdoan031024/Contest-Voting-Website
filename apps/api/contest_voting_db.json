@@ -109,21 +109,220 @@
   ],
   "settings": {
     "isGateOpen": true,
-    "startDate": "2024-10-20T00:00",
-    "endDate": "2024-11-24T23:59",
+    "startDate": "2026-06-01T00:00",
+    "endDate": "2026-12-31T23:59",
     "maxVotesPerPhone": 5,
     "eventTitle": "HUIT STARTUP - Đổi mới sáng tạo hướng tới phát triển bền vững",
     "organizer": "Đổi mới sáng tạo hướng tới phát triển bền vững",
     "contactEmail": "support@voting.vn",
     "isMaintenanceMode": false,
+    "sponsorBannerUrl": "/original_assets/image4b12.png",
     "aboutTitle": "HUIT STARTUP LẦN THỨ VII 2026",
     "aboutDescription": "Cuộc thi HUIT Startup lần 07 năm 2026 với chủ đề “Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững\" cấp thành phố (HUIT STARTUP LẦN THỨ VII) là hoạt động thường niên do Trường Đại học Công Thương TP. Hồ Chí Minh tổ chức, nhằm tìm kiếm và ươm tạo các ý tưởng, dự án sáng tạo của học sinh, sinh viên, học viên và doanh nghiệp góp phần giải quyết các vấn đề xã hội và thúc đẩy phát triển bền vững. Đây không chỉ là sân chơi học thuật mà còn là bệ phóng cho những ý tưởng sáng tạo, những giải pháp thiết thực được hình thành, phát triển và hiện thực hóa, mang lại giá trị thiết thực cho bản thân, gia đình, cộng đồng và toàn xã hội. Năm 2026, cuộc thi trở lại với quy mô mở rộng và chủ đề đầy cảm hứng: \"Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững\". Cuộc thi chào đón sự tham gia của Học sinh, sinh viên, học viên ở các trường đại học, cao đắng, trung cấp, THPT, GDTX và Các cá nhân, tổ chức, doanh nghiệp (HTX, hộ kinh doanh, doanh nghiệp vừa và nhỏ trên địa bàn Thành phố Hồ Chí Minh và các tỉnh lân cận yêu thích hoạt động khởi nghiệp, có ý tưởng, dự án khởi nghiệp sáng. Mục tiêu là tìm kiếm và ươm mầm những ý tưởng, giải pháp đổi mới sáng tạo, góp phần giải quyết các vấn đề cấp thiết của cộng đồng, xã hội và thúc đẩy phát triển kinh tế – xã hội một cách bền vững. Thông qua cuộc thi, ban tổ chức mong muốn lan tỏa mạnh mẽ tinh thần khởi nghiệp, đổi mới sáng tạo trong giới trẻ; đồng thời kết nối và mở rộng hệ sinh thái khởi nghiệp đổi mới sáng tạo trong khối các cơ sở giáo dục, các startup tạo tiền đề cho sự phát triển nguồn nhân lực sáng tạo, thích ứng và bản lĩnh trong thời đại mới.",
     "aboutImageUrl": "/uploads/poster-khoi-nghiep.jpg",
+    "statsCandidates": "20+",
+    "statsVotes": "100K+",
+    "statsViews": "30M+",
+    "aboutSubtitle": "Cuộc thi HUIT Startup lần VII - Cấp Thành phố năm 2026",
+    "aboutTheme": "Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững",
+    "aboutOrganizerDetail": "Đơn vị tổ chức: Trường Đại học Công Thương TP. HCM (HUIT) và IEC.\nTài trợ kim cương: Sài Gòn Thăng Long; Quỹ đầu tư VinaTech.\nĐơn vị phối hợp: Diễn đàn Doanh nghiệp; Khởi nghiệp Quốc gia phía Nam; VNEI.\nĐơn vị bảo trợ: Các đơn vị/biểu trưng bảo trợ theo poster cuộc thi.",
+    "aboutSectors": "Công nghiệp, AI, chuyển đổi số và an ninh mạng\nCông nghệ thực phẩm, nông nghiệp, môi trường và năng lượng\nGiáo dục, văn hóa, du lịch, logistics, tài chính, thương mại điện tử và luật\nY tế, sức khỏe và đời sống\nPhát triển bền vững và kinh doanh tạo tác động xã hội",
+    "aboutBenefits": "Đào tạo kỹ năng khởi nghiệp\nMentor/cố vấn chuyên sâu\nStartup Tour & kiểm chứng thị trường\nKết nối quỹ đầu tư, nhà đầu tư và cơ hội ươm tạo",
+    "aboutPrize": "Tổng giá trị giải thưởng 05 TỶ ĐỒNG và các gói hỗ trợ hấp dẫn, gồm tiền mặt, gói mentor/cố vấn chuyên sâu, gói sở hữu trí tuệ, nền tảng ERP Platform và nhiều cơ hội nhận các gói ươm tạo, kết nối đầu tư, phát triển dự án sau cuộc thi.",
+    "aboutParticipants": "Học sinh: THPT, GDTX, trung cấp có ý tưởng khởi nghiệp sáng tạo.\nSinh viên, học viên: Đang học tại các trường đại học, cao đẳng và cơ sở giáo dục.\nCá nhân, tổ chức: Yêu thích hoạt động khởi nghiệp, có ý tưởng hoặc dự án sáng tạo.\nDoanh nghiệp: HTX, hộ kinh doanh, doanh nghiệp vừa và nhỏ tại TP. Hồ Chí Minh và các tỉnh lân cận.",
+    "aboutContactName": "Nguyễn Thị Bích Nguyên",
+    "aboutContactRole": "Chuyên viên - TT Đổi mới sáng tạo và Khởi nghiệp",
+    "aboutContactPhone": "0975702463",
+    "aboutContactWebsite": "https://khoinghiep.huit.edu.vn",
+    "aboutContactQrUrl": "/images/qrdangky.png",
+    "isRegistrationOpen": true,
+    "registrationDeadline": "2026-06-20T23:59",
+    "registrationUrl": "https://khoinghiep.huit.edu.vn",
+    "detailUrl": "https://khoinghiep.huit.edu.vn",
+    "supportZaloUrl": "https://zalo.me/0975702463",
+    "freeVotesPerAccountPerDay": 1,
     "sepayBankName": "KienLongBank",
     "sepayAccountNo": "101499100004001667",
     "sepayAccountName": "DANG XUAN DUONG",
     "sepayPrefix": "MD",
-    "sepayApiKey": "1dcd4e6cd52fde1e4bf0510a9b406476322d811f3bbae785"
+    "sepayApiKey": "1dcd4e6cd52fde1e4bf0510a9b406476322d811f3bbae785",
+    "isTestMode": true,
+    "guideSections": [
+      {
+        "title": "Hướng dẫn bình chọn miễn phí",
+        "steps": [
+          {
+            "number": "01",
+            "description": "Tạo tài khoản mới hoặc đăng nhập nhanh bằng tài khoản Google.",
+            "image": "/original_assets/imagefca6.png"
+          },
+          {
+            "number": "02",
+            "description": "Đăng nhập tài khoản để nhận lượt bình chọn miễn phí hằng ngày.",
+            "image": "/original_assets/imagef1be.png"
+          },
+          {
+            "number": "03",
+            "description": "Tìm kiếm và lựa chọn dự án bạn muốn bình chọn.",
+            "image": "/original_assets/image81d3.png"
+          },
+          {
+            "number": "04",
+            "description": "Chọn gói 5 điểm miễn phí, hệ thống ghi nhận điểm sau khi xác nhận thành công.",
+            "image": "/original_assets/image20da.png"
+          }
+        ]
+      },
+      {
+        "title": "Thanh toán chuyển khoản tự động qua Sepay",
+        "steps": [
+          {
+            "number": "01",
+            "description": "Truy cập danh sách dự án, chọn dự án bạn muốn ủng hộ.",
+            "image": "/original_assets/image17ae.png"
+          },
+          {
+            "number": "02",
+            "description": "Lựa chọn gói điểm mong muốn và bấm thanh toán.",
+            "image": "/original_assets/imageefc9.png"
+          },
+          {
+            "number": "03",
+            "description": "Quét mã QR thanh toán hiển thị trên màn hình hoặc chuyển khoản đúng cú pháp, số tiền qua cổng Sepay.",
+            "image": "/original_assets/image837f.png"
+          },
+          {
+            "number": "04",
+            "description": "Giao dịch hoàn tất, hệ thống Sepay tự động xác nhận và cộng điểm bình chọn sau vài giây.",
+            "image": "/original_assets/image20da.png"
+          }
+        ]
+      }
+    ],
+    "exchangeRates": [
+      {
+        "points": "5",
+        "price": "0"
+      },
+      {
+        "points": "10",
+        "price": "100"
+      },
+      {
+        "points": "20",
+        "price": "2000"
+      },
+      {
+        "points": "50",
+        "price": "50000"
+      },
+      {
+        "points": "220",
+        "price": "100000"
+      },
+      {
+        "points": "1050",
+        "price": "500000"
+      },
+      {
+        "points": "2300",
+        "price": "1000000"
+      },
+      {
+        "points": "7000",
+        "price": "3000000"
+      }
+    ],
+    "votePackages": [
+      {
+        "id": "free-5",
+        "code": "FREE_5",
+        "name": "5 điểm miễn phí",
+        "points": 5,
+        "price": 0,
+        "currency": "VND",
+        "vatRate": 10,
+        "packageType": "FREE",
+        "isActive": true
+      },
+      {
+        "id": "vote-10",
+        "code": "PAID_10",
+        "name": "10 điểm",
+        "points": 10,
+        "price": 10000,
+        "currency": "VND",
+        "vatRate": 10,
+        "packageType": "PAID",
+        "isActive": true
+      },
+      {
+        "id": "vote-20",
+        "code": "PAID_20",
+        "name": "20 điểm",
+        "points": 20,
+        "price": 20000,
+        "currency": "VND",
+        "vatRate": 10,
+        "packageType": "PAID",
+        "isActive": true
+      },
+      {
+        "id": "vote-50",
+        "code": "PAID_50",
+        "name": "50 điểm",
+        "points": 50,
+        "price": 50000,
+        "currency": "VND",
+        "vatRate": 10,
+        "packageType": "PAID",
+        "isActive": true
+      },
+      {
+        "id": "vote-220",
+        "code": "PAID_220",
+        "name": "220 điểm",
+        "points": 220,
+        "price": 100000,
+        "currency": "VND",
+        "vatRate": 10,
+        "packageType": "PAID",
+        "isActive": true
+      },
+      {
+        "id": "vote-1050",
+        "code": "PAID_1050",
+        "name": "1.050 điểm",
+        "points": 1050,
+        "price": 500000,
+        "currency": "VND",
+        "vatRate": 10,
+        "packageType": "PAID",
+        "isActive": true
+      },
+      {
+        "id": "vote-2300",
+        "code": "PAID_2300",
+        "name": "2.300 điểm",
+        "points": 2300,
+        "price": 1000000,
+        "currency": "VND",
+        "vatRate": 10,
+        "packageType": "PAID",
+        "isActive": true
+      },
+      {
+        "id": "vote-7000",
+        "code": "PAID_7000",
+        "name": "7.000 điểm",
+        "points": 7000,
+        "price": 3000000,
+        "currency": "VND",
+        "vatRate": 10,
+        "packageType": "PAID",
+        "isActive": true
+      }
+    ]
   },
   "webUsers": [
     {
@@ -138,6 +337,184 @@
       "contestTable": "Bảng sinh viên, học viên",
       "registeredAt": "2026-06-02T19:22:34.250Z",
       "lastLoginAt": "2026-06-02T19:22:34.250Z"
+    }
+  ],
+  "voteHistory": [
+    {
+      "id": "vote-1781187260193",
+      "candidateId": "002",
+      "candidateSbd": "002",
+      "eventId": "thi-sinh-duoc-yeu-thich-nhat",
+      "packageId": "free-5",
+      "packageType": "FREE",
+      "points": 5,
+      "amount": 0,
+      "userId": "a6beda6a-fcad-490e-a0ae-5335795f43fa",
+      "voterPhone": "WEB_USER",
+      "createdAt": "2026-06-11T14:14:20.193Z"
+    },
+    {
+      "id": "vote-1781187238970",
+      "candidateId": "004",
+      "candidateSbd": "004",
+      "eventId": "thi-sinh-duoc-yeu-thich-nhat",
+      "packageId": "free-5",
+      "packageType": "FREE",
+      "points": 5,
+      "amount": 0,
+      "userId": "a6beda6a-fcad-490e-a0ae-5335795f43fa",
+      "voterPhone": "WEB_USER",
+      "createdAt": "2026-06-11T14:13:58.970Z"
+    },
+    {
+      "id": "vote-1781186322555",
+      "candidateId": "002",
+      "candidateSbd": "002",
+      "eventId": "thi-sinh-duoc-yeu-thich-nhat",
+      "packageId": "vote-10",
+      "packageType": "PAID",
+      "points": 10,
+      "amount": 100,
+      "userId": "a6beda6a-fcad-490e-a0ae-5335795f43fa",
+      "voterPhone": "WEB_USER",
+      "transactionId": "TX-1781186322550-567",
+      "createdAt": "2026-06-11T13:58:42.555Z"
+    },
+    {
+      "id": "vote-1781186309017",
+      "candidateId": "001",
+      "candidateSbd": "001",
+      "eventId": "thi-sinh-duoc-yeu-thich-nhat",
+      "packageId": "vote-20",
+      "packageType": "PAID",
+      "points": 20,
+      "amount": 2000,
+      "userId": "a6beda6a-fcad-490e-a0ae-5335795f43fa",
+      "voterPhone": "WEB_USER",
+      "transactionId": "TX-1781186309011-838",
+      "createdAt": "2026-06-11T13:58:29.017Z"
+    },
+    {
+      "id": "vote-1781184315656",
+      "candidateId": "001",
+      "candidateSbd": "001",
+      "eventId": "thi-sinh-duoc-yeu-thich-nhat",
+      "packageId": "free-5",
+      "packageType": "FREE",
+      "points": 5,
+      "amount": 0,
+      "userId": "a6beda6a-fcad-490e-a0ae-5335795f43fa",
+      "createdAt": "2026-06-11T13:25:15.656Z"
+    }
+  ],
+  "votePackages": [
+    {
+      "id": "free-5",
+      "code": "FREE_5",
+      "name": "5 điểm miễn phí",
+      "points": 5,
+      "price": 0,
+      "currency": "VND",
+      "vatRate": 10,
+      "packageType": "FREE",
+      "isActive": true
+    },
+    {
+      "id": "vote-10",
+      "code": "PAID_10",
+      "name": "10 điểm",
+      "points": 10,
+      "price": 100,
+      "currency": "VND",
+      "vatRate": 10,
+      "packageType": "PAID",
+      "isActive": true
+    },
+    {
+      "id": "vote-20",
+      "code": "PAID_20",
+      "name": "20 điểm",
+      "points": 20,
+      "price": 2000,
+      "currency": "VND",
+      "vatRate": 10,
+      "packageType": "PAID",
+      "isActive": true
+    },
+    {
+      "id": "vote-50",
+      "code": "PAID_50",
+      "name": "50 điểm",
+      "points": 50,
+      "price": 50000,
+      "currency": "VND",
+      "vatRate": 10,
+      "packageType": "PAID",
+      "isActive": true
+    },
+    {
+      "id": "vote-220",
+      "code": "PAID_220",
+      "name": "220 điểm",
+      "points": 220,
+      "price": 100000,
+      "currency": "VND",
+      "vatRate": 10,
+      "packageType": "PAID",
+      "isActive": true
+    },
+    {
+      "id": "vote-1050",
+      "code": "PAID_1050",
+      "name": "1050 điểm",
+      "points": 1050,
+      "price": 500000,
+      "currency": "VND",
+      "vatRate": 10,
+      "packageType": "PAID",
+      "isActive": true
+    },
+    {
+      "id": "vote-2300",
+      "code": "PAID_2300",
+      "name": "2300 điểm",
+      "points": 2300,
+      "price": 1000000,
+      "currency": "VND",
+      "vatRate": 10,
+      "packageType": "PAID",
+      "isActive": true
+    },
+    {
+      "id": "vote-7000",
+      "code": "PAID_7000",
+      "name": "7000 điểm",
+      "points": 7000,
+      "price": 3000000,
+      "currency": "VND",
+      "vatRate": 10,
+      "packageType": "PAID",
+      "isActive": true
+    }
+  ],
+  "transactions": [
+    {
+      "id": "TX-1781186322550-567",
+      "candidateSbd": "002",
+      "packageId": "vote-10",
+      "amount": 100,
+      "vatRate": 10,
+      "status": "SUCCESS",
+      "createdAt": "2026-06-11T13:58:42.555Z"
+    },
+    {
+      "id": "TX-1781186309011-838",
+      "candidateSbd": "001",
+      "packageId": "vote-20",
+      "amount": 2000,
+      "vatRate": 10,
+      "status": "SUCCESS",
+      "createdAt": "2026-06-11T13:58:29.017Z"
     }
   ]
 }

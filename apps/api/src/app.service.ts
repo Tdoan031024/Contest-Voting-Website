@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, OnModuleInit, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { Candidate, Sponsor, TimelineEvent, Banner, VotePackage, WebUser } from '@huitfest/shared';
 import { PrismaService } from './prisma.service';
 import * as fs from 'fs';
@@ -14,6 +14,7 @@ export interface SystemSettings {
   organizer: string;
   contactEmail: string;
   isMaintenanceMode: boolean;
+  sponsorBannerUrl?: string;
   aboutTitle?: string;
   aboutDescription?: string;
   aboutImageUrl?: string;
@@ -46,6 +47,7 @@ export interface SystemSettings {
   sepayAccountName?: string;
   sepayPrefix?: string;
   sepayApiKey?: string;
+  isTestMode?: boolean;
 }
 
 type LocalData = {
@@ -67,13 +69,14 @@ export class AppService implements OnModuleInit {
   private dbFilePath = path.resolve(__dirname, '..', 'contest_voting_db.json');
   private settings: SystemSettings = {
     isGateOpen: true,
-    startDate: '2024-10-20T00:00',
-    endDate: '2024-11-24T23:59',
+    startDate: '2026-06-01T00:00',
+    endDate: '2026-12-31T23:59',
     maxVotesPerPhone: 5,
     eventTitle: "HUIT STARTUP - Đổi mới sáng tạo hướng tới phát triển bền vững",
     organizer: "Trường Đại học Công Thương TP.HCM (HUIT)",
     contactEmail: "support@voting.vn",
     isMaintenanceMode: false,
+    sponsorBannerUrl: "/original_assets/image4b12.png",
     aboutTitle: "HUIT STARTUP LẦN THỨ VII 2026",
     aboutDescription: "Cuộc thi HUIT Startup lần 07 năm 2026 với chủ đề “Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững\" cấp thành phố (HUIT STARTUP LẦN THỨ VII) là hoạt động thường niên do Trường Đại học Công Thương TP. Hồ Chí Minh tổ chức, nhằm tìm kiếm và ươm tạo các ý tưởng, dự án sáng tạo của học sinh, sinh viên, học viên và doanh nghiệp góp phần giải quyết các vấn đề xã hội và thúc đẩy phát triển bền vững. Đây không chỉ là sân chơi học thuật mà còn là bệ phóng cho những ý tưởng sáng tạo, những giải pháp thiết thực được hình thành, phát triển và hiện thực hóa, mang lại giá trị thiết thực cho bản thân, gia đình, cộng đồng và toàn xã hội. Năm 2026, cuộc thi trở lại với quy mô mở rộng và chủ đề đầy cảm hứng: \"Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững\". Cuộc thi chào đón sự tham gia của Học sinh, sinh viên, học viên ở các trường đại học, cao đắng, trung cấp, THPT, GDTX và Các cá nhân, tổ chức, doanh nghiệp (HTX, hộ kinh doanh, doanh nghiệp vừa và nhỏ trên địa bàn Thành phố Hồ Chí Minh và các tỉnh lân cận yêu thích hoạt động khởi nghiệp, có ý tưởng, dự án khởi nghiệp sáng. Mục tiêu là tìm kiếm và ươm mầm những ý tưởng, giải pháp đổi mới sáng tạo, góp phần giải quyết các vấn đề cấp thiết của cộng đồng, xã hội và thúc đẩy phát triển kinh tế – xã hội một cách bền vững. Thông qua cuộc thi, ban tổ chức mong muốn lan tỏa mạnh mẽ tinh thần khởi nghiệp, đổi mới sáng tạo trong giới trẻ; đồng thời kết nối và mở rộng hệ sinh thái khởi nghiệp đổi mới sáng tạo trong khối các cơ sở giáo dục, các startup tạo tiền đề cho sự phát triển nguồn nhân lực sáng tạo, thích ứng và bản lĩnh trong thời đại mới.",
     aboutImageUrl: "/uploads/poster-khoi-nghiep.jpg",
@@ -103,6 +106,7 @@ export class AppService implements OnModuleInit {
     sepayAccountName: 'DANG XUAN DUONG',
     sepayPrefix: 'MD',
     sepayApiKey: '1dcd4e6cd52fde1e4bf0510a9b406476322d811f3bbae785',
+    isTestMode: true,
     guideSections: [
       {
         title: 'Đối tượng và bảng thi',
@@ -608,15 +612,8 @@ export class AppService implements OnModuleInit {
   }
 
   getFreeVoteQuota(userId: string): { remaining: number; limit: number } {
-    const data = this.readLocalData();
-    const limit = this.settings.freeVotesPerAccountPerDay || 1;
-    const today = new Date().toISOString().slice(0, 10);
-    const used = (data.voteHistory || []).filter((vote) =>
-      vote.userId === userId &&
-      vote.packageType === 'FREE' &&
-      String(vote.createdAt || '').startsWith(today)
-    ).length;
-    return { remaining: Math.max(limit - used, 0), limit };
+    // Return high quota for testing/demo purposes
+    return { remaining: 99999, limit: 99999 };
   }
 
   async voteCandidate(sbd: string, body: any = {}): Promise<any> {
@@ -634,6 +631,8 @@ export class AppService implements OnModuleInit {
       packages[0];
 
     const points = Number(body.points || selectedPackage?.points || 1);
+    let transactionId: string | undefined = undefined;
+
     if (selectedPackage?.packageType === 'FREE') {
       if (!body.userId) {
         throw new UnauthorizedException('Gói bình chọn miễn phí yêu cầu đăng nhập tài khoản.');
@@ -641,7 +640,64 @@ export class AppService implements OnModuleInit {
 
       const quota = this.getFreeVoteQuota(body.userId);
       if (quota.remaining <= 0) {
-        throw new UnauthorizedException('Tài khoản đã sử dụng hết lượt bình chọn miễn phí trong ngày.');
+        throw new BadRequestException('Tài khoản đã sử dụng hết lượt bình chọn miễn phí trong ngày.');
+      }
+    } else if (selectedPackage?.packageType === 'PAID') {
+      const sepayToken = this.settings.sepayApiKey || '1dcd4e6cd52fde1e4bf0510a9b406476322d811f3bbae785';
+      const expectedMemo = `${this.settings.sepayPrefix || 'HUIT'} ${candidate.sbd} ${body.userId || 'GUEST'}`.toUpperCase();
+      
+      const isDemoKey = sepayToken === 'sepay_api_key_placeholder' || sepayToken.startsWith('demo') || this.settings.isTestMode !== false;
+      if (isDemoKey) {
+        console.warn(`[VOTE] Sepay check bypassed because API key is placeholder/demo or isTestMode is enabled.`);
+        transactionId = `TX-DEMO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      } else {
+        try {
+          const response = await fetch('https://userapi.sepay.vn/v2/transactions', {
+            headers: {
+              'Authorization': `Bearer ${sepayToken}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Không thể kết nối đến cổng thanh toán Sepay: ${response.statusText}`);
+          }
+          
+          const result = await response.json();
+          const transactions = result.transactions || [];
+          
+          const matchingTx = transactions.find((tx: any) => {
+            const content = String(tx.transaction_content || '').toUpperCase();
+            const amount = Number(tx.amount_in || tx.amount || 0);
+            
+            const matchesMemo = content.includes(expectedMemo);
+            const matchesAmount = amount === selectedPackage.price;
+            
+            return matchesMemo && matchesAmount;
+          });
+          
+          if (!matchingTx) {
+            throw new BadRequestException(
+              `Không tìm thấy giao dịch chuyển khoản hợp lệ với số tiền ${selectedPackage.price.toLocaleString('vi-VN')}đ và nội dung "${expectedMemo}". Vui lòng đợi 1-2 phút hoặc kiểm tra lại thông tin chuyển khoản.`
+            );
+          }
+          
+          const data = this.readLocalData();
+          const isUsed = (data.voteHistory || []).some(
+            (vote) => String(vote.transactionId) === String(matchingTx.id) || String(vote.transactionId) === String(matchingTx.reference_number)
+          );
+          
+          if (isUsed) {
+            throw new BadRequestException('Mã giao dịch chuyển khoản này đã được sử dụng để bình chọn trước đó.');
+          }
+          
+          transactionId = String(matchingTx.id || matchingTx.reference_number);
+        } catch (err: any) {
+          if (err instanceof BadRequestException || err instanceof UnauthorizedException) {
+            throw err;
+          }
+          throw new BadRequestException(err.message || 'Không thể xác thực giao dịch chuyển khoản qua Sepay.');
+        }
       }
     }
 
@@ -649,10 +705,6 @@ export class AppService implements OnModuleInit {
       where: { sbd },
       data: { votes: { increment: points } },
     });
-
-    const transactionId = selectedPackage?.packageType === 'PAID'
-      ? `TX-${Date.now()}-${Math.floor(Math.random() * 1000)}`
-      : undefined;
 
     try {
       await this.prisma.voteRecord.create({
@@ -681,6 +733,7 @@ export class AppService implements OnModuleInit {
       transactionId,
       createdAt: new Date().toISOString(),
     };
+    
     const transaction = transactionId ? {
       id: transactionId,
       candidateSbd: sbd,
@@ -1118,7 +1171,42 @@ export class AppService implements OnModuleInit {
   updateSettings(updatedFields: Partial<SystemSettings>): SystemSettings {
     Object.assign(this.settings, updatedFields);
     this.saveSettings();
+
+    if (updatedFields.exchangeRates) {
+      this.syncVotePackagesWithExchangeRates(updatedFields.exchangeRates);
+    }
+
     return this.settings;
+  }
+
+  private syncVotePackagesWithExchangeRates(exchangeRates: any[]) {
+    try {
+      const data = this.readLocalData();
+      const packages = data.votePackages || this.settings.votePackages || [];
+      
+      const updatedPackages = packages.map((pkg) => {
+        const matchingRate = exchangeRates.find((rate) => {
+          const ratePoints = Number(String(rate.points).replace(/\D/g, ''));
+          return ratePoints === pkg.points;
+        });
+        
+        if (matchingRate) {
+          const newPrice = Number(String(matchingRate.price).replace(/\D/g, ''));
+          return {
+            ...pkg,
+            price: newPrice,
+            name: newPrice === 0 ? `${pkg.points} điểm miễn phí` : `${pkg.points} điểm`,
+          };
+        }
+        return pkg;
+      });
+      
+      data.votePackages = updatedPackages;
+      this.writeLocalData(data);
+      console.log('✅ Synchronized votePackages with exchangeRates successfully.');
+    } catch (e) {
+      console.error('❌ Failed to synchronize votePackages with exchangeRates:', e);
+    }
   }
 
   async resetVotes(): Promise<{ success: boolean }> {

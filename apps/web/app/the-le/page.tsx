@@ -60,12 +60,36 @@ function normalizeSections(rawSections: any[]): SectionConfig[] {
   }));
 }
 
+function extractDigits(str: any): string {
+  if (str === undefined || str === null) return '';
+  const s = String(str).trim();
+  const match = s.match(/\d+/g);
+  if (!match) {
+    if (s.toLowerCase().includes('miễn phí')) return '0';
+    return '';
+  }
+  return match.join('');
+}
+
 function normalizeRates(rawRates: any[]): ExchangeRate[] {
   const rates = rawRates
-    .map((rate) => ({
-      points: String(rate.pointsLabel || rate.label || (rate.points ? `${Number(rate.points).toLocaleString('vi-VN')} Điểm` : '')),
-      price: String(rate.priceLabel || (Number(rate.price) > 0 ? `${Number(rate.price).toLocaleString('vi-VN')} VND` : 'Miễn phí (01 lượt / ngày)')),
-    }))
+    .map((rate) => {
+      const pointsNum = extractDigits(rate.points || rate.label);
+      const priceNum = extractDigits(rate.price || rate.priceLabel);
+
+      let pointsStr = '';
+      if (pointsNum !== '') {
+        pointsStr = `${Number(pointsNum).toLocaleString('vi-VN')} Điểm`;
+      }
+
+      let priceStr = '';
+      if (priceNum !== '') {
+        const num = Number(priceNum);
+        priceStr = num > 0 ? `${num.toLocaleString('vi-VN')} VND` : 'Miễn phí (01 lượt / ngày)';
+      }
+
+      return { points: pointsStr, price: priceStr };
+    })
     .filter((rate) => rate.points && rate.price);
   return rates.length > 0 ? rates : defaultExchangeRates;
 }
@@ -113,7 +137,7 @@ export default function TheLePage() {
     <>
       <style>{`
         .iUzfqH {
-          background-image: url(/background/background.png);
+          background-image: url(/background/background2.png);
           background-color: #030612;
           background-attachment: fixed;
           background-size: cover;

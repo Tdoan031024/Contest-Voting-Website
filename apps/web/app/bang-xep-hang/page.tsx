@@ -5,6 +5,7 @@ import { Candidate } from '@huitfest/shared';
 import Link from 'next/link';
 import { useAlert } from '../AlertProvider';
 import { apiUrl } from '../api';
+import VoteModal from '../VoteModal';
 
 // once=true: stays visible after first intersection, never hides again
 function useInView(threshold = 0.15) {
@@ -49,6 +50,7 @@ function getStoredUser() {
 export default function RankingPage() {
   const { showAlert } = useAlert();
   const [candidates, setCandidates] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
+  const [activeVoteCandidate, setActiveVoteCandidate] = useState<Candidate | null>(null);
   const [search, setSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [settings, setSettings] = useState<any>(null);
@@ -119,47 +121,16 @@ export default function RankingPage() {
     return now >= start && now <= end;
   };
 
-  const handleVote = async (sbd: string, name: string) => {
+  const handleVote = (sbd: string, name: string) => {
     if (!isGateCurrentlyOpen()) {
       showAlert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!", "warning", "Cổng bình chọn");
       return;
     }
 
-    const user = getStoredUser();
-    if (!user) {
-      showAlert("Bạn cần đăng nhập tài khoản khán giả trước khi thực hiện bình chọn.", "warning", "Yêu cầu đăng nhập");
-      window.location.href = `/dang-nhap?redirect=/bang-xep-hang`;
-      return;
+    const cand = candidates.find(c => c.sbd === sbd);
+    if (cand) {
+      setActiveVoteCandidate(cand);
     }
-
-    try {
-      const res = await fetch(apiUrl(`/api/candidates/${sbd}/vote`), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          phone: user.phone,
-          userId: user.id,
-          packageId: 'free-5'
-        }),
-      });
-      if (res.ok) {
-        const updated = await res.json();
-        setCandidates(prev => prev.map(c => c.sbd === sbd ? updated : c));
-        showAlert(`Bình chọn thành công cho ${name}!`, "success", "Bình chọn thành công");
-        return;
-      } else {
-        const errorData = await res.json().catch(() => null);
-        showAlert(errorData?.message || "Không thể thực hiện bình chọn.", "error", "Lỗi bình chọn");
-        return;
-      }
-    } catch (err) {
-      console.log('NestJS Backend API offline, executing client-side mock vote.', err);
-    }
-
-    setCandidates(prev =>
-      prev.map(c => c.sbd === sbd ? { ...c, votes: c.votes + 5 } : c)
-    );
-    showAlert(`Bình chọn offline thành công cho ${name}!`, "success", "Bình chọn thành công");
   };
 
   const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes);
@@ -259,7 +230,7 @@ export default function RankingPage() {
       <style>{`
         @media (min-width: 812px) {
           .iUzfqH {
-            background-image: url(/background/background.png);
+            background-image: url(/background/background2.png);
             background-color: white;
             background-attachment: fixed;
             background-size: cover;
@@ -453,6 +424,18 @@ export default function RankingPage() {
         </div>
 
       </main>
+
+      {activeVoteCandidate && (
+        <VoteModal
+          candidate={activeVoteCandidate}
+          onClose={() => setActiveVoteCandidate(null)}
+          onSuccess={(updatedCandidate) => {
+            setCandidates((prev) =>
+              prev.map((c) => (c.sbd === updatedCandidate.sbd ? updatedCandidate : c))
+            );
+          }}
+        />
+      )}
     </>
   );
 }
