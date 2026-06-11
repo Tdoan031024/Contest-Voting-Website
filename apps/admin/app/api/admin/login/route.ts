@@ -29,10 +29,16 @@ function createSessionToken(username: string, expiresAt: number, secret: string)
 
 export async function POST(request: Request) {
   const sessionSecret = process.env.ADMIN_SESSION_SECRET || 'HuitMedia2026';
+
+  const host = request.headers.get('host') || 'localhost:3001';
+  const defaultApiUrl = host.includes('huitmedia.edu.vn')
+    ? 'https://startup.huitmedia.edu.vn'
+    : 'http://localhost:5000';
+
   const apiBaseUrl =
     process.env.ADMIN_API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    'http://localhost:5000';
+    defaultApiUrl;
 
   const payload = (await request.json().catch(() => null)) as LoginPayload | null;
 
