@@ -8,6 +8,9 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    webpackBuildWorker: false,
+  },
 };
 
 module.exports = nextConfig;
