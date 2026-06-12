@@ -63,8 +63,9 @@ export async function POST(request: Request) {
     });
   } catch (err: any) {
     console.error('Fetch error details:', err);
+    const causeMessage = err.cause ? ` (Cause: ${err.cause.message || err.cause.code || err.cause})` : '';
     return NextResponse.json(
-      { ok: false, message: `Không thể kết nối API (${apiBaseUrl}): ${err.message || err}` },
+      { ok: false, message: `Không thể kết nối API (${apiBaseUrl}): ${err.message || err}${causeMessage}` },
       { status: 502 }
     );
   }
