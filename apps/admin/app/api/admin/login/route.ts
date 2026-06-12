@@ -49,16 +49,25 @@ export async function POST(request: Request) {
     );
   }
 
-  const authResponse = await fetch(`${apiBaseUrl}/api/admin/login`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      username: payload.username,
-      password: payload.password,
-    }),
-  });
+  let authResponse;
+  try {
+    authResponse = await fetch(`${apiBaseUrl}/api/admin/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        username: payload.username,
+        password: payload.password,
+      }),
+    });
+  } catch (err: any) {
+    console.error('Fetch error details:', err);
+    return NextResponse.json(
+      { ok: false, message: `Không thể kết nối API (${apiBaseUrl}): ${err.message || err}` },
+      { status: 502 }
+    );
+  }
 
   const authData = await authResponse.json().catch(() => null);
   if (!authResponse.ok || !authData?.ok) {
