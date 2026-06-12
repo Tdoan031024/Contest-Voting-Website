@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     ? 'http://127.0.0.1'
     : 'http://localhost:5000';
 
-  const apiBaseUrl =
+  let apiBaseUrl =
     process.env.ADMIN_API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
     defaultApiUrl;
@@ -52,8 +52,18 @@ export async function POST(request: Request) {
   const fetchHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
   };
-  if (apiBaseUrl.includes('127.0.0.1') || apiBaseUrl.includes('localhost')) {
-    fetchHeaders['Host'] = 'startup.huitmedia.edu.vn';
+
+  try {
+    if (apiBaseUrl && apiBaseUrl.startsWith('http')) {
+      const parsedUrl = new URL(apiBaseUrl);
+      const hostname = parsedUrl.hostname;
+      if (hostname !== 'localhost' && hostname !== '127.0.0.1' && !/^[0-9.]+$/.test(hostname)) {
+        fetchHeaders['Host'] = hostname;
+        apiBaseUrl = `http://127.0.0.1${parsedUrl.port ? `:${parsedUrl.port}` : ''}`;
+      }
+    }
+  } catch (urlErr) {
+    console.error('Failed to parse apiBaseUrl:', urlErr);
   }
 
   let authResponse;
