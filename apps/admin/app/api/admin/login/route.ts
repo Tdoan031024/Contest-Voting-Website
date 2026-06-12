@@ -32,7 +32,7 @@ export async function POST(request: Request) {
 
   const host = request.headers.get('host') || 'localhost:3001';
   const defaultApiUrl = host.includes('huitmedia.edu.vn')
-    ? 'https://startup.huitmedia.edu.vn'
+    ? 'http://127.0.0.1'
     : 'http://localhost:5000';
 
   const apiBaseUrl =
@@ -49,13 +49,18 @@ export async function POST(request: Request) {
     );
   }
 
+  const fetchHeaders: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (apiBaseUrl.includes('127.0.0.1') || apiBaseUrl.includes('localhost')) {
+    fetchHeaders['Host'] = 'startup.huitmedia.edu.vn';
+  }
+
   let authResponse;
   try {
     authResponse = await fetch(`${apiBaseUrl}/api/admin/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: fetchHeaders,
       body: JSON.stringify({
         username: payload.username,
         password: payload.password,
