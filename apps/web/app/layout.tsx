@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AlertProvider } from './AlertProvider';
 import { apiUrl } from './api';
+import { initDevToolsProtection } from '../src/utils/devtoolsProtection';
+
 
 export interface SystemSettings {
   isGateOpen: boolean;
@@ -31,6 +33,11 @@ export default function RootLayout({
   const [currentHash, setCurrentHash] = useState('');
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    const cleanup = initDevToolsProtection();
+    return cleanup;
+  }, []);
 
   useEffect(() => {
     const readUser = () => {
