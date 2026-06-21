@@ -1,13 +1,20 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Candidate } from '@huitfest/shared';
 import Link from 'next/link';
 import { useAlert } from '../AlertProvider';
 import { apiUrl } from '../api';
 import VoteModal from '../VoteModal';
+const PROJECT_FALLBACK_IMAGE = '/uploads/poster-khoi-nghiep.jpg';
 
-// once=true: stays visible after first intersection, never hides again
+function getCandidateImageUrl(url?: string | null) {
+  if (!url) return PROJECT_FALLBACK_IMAGE;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  if (url.startsWith('/uploads/')) return apiUrl(url);
+  return url;
+}
+
 function useInView(threshold = 0.15) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -16,7 +23,7 @@ function useInView(threshold = 0.15) {
       ([entry]) => {
         if (entry.isIntersecting) {
           setVisible(true);
-          obs.disconnect(); // fire once only
+          obs.disconnect();
         }
       },
       { threshold }
@@ -25,6 +32,27 @@ function useInView(threshold = 0.15) {
     return () => obs.disconnect();
   }, [threshold]);
   return { ref, visible };
+}
+
+function useCountUp(target: number, duration = 1800, active = false) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    if (!active || target === 0 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setCount(target);
+      return;
+    }
+    const startedAt = performance.now();
+    let frame = 0;
+    const tick = (now: number) => {
+      const progress = Math.min((now - startedAt) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setCount(Math.floor(target * eased));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [active, target, duration]);
+  return count;
 }
 
 const LOCAL_MOCK_CANDIDATES: Candidate[] = [
@@ -40,28 +68,259 @@ function getStoredUser() {
   if (typeof window === 'undefined') return null;
   const raw = localStorage.getItem('huit_web_user');
   if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
+// Skeleton Card component
+function SkeletonCard() {
+  return (
+    <div className="skeleton-card">
+      <div className="skeleton skeleton-image" />
+      <div className="skeleton-body">
+        <div className="skeleton skeleton-line short" />
+        <div className="skeleton skeleton-line medium" />
+        <div className="skeleton skeleton-line long" />
+        <div className="skeleton skeleton-btn" style={{ marginTop: 8 }} />
+      </div>
+    </div>
+  );
+}
+
+// Podium Item component
+function PodiumItem({ candidate, rank, maxVotes, onVote, isGateOpen }: {
+  candidate: Candidate;
+  rank: number;
+  maxVotes: number;
+  onVote: (c: Candidate) => void;
+  isGateOpen: boolean;
+}) {
+  const podiumRef = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setVisible(true); obs.disconnect(); }
+    }, { threshold: 0.1 });
+    if (podiumRef.current) obs.observe(podiumRef.current);
+    return () => obs.disconnect();
+  }, []);
+  const votesDisplay = useCountUp(candidate.votes, 1500, visible);
+  const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : 'rank-3';
+  const rankTone = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'standard';
+
+  return (
+    <div ref={podiumRef} className={`podium-item ${rankClass}`} style={{ animationDelay: `${(rank - 1) * 100}ms` }}>
+      
+      {/* Startup Project Card (Structured identically to the CandidateCard below) */}
+      <div className="project-card-clear project-showcase-card relative w-full border transition-all duration-300 overflow-hidden flex flex-col">
+        {/* Project banner image */}
+        <div className="project-card-media project-showcase-media relative block w-full aspect-[16/8.6]">
+          <div className="project-media-shell m-2 mb-0 relative h-[calc(100%-8px)] overflow-hidden rounded-[13px] bg-black/15 border border-white/10">
+            {rank === 1 && <div className="podium-crown">👑</div>}
+            <img
+              alt={candidate.name}
+              className="project-media-image object-cover object-center w-full h-full"
+              src={getCandidateImageUrl(candidate.imageUrl)}
+              loading="lazy"
+              onError={(event) => {
+                const target = event.currentTarget;
+                if (!target.dataset.fallbackApplied) {
+                  target.dataset.fallbackApplied = 'true';
+                  target.src = PROJECT_FALLBACK_IMAGE;
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Project details */}
+        <div className="project-card-body project-showcase-body flex flex-1 flex-col px-3 pt-3 pb-3">
+          <div className="project-card-meta">
+            <span className="project-card-code-badge">Mã dự án: {candidate.sbd}</span>
+            <span className={`project-rank-badge ${rankTone}`}>Top {rank}</span>
+          </div>
+
+          <div className="project-title-group">
+            <h3 className="project-card-title">
+              <Link href={`/thi-sinh/${candidate.sbd}`} className="focus:outline-none">
+                {candidate.name}
+              </Link>
+            </h3>
+          </div>
+
+          <div className="project-vote-stat">
+            <div>
+              <p className="project-vote-stat-label">Lượt bình chọn</p>
+              <p className="project-vote-stat-value">
+                {visible ? votesDisplay.toLocaleString() : candidate.votes.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <p className="project-card-description mt-2 line-clamp-2 min-h-[42px] text-left">
+            {candidate.description || 'Ý tưởng khởi nghiệp đang được cập nhật thông tin giới thiệu.'}
+          </p>
+
+          <div className="project-card-actions flex items-center gap-2">
+            <button
+              onClick={() => onVote(candidate)}
+              disabled={!isGateOpen}
+              aria-label={isGateOpen ? `Bình chọn cho dự án ${candidate.name}` : 'Cổng bình chọn đã đóng'}
+              className={`project-vote-button sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-xl py-2.5 w-full border-0 cursor-pointer transition-all hover-shine-effect ${isGateOpen
+                  ? 'active bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]'
+                  : 'disabled bg-slate-700/50 cursor-not-allowed opacity-50'
+                }`}
+            >
+              <span className="project-vote-button-glow" aria-hidden="true" />
+              <p className={`project-vote-button-label text-[11px] leading-[16px] font-bold uppercase tracking-wider ${isGateOpen
+                  ? 'text-neutral-white dark:text-primary'
+                  : 'text-slate-400'
+                }`}>
+                {isGateOpen ? 'Bình chọn' : 'Đã đóng'}
+              </p>
+            </button>
+            <Link
+              href={`/thi-sinh/${candidate.sbd}`}
+              className="ranking-detail-button flex min-h-[40px] items-center justify-center rounded-xl px-4 font-bold uppercase tracking-wider transition whitespace-nowrap"
+            >
+              Chi tiết
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Pedestal block under the card */}
+      <div className="podium-pedestal">
+        <div className="podium-pedestal-num">{rank}</div>
+        <div className="podium-pedestal-label">
+          {rank === 1 ? 'Quán quân' : rank === 2 ? 'Hạng 2' : 'Hạng 3'}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Regular candidate card
+function CandidateCard({ c, rank, maxVotes, visible, animationDelay, onVote, isGateOpen }: {
+  c: Candidate;
+  rank: number;
+  maxVotes: number;
+  visible: boolean;
+  animationDelay: string;
+  onVote: (c: Candidate) => void;
+  isGateOpen: boolean;
+}) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setInView(true); obs.disconnect(); }
+    }, { threshold: 0.1 });
+    if (cardRef.current) obs.observe(cardRef.current);
+    return () => obs.disconnect();
+  }, []);
+
+  const votesDisplay = useCountUp(c.votes, 1400, inView);
+  const rankTone = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'standard';
+  const candidateImage = getCandidateImageUrl(c.imageUrl);
+
+  return (
+    <div
+      ref={cardRef}
+      style={{ animationDelay }}
+      className={`project-card-item h-full group w-full transition-all duration-300 ${visible ? 'anim-up' : ''}`}
+    >
+      <div className="project-card-clear project-showcase-card relative h-full rounded-[20px] border transition-all duration-300 overflow-hidden">
+        {/* Project banner image */}
+        <div className="project-card-media project-showcase-media relative block w-full aspect-[16/8.6]">
+          <div className="project-media-shell m-2 mb-0 relative h-[calc(100%-8px)] overflow-hidden rounded-[13px] bg-black/15 border border-white/10">
+            <img
+              alt={c.name}
+              className="project-media-image object-cover object-center w-full h-full"
+              src={candidateImage}
+              loading="lazy"
+              onError={(event) => {
+                const target = event.currentTarget;
+                if (!target.dataset.fallbackApplied) {
+                  target.dataset.fallbackApplied = 'true';
+                  target.src = PROJECT_FALLBACK_IMAGE;
+                }
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Project details */}
+        <div className="project-card-body project-showcase-body flex flex-1 flex-col px-3 pt-3 pb-3">
+          <div className="project-card-meta">
+            <span className="project-card-code-badge">Mã dự án: {c.sbd}</span>
+            <span className={`project-rank-badge ${rankTone}`}>Top {rank}</span>
+          </div>
+
+          <div className="project-title-group">
+            <h3 className="project-card-title">
+              <Link href={`/thi-sinh/${c.sbd}`} className="focus:outline-none">
+                {c.name}
+              </Link>
+            </h3>
+          </div>
+
+          <div className="project-vote-stat">
+            <div>
+              <p className="project-vote-stat-label">Lượt bình chọn</p>
+              <p className="project-vote-stat-value">
+                {inView ? votesDisplay.toLocaleString() : c.votes.toLocaleString()}
+              </p>
+            </div>
+          </div>
+
+          <p className="project-card-description mt-2 line-clamp-2 min-h-[42px] text-left">
+            {c.description || 'Ý tưởng khởi nghiệp đang được cập nhật thông tin giới thiệu.'}
+          </p>
+
+          <div className="project-card-actions flex items-center gap-2">
+            <button
+              onClick={() => onVote(c)}
+              disabled={!isGateOpen}
+              aria-label={isGateOpen ? `Bình chọn cho dự án ${c.name}` : 'Cổng bình chọn đã đóng'}
+              className={`project-vote-button sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-xl py-2.5 w-full border-0 cursor-pointer transition-all hover-shine-effect ${isGateOpen
+                  ? 'active bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]'
+                  : 'disabled bg-slate-700/50 cursor-not-allowed opacity-50'
+                }`}
+            >
+              <span className="project-vote-button-glow" aria-hidden="true" />
+              <p className={`project-vote-button-label text-[11px] leading-[16px] font-bold uppercase tracking-wider ${isGateOpen
+                  ? 'text-neutral-white dark:text-primary'
+                  : 'text-slate-400'
+                }`}>
+                {isGateOpen ? 'Bình chọn' : 'Đã đóng'}
+              </p>
+            </button>
+            <Link
+              href={`/thi-sinh/${c.sbd}`}
+              className="ranking-detail-button flex min-h-[40px] items-center justify-center rounded-xl px-4 font-bold uppercase tracking-wider transition whitespace-nowrap"
+            >
+              Chi tiết
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export default function RankingPage() {
   const { showAlert } = useAlert();
-  const [candidates, setCandidates] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
+  const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [activeVoteCandidate, setActiveVoteCandidate] = useState<Candidate | null>(null);
   const [search, setSearch] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [category, setCategory] = useState<'ALL' | 'HIGH_SCHOOL' | 'STUDENT' | 'ENTERPRISE'>('ALL');
+  const [sortBy, setSortBy] = useState<'votes' | 'sbd'>('votes');
+  const [isLoading, setIsLoading] = useState(true);
   const [settings, setSettings] = useState<any>(null);
-  const [mounted, setMounted] = useState(false);
 
-  // Scroll animation refs
   const titleSection = useInView(0.2);
   const podiumSection = useInView(0.1);
   const listSection = useInView(0.05);
-
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     async function loadCandidates() {
@@ -71,25 +330,19 @@ export default function RankingPage() {
         if (res.ok) {
           const data = await res.json();
           setCandidates(data);
+        } else {
+          setCandidates(LOCAL_MOCK_CANDIDATES);
         }
-      } catch (err) {
-        console.log('NestJS Backend API offline, using local mock data.');
-      } finally {
-        setIsLoading(false);
-      }
+      } catch { setCandidates(LOCAL_MOCK_CANDIDATES); console.log('Using local mock data.'); }
+      finally { setIsLoading(false); }
     }
     loadCandidates();
 
     const interval = setInterval(async () => {
       try {
         const res = await fetch(apiUrl('/api/candidates'));
-        if (res.ok) {
-          const data = await res.json();
-          setCandidates(data);
-        }
-      } catch (err) {
-        console.log('Poll candidates failed');
-      }
+        if (res.ok) { const data = await res.json(); setCandidates(data); }
+      } catch { }
     }, 10000);
     return () => clearInterval(interval);
   }, []);
@@ -98,245 +351,189 @@ export default function RankingPage() {
     async function loadSettings() {
       try {
         const res = await fetch(apiUrl('/api/settings'));
-        if (res.ok) {
-          const data = await res.json();
-          setSettings(data);
-        }
-      } catch (err) {
-        console.log('Load settings failed');
-      }
+        if (res.ok) { setSettings(await res.json()); }
+      } catch { }
     }
     loadSettings();
     const interval = setInterval(loadSettings, 5000);
     return () => clearInterval(interval);
   }, []);
 
-  const isGateCurrentlyOpen = () => {
-    if (!settings) return true;
+  const isGateOpen = (() => {
+    if (!settings) return false;
     if (!settings.isGateOpen) return false;
-
     const now = new Date();
-    const start = new Date(settings.startDate);
-    const end = new Date(settings.endDate);
-    return now >= start && now <= end;
-  };
+    return now >= new Date(settings.startDate) && now <= new Date(settings.endDate);
+  })();
 
-  const handleVote = (sbd: string, name: string) => {
-    if (!isGateCurrentlyOpen()) {
-      showAlert("Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!", "warning", "Cổng bình chọn");
+  const handleVote = (c: Candidate) => {
+    if (!isGateOpen) {
+      showAlert('Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng. Vui lòng quay lại sau!', 'warning', 'Cổng bình chọn');
       return;
     }
-
-    const cand = candidates.find(c => c.sbd === sbd);
-    if (cand) {
-      setActiveVoteCandidate(cand);
-    }
+    setActiveVoteCandidate(c);
   };
 
   const sortedCandidates = [...candidates].sort((a, b) => b.votes - a.votes);
-
-  const filteredCandidates = sortedCandidates.filter(c =>
-    c.name.toLowerCase().includes(search.toLowerCase()) || c.sbd.includes(search)
-  );
-
+  const filteredCandidates = candidates
+    .filter(c => category === 'ALL' || c.contestTable === category)
+    .filter(c => c.name.toLowerCase().includes(search.trim().toLowerCase()) || c.sbd.includes(search.trim()))
+    .sort((a, b) => sortBy === 'votes'
+      ? b.votes - a.votes
+      : a.sbd.localeCompare(b.sbd, 'vi', { numeric: true }));
   const top3 = sortedCandidates.slice(0, 3);
-  // Order for staggered display: Rank 2, Rank 1, Rank 3
-  const podiumOrder = [1, 0, 2];
-  const orderedTop3 = podiumOrder
-    .map(idx => top3[idx])
-    .filter(c => c !== undefined);
-
-  const renderProjectCard = (c: Candidate, rank: number, featured = false, animationDelay = '0ms') => {
-    const rankLabel = rank <= 3 ? `Top ${rank}` : `Hạng ${rank}`;
-    const rankTone =
-      rank === 1
-        ? 'from-[#FFE066] to-[#F59E0B] text-[#1B1600]'
-        : rank === 2
-          ? 'from-[#E5E7EB] to-[#94A3B8] text-[#101827]'
-          : rank === 3
-            ? 'from-[#FDBA74] to-[#B45309] text-white'
-            : 'from-[#0A2FFF] to-[#79BCC2] text-white';
-
-    return (
-      <div
-        key={c.id}
-        className={`group h-full w-full ${featured ? 'max-w-[420px]' : ''} ${listSection.visible || podiumSection.visible ? 'anim-up' : ''}`}
-        style={{ animationDelay }}
-      >
-        <div className="cand-card relative flex h-full flex-col overflow-hidden rounded-[26px] border border-white/10 bg-white/[0.08] shadow-[0_24px_80px_rgba(0,0,0,0.18)] backdrop-blur-[10px]">
-          <Link className="relative block aspect-[16/9] overflow-hidden bg-[#071034]" href={`/thi-sinh/${c.sbd}`}>
-            <img
-              alt={c.name}
-              className="h-full w-full object-cover object-center transition duration-700 group-hover:scale-105"
-              src={c.imageUrl}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#03071F]/88 via-transparent to-transparent" />
-            <div className={`absolute left-4 top-4 rounded-full bg-gradient-to-r ${rankTone} px-4 py-1.5 text-[12px] font-extrabold uppercase tracking-wider shadow-lg`}>
-              {rankLabel}
-            </div>
-            <div className="absolute right-4 top-4 rounded-full border border-white/15 bg-black/55 px-3 py-1.5 text-[12px] font-bold text-white backdrop-blur-md">
-              MDB {c.sbd}
-            </div>
-          </Link>
-
-          <div className="flex flex-1 flex-col p-4 sm:p-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#79BCC2]">Dự án khởi nghiệp</p>
-                <Link href={`/thi-sinh/${c.sbd}`} className="mt-1 block">
-                  <h3 className="line-clamp-2 text-[20px] font-extrabold leading-tight text-white transition group-hover:text-[#79BCC2]">
-                    {c.name}
-                  </h3>
-                </Link>
-              </div>
-              <div className="shrink-0 rounded-2xl border border-[#FDE047]/25 bg-[#FDE047]/10 px-3 py-2 text-right">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-[#FDE68A]">Bình chọn</p>
-                <p className="text-[18px] font-black text-[#FDE047] drop-shadow-[0_0_14px_rgba(253,224,71,0.4)]">
-                  {c.votes.toLocaleString()}
-                </p>
-              </div>
-            </div>
-
-            <p className="mt-3 line-clamp-2 min-h-[42px] text-[14px] leading-relaxed text-white/72 text-justify">
-              {c.description || 'Thông tin giới thiệu dự án đang được cập nhật.'}
-            </p>
-
-            <div className="mt-5 flex items-center gap-3">
-              <button
-                onClick={() => handleVote(c.sbd, c.name)}
-                className={`vote-btn flex min-h-[46px] flex-1 items-center justify-center rounded-xl border-0 px-4 text-[14px] font-extrabold uppercase tracking-wider ${
-                  isGateCurrentlyOpen()
-                    ? 'bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] text-white'
-                    : 'cursor-not-allowed bg-slate-700/50 text-slate-400 opacity-60'
-                }`}
-              >
-                {isGateCurrentlyOpen() ? 'Bình chọn dự án' : 'Đã đóng'}
-              </button>
-              <Link
-                href={`/thi-sinh/${c.sbd}`}
-                className="flex min-h-[46px] items-center justify-center rounded-xl border border-white/15 bg-white/8 px-4 text-[13px] font-bold uppercase tracking-wider text-white transition hover:border-[#79BCC2]/60 hover:bg-white/12"
-              >
-                Chi tiết
-              </Link>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // Olympic order: Silver (2nd), Gold (1st), Bronze (3rd)
+  const podiumOrder = [1, 0, 2].map(i => top3[i]).filter(Boolean);
+  const maxVotes = sortedCandidates[0]?.votes || 1;
+  const showPodium = !search.trim() && category === 'ALL' && sortBy === 'votes';
+  const listCandidates = showPodium
+    ? filteredCandidates.filter(c => sortedCandidates.findIndex(item => item.sbd === c.sbd) >= 3)
+    : filteredCandidates;
 
   return (
     <>
       <style>{`
-        @media (min-width: 812px) {
-          .iUzfqH {
-            background-image: url(/background/background2.png);
-            background-color: white;
-            background-attachment: fixed;
-            background-size: cover;
-            background-repeat: no-repeat;
-          }
-        }
-        @keyframes fadeSlideUp {
-          from { opacity: 0; transform: translateY(32px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes fadeSlideDown {
-          from { opacity: 0; transform: translateY(-24px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes scaleIn {
-          from { opacity: 0; transform: scale(0.88); }
-          to   { opacity: 1; transform: scale(1); }
-        }
-        @keyframes glowPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(10,47,255,0); }
-          50%       { box-shadow: 0 0 28px 4px rgba(10,47,255,0.18); }
-        }
-        @keyframes underlineExpand {
-          from { width: 0; }
-          to   { width: 40px; }
-        }
-        @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50%       { transform: translateY(-8px); }
-        }
-        .anim-up    { animation: fadeSlideUp   0.85s cubic-bezier(0.16,1,0.3,1) both; }
-        .anim-down  { animation: fadeSlideDown  0.85s cubic-bezier(0.16,1,0.3,1) both; }
-        .anim-scale { animation: scaleIn        0.85s cubic-bezier(0.16,1,0.3,1) both; }
-        .anim-d50   { animation-delay:  50ms; }
-        .anim-d100  { animation-delay: 100ms; }
-        .anim-d150  { animation-delay: 150ms; }
-        .anim-d200  { animation-delay: 200ms; }
-        .anim-d300  { animation-delay: 300ms; }
-        .anim-d400  { animation-delay: 400ms; }
-        .anim-d500  { animation-delay: 500ms; }
-        /* Podium card hover */
-        .podium-card {
-          transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1),
-                      box-shadow 0.4s ease,
-                      background-color 0.3s ease;
-        }
-        .podium-card:hover {
-          transform: translateY(-10px) scale(1.04);
-          box-shadow: 0 24px 60px rgba(0,0,0,0.3), 0 0 30px rgba(121,188,194,0.18);
-        }
-        /* Candidate card hover */
-        .cand-card {
-          transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1),
-                      box-shadow 0.35s ease,
-                      background-color 0.3s ease;
-        }
-        .cand-card:hover {
-          transform: translateY(-7px) scale(1.02);
-          box-shadow: 0 16px 40px rgba(0,0,0,0.25), 0 0 20px rgba(121,188,194,0.12);
-        }
-        /* Vote button effects */
-        .vote-btn {
-          transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
-                      box-shadow 0.3s ease,
-                      opacity 0.2s ease;
-          position: relative;
-          overflow: hidden;
-        }
-        .vote-btn:hover:not(:disabled) {
-          transform: translateY(-2px) scale(1.03);
-          box-shadow: 0 6px 20px rgba(10,47,255,0.35);
-        }
+        @keyframes fadeSlideUp { from { opacity:0; transform:translateY(32px); } to { opacity:1; transform:translateY(0); } }
+        .anim-up { animation: fadeSlideUp 0.85s cubic-bezier(0.16,1,0.3,1) both; }
+        .anim-d50  { animation-delay:  50ms; }
+        .anim-d100 { animation-delay: 100ms; }
+        .anim-d150 { animation-delay: 150ms; }
+        .anim-d200 { animation-delay: 200ms; }
+        .anim-d300 { animation-delay: 300ms; }
+        .cand-card { transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.35s ease; }
+        .cand-card:hover { transform: translateY(-7px) scale(1.02); box-shadow: 0 16px 40px rgba(0,0,0,0.25); }
+        .vote-btn { transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; overflow: hidden; }
+        .vote-btn:hover:not(:disabled) { transform: translateY(-2px) scale(1.02); box-shadow: 0 6px 20px rgba(10,47,255,0.35); }
         .vote-btn:active:not(:disabled) { transform: scale(0.97); }
-        /* Search bar focus */
-        .search-bar {
-          transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        .orb-pulse { animation: float 10s ease-in-out infinite; }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+        .ranking-control-panel {
+          position: sticky;
+          top: 84px;
+          z-index: 50;
+          max-width: 980px;
+          margin-inline: auto;
+          padding-top: 14px;
+          padding-bottom: 12px;
+          border: 1px solid var(--site-line);
+          border-radius: 22px;
+          background: color-mix(in srgb, var(--site-card) 90%, transparent);
+          box-shadow: 0 16px 42px rgba(15,23,42,.10);
+          backdrop-filter: blur(18px) saturate(1.25);
         }
-        .search-bar:focus-within {
-          box-shadow: 0 0 0 2px rgba(121,188,194,0.35), 0 4px 20px rgba(121,188,194,0.12);
-          border-color: rgba(121,188,194,0.5) !important;
+        .ranking-filter-toolbar {
+          max-width: 860px;
+          margin: 12px auto 0;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
         }
-        .orb-pulse {
-          animation: float 10s ease-in-out infinite;
+        .ranking-filter-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+        .ranking-filter-pill {
+          min-height: 38px;
+          padding: 0 14px;
+          border: 1px solid var(--site-line);
+          border-radius: 999px;
+          background: var(--site-soft);
+          color: var(--site-muted);
+          font-size: 12px;
+          font-weight: 750;
+          transition: .2s ease;
+        }
+        .ranking-filter-pill:hover { border-color: var(--site-primary); color: var(--site-primary); }
+        .ranking-filter-pill.active {
+          border-color: transparent;
+          background: linear-gradient(135deg, #0A2FFF, #2870df);
+          color: #fff;
+          box-shadow: 0 7px 18px rgba(10,47,255,.22);
+        }
+        .ranking-sort-label {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          color: var(--site-muted);
+          font-size: 12px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+        .ranking-sort-label select {
+          height: 38px;
+          padding: 0 30px 0 12px;
+          border: 1px solid var(--site-line);
+          border-radius: 11px;
+          background: var(--site-card);
+          color: var(--site-text);
+          font-size: 12px;
+          font-weight: 700;
+        }
+        .ranking-result-count {
+          margin: 8px 0 0;
+          color: var(--site-muted);
+          text-align: center;
+          font-size: 12px;
+        }
+        .ranking-page-modern .empty-state h3 { color: var(--site-text) !important; }
+        .ranking-page-modern .empty-state p { color: var(--site-muted) !important; }
+        .ranking-reset-button {
+          margin-top: 16px;
+          min-height: 42px;
+          padding: 0 24px;
+          border: 0;
+          border-radius: 12px;
+          background: linear-gradient(135deg, #0A2FFF, #79BCC2);
+          color: #fff;
+          font-weight: 750;
+        }
+        .ranking-page-modern .project-card-description { font-size: 15px !important; line-height: 1.65 !important; }
+        .ranking-page-modern .project-vote-stat-label { font-size: 12px !important; }
+        .ranking-page-modern .project-vote-button-label { font-size: 13px !important; line-height: 18px !important; }
+        .ranking-detail-button {
+          border: 1px solid var(--site-line);
+          background: var(--site-card);
+          color: var(--site-text) !important;
+          font-size: 13px;
+        }
+        .ranking-detail-button:hover { border-color: #79BCC2; background: var(--site-soft); }
+        .ranking-page-modern button:focus-visible,
+        .ranking-page-modern a:focus-visible,
+        .ranking-page-modern input:focus-visible,
+        .ranking-page-modern select:focus-visible {
+          outline: 3px solid rgba(40,112,223,.25) !important;
+          outline-offset: 3px !important;
+        }
+        @media (max-width: 760px) {
+          .ranking-control-panel { top: 84px; border-radius: 16px; padding-inline: 12px !important; }
+          .ranking-filter-toolbar { flex-direction: column; align-items: stretch; }
+          .ranking-filter-pills { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); }
+          .ranking-filter-pill { padding-inline: 8px; }
+          .ranking-sort-label { justify-content: space-between; }
+          .ranking-sort-label select { flex: 1; max-width: 230px; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .anim-up, .orb-pulse, .podium-crown { animation: none !important; }
         }
       `}</style>
 
-      <main className="sc-908a50-0 iUzfqH flex-1">
-
-        {/* Ambient glow orbs */}
+      <main className="sc-908a50-0 iUzfqH theme-page ranking-page-modern flex-1">
         <div className="orb-pulse fixed top-20 -left-20 w-[350px] h-[350px] rounded-full bg-[#0A2FFF]/8 blur-[120px] pointer-events-none z-0" />
         <div className="orb-pulse fixed -bottom-10 -right-10 w-[400px] h-[400px] rounded-full bg-[#79BCC2]/6 blur-[130px] pointer-events-none z-0" style={{ animationDelay: '5s' }} />
 
-        {/* Content Wrap */}
         <div className="relative z-10">
           <div className="sc-1a037b37-0 hfAPBN relative">
             <div className="flex flex-col items-center py-3 sm:py-[40px]">
 
-              {/* Leaderboard title */}
-              <div ref={titleSection.ref} className="flex flex-col space-y-[24px] text-center">
-                <div className="flex flex-col space-y-1.5">
-                  <h2 className={`text-[22px] sm:text-[42px] tracking-[-1px] leading-[27px] sm:leading-[52px] font-extrabold uppercase text-white ${titleSection.visible ? 'anim-up anim-d100' : ''}`}>
+              {/* Title section with Live Badge */}
+              <div ref={titleSection.ref} className="flex flex-col items-center space-y-[24px] text-center w-full">
+                <div className="flex flex-col items-center space-y-1.5">
+
+                  <h1 className={`ranking-title text-[26px] sm:text-[44px] tracking-[-1px] leading-[32px] sm:leading-[54px] font-extrabold uppercase ${titleSection.visible ? 'anim-up anim-d100' : ''}`}>
                     Bảng xếp hạng dự án
-                  </h2>
-                  <h3 className={`text-[16px] sm:text-[28px] py-1 leading-[24px] uppercase font-semibold text-[#79BCC2] ${titleSection.visible ? 'anim-up anim-d200' : ''}`}>
+                  </h1>
+                  <p className={`text-[16px] sm:text-[28px] py-1 leading-[24px] uppercase font-semibold text-[#79BCC2] ${titleSection.visible ? 'anim-up anim-d200' : ''}`}>
                     HUIT STARTUP LẦN THỨ VII 2026
-                  </h3>
+                  </p>
                   <div
                     className="h-[3px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-2 transition-all duration-[1200ms] ease-out"
                     style={{ width: titleSection.visible ? '60px' : '0px' }}
@@ -344,60 +541,115 @@ export default function RankingPage() {
                 </div>
               </div>
 
-              {/* Search Bar matching sample web */}
-              <div className={`max-w-[615px] w-full mt-3 sm:mt-[24px] ${titleSection.visible ? 'anim-up anim-d300' : ''}`}>
-                <div className="search-bar flex items-center space-x-[8px] rounded-[20px] px-[8px] py-[7px] border border-grey-lightGrey1 dark:border-grey-darkGrey bg-grey-lightGrey2 dark:bg-grey-dimGrey h-[60px] !px-2 rounded-[40px] w-full">
-                  <div className="fill-neutral-neutral1 dark:fill-neutral-white pl-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="18" viewBox="0 0 17 18">
-                      <path d="M0 7.4353C0 6.52222 0.171549 5.66724 0.514648 4.87036C0.857747 4.06795 1.33366 3.36239 1.94238 2.75366C2.55111 2.14494 3.25391 1.66903 4.05078 1.32593C4.85319 0.982829 5.71094 0.811279 6.62402 0.811279C7.53711 0.811279 8.39209 0.982829 9.18896 1.32593C9.99137 1.66903 10.6969 2.14494 11.3057 2.75366C11.9144 3.36239 12.3903 4.06795 12.7334 4.87036C13.0765 5.66724 13.248 6.52222 13.248 7.4353C13.248 8.19344 13.1263 8.91284 12.8828 9.59351C12.6449 10.2742 12.3128 10.8912 11.8867 11.4446L15.9458 15.5286C16.0343 15.6171 16.1007 15.7195 16.145 15.8357C16.1948 15.9519 16.2197 16.0764 16.2197 16.2092C16.2197 16.3918 16.1782 16.5579 16.0952 16.7073C16.0177 16.8567 15.9071 16.9729 15.7632 17.0559C15.6193 17.1444 15.4533 17.1887 15.2651 17.1887C15.1323 17.1887 15.005 17.1638 14.8833 17.114C14.7671 17.0697 14.6592 17.0006 14.5596 16.9065L10.4756 12.8142C9.93327 13.2016 9.33561 13.5059 8.68262 13.7273C8.02962 13.9486 7.34342 14.0593 6.62402 14.0593C5.71094 14.0593 4.85319 13.8878 4.05078 13.5447C3.25391 13.2016 2.55111 12.7257 1.94238 12.1169C1.33366 11.5082 0.857747 10.8054 0.514648 10.0085C0.171549 9.20614 0 8.34839 0 7.4353ZM1.41943 7.4353C1.41943 8.1547 1.55225 8.82983 1.81787 9.46069C2.08903 10.086 2.46257 10.6366 2.93848 11.1125C3.41992 11.5885 3.97331 11.962 4.59863 12.2332C5.22949 12.5043 5.90462 12.6399 6.62402 12.6399C7.34342 12.6399 8.01579 12.5043 8.64111 12.2332C9.27197 11.962 9.82536 11.5885 10.3013 11.1125C10.7772 10.6366 11.1507 10.086 11.4219 9.46069C11.693 8.82983 11.8286 8.1547 11.8286 7.4353C11.8286 6.7159 11.693 6.04354 11.4219 5.41821C11.1507 4.78735 10.7772 4.23397 10.3013 3.75806C9.82536 3.27661 9.27197 2.90308 8.64111 2.63745C8.01579 2.36629 7.34342 2.23071 6.62402 2.23071C5.90462 2.23071 5.22949 2.36629 4.59863 2.63745C3.97331 2.90308 3.41992 3.27661 2.93848 3.75806C2.46257 4.23397 2.08903 4.78735 1.81787 5.41821C1.55225 6.04354 1.41943 6.7159 1.41943 7.4353Z" fill="currentColor"></path>
+              {/* Enhanced Search Bar */}
+              <div className={`ranking-control-panel w-full mt-4 sm:mt-6 px-4 ${titleSection.visible ? 'anim-up anim-d300' : ''}`}>
+                <div className="search-enhanced">
+                  <span className="search-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
                     </svg>
-                  </div>
+                  </span>
                   <input
-                    className="w-full bg-transparent focus:outline-none text-neutral-neutral1 dark:text-neutral-white placeholder:text-neutral-neutral1 dark:placeholder:text-neutral-white pl-2 text-[14px]"
-                    placeholder="Tìm kiếm dự án theo tên hoặc MDB..."
                     type="text"
+                    placeholder="Tìm dự án theo tên hoặc MDB... vd: '085', 'Nông nghiệp'"
                     value={search}
                     onChange={e => setSearch(e.target.value)}
+                    aria-label="Tìm dự án theo tên hoặc mã dự án"
                   />
+                  {search && (
+                    <button type="button" className="search-clear" onClick={() => setSearch('')} aria-label="Xóa nội dung tìm kiếm">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
+                <div className="ranking-filter-toolbar">
+                  <div className="ranking-filter-pills" role="group" aria-label="Lọc dự án theo bảng thi">
+                    {[
+                      ['ALL', 'Tất cả'],
+                      ['HIGH_SCHOOL', 'Học sinh'],
+                      ['STUDENT', 'Sinh viên'],
+                      ['ENTERPRISE', 'Doanh nghiệp']
+                    ].map(([value, label]) => (
+                      <button
+                        key={value}
+                        type="button"
+                        className={`ranking-filter-pill ${category === value ? 'active' : ''}`}
+                        aria-pressed={category === value}
+                        onClick={() => setCategory(value as typeof category)}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                  <label className="ranking-sort-label">
+                    <span>Sắp xếp</span>
+                    <select value={sortBy} onChange={event => setSortBy(event.target.value as typeof sortBy)}>
+                      <option value="votes">Nhiều phiếu nhất</option>
+                      <option value="sbd">Mã dự án tăng dần</option>
+                    </select>
+                  </label>
+                </div>
+                <p className="ranking-result-count" aria-live="polite">
+                  {filteredCandidates.length > 0 ? `${filteredCandidates.length} dự án phù hợp` : 'Không tìm thấy dự án phù hợp'}
+                </p>
               </div>
 
-
+              {/* Loading State */}
               {isLoading ? (
-                <div className="flex justify-center items-center py-20 text-white">
-                  Đang tải bảng xếp hạng dự án...
+                <div className="w-full max-w-[1360px] mx-auto px-4 mt-8">
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+                    {[1, 2, 3].map(i => <SkeletonCard key={i} />)}
+                  </div>
                 </div>
               ) : filteredCandidates.length === 0 ? (
-                <div className="text-center py-20 text-white/50">
-                  Không tìm thấy dự án phù hợp
+                <div className="empty-state mt-8">
+                  <div className="empty-state-icon" style={{ fontSize: 56, filter: 'grayscale(0.5)' }}>🔍</div>
+                  <h3>Không tìm thấy dự án</h3>
+                  <p>Thử đổi từ khóa, bảng thi hoặc cách sắp xếp</p>
+                  <button onClick={() => { setSearch(''); setCategory('ALL'); setSortBy('votes'); }} className="ranking-reset-button">
+                    Xem tất cả dự án
+                  </button>
                 </div>
               ) : (
                 <>
-                  {/* Featured ranking cards */}
-                  {!search && orderedTop3.length > 0 && (
-                    <div ref={podiumSection.ref} className="w-full max-w-[1360px] mx-auto px-4 mb-14 mt-8">
+                  {/* OLYMPIC PODIUM — Only show when not searching */}
+                  {showPodium && podiumOrder.length > 0 && (
+                    <div ref={podiumSection.ref} className="w-full max-w-[1360px] mx-auto px-4 mb-10 mt-8">
                       <div className="mb-6 flex flex-col gap-2 text-center">
                         <p className={`text-[12px] font-bold uppercase tracking-[0.28em] text-[#79BCC2] ${podiumSection.visible ? 'anim-up' : ''}`}>
-                          Dự án nổi bật
+                          🏆 Dự án nổi bật nhất
                         </p>
-                        <h3 className={`text-[22px] sm:text-[34px] font-extrabold uppercase text-white ${podiumSection.visible ? 'anim-up anim-d100' : ''}`}>
-                          Top dự án được bình chọn nhiều nhất
-                        </h3>
+                        <h2 className={`ranking-title text-[22px] sm:text-[34px] font-extrabold uppercase ${podiumSection.visible ? 'anim-up anim-d100' : ''}`}>
+                          Bục vinh danh
+                        </h2>
                       </div>
-                      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-                        {orderedTop3.map((c, idx) => {
-                          const originalRank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
-                          return renderProjectCard(c, originalRank, true, `${idx * 110}ms`);
-                        })}
+
+                      {/* Olympic Podium */}
+                      <div className="podium-3">
+                        {/* Rank 2 (Silver — left) */}
+                        {podiumOrder[0] && (
+                          <PodiumItem candidate={podiumOrder[0]} rank={2} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                        )}
+                        {/* Rank 1 (Gold — center, tallest) */}
+                        {podiumOrder[1] && (
+                          <PodiumItem candidate={podiumOrder[1]} rank={1} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                        )}
+                        {/* Rank 3 (Bronze — right) */}
+                        {podiumOrder[2] && (
+                          <PodiumItem candidate={podiumOrder[2]} rank={3} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                        )}
                       </div>
                     </div>
                   )}
-                  {/* Section Title for Full Grid */}
-                  {!search && (
-                    <div ref={listSection.ref} className="flex flex-col items-center mb-8 sm:mb-12">
-                      <h3 className={`text-[18px] sm:text-[28px] tracking-wide font-bold uppercase text-white ${listSection.visible ? 'anim-up' : ''}`}>
-                        Danh sách xếp hạng đầy đủ
-                      </h3>
+
+                  {/* Full Ranking List */}
+                  {listCandidates.length > 0 && (
+                    <div id="danh-sach-du-an" ref={listSection.ref} className="flex scroll-mt-28 flex-col items-center mb-8 sm:mb-12">
+                      <h2 className={`ranking-title text-[18px] sm:text-[28px] tracking-wide font-bold uppercase ${listSection.visible ? 'anim-up' : ''}`}>
+                        {showPodium ? 'Các vị trí tiếp theo' : 'Danh sách dự án'}
+                      </h2>
                       <div
                         className="h-[2.5px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] rounded-full mt-2 transition-all duration-[1000ms] ease-out"
                         style={{ width: listSection.visible ? '50px' : '0px' }}
@@ -406,23 +658,27 @@ export default function RankingPage() {
                   )}
 
                   <div className="w-full grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3 max-w-[1360px] mx-auto px-4">
-                    {filteredCandidates.map((c) => {
+                    {listCandidates.map((c) => {
                       const rank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
-                      return renderProjectCard(c, rank, false, `${(rank - 1) * 70}ms`);
+                      return (
+                        <CandidateCard
+                          key={c.id}
+                          c={c}
+                          rank={rank}
+                          maxVotes={maxVotes}
+                          visible={listSection.visible || !!search || category !== 'ALL' || sortBy !== 'votes'}
+                          animationDelay={`${(rank - 1) * 70}ms`}
+                          onVote={handleVote}
+                          isGateOpen={isGateOpen}
+                        />
+                      );
                     })}
                   </div>
                 </>
               )}
-
             </div>
           </div>
         </div>
-
-        {/* Mobile Background bottom overlay */}
-        <div className="fixed left-0 top-0 right-0 supports-[height:100cqh]:h-[100cqh] supports-[height:100dvh]:h-[100dvh] sm:hidden -z-50">
-          <img alt="" className="absolute top-0 max-w-[1920px] max-h-[1080px] h-[1920px] w-[1080px]" src="/original_assets/image87ce.jpg" />
-        </div>
-
       </main>
 
       {activeVoteCandidate && (
@@ -430,13 +686,10 @@ export default function RankingPage() {
           candidate={activeVoteCandidate}
           onClose={() => setActiveVoteCandidate(null)}
           onSuccess={(updatedCandidate) => {
-            setCandidates((prev) =>
-              prev.map((c) => (c.sbd === updatedCandidate.sbd ? updatedCandidate : c))
-            );
+            setCandidates((prev) => prev.map((c) => c.sbd === updatedCandidate.sbd ? updatedCandidate : c));
           }}
         />
       )}
     </>
   );
 }
-

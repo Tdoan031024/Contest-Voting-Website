@@ -86,6 +86,22 @@ function getStoredUser() {
   }
 }
 
+const PROJECT_FALLBACK_IMAGE = '/uploads/poster-khoi-nghiep.jpg';
+
+function getCandidateImageUrl(url?: string | null) {
+  if (!url) return PROJECT_FALLBACK_IMAGE;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  if (url.startsWith('/uploads/')) return apiUrl(url);
+  return url;
+}
+
+function getProjectRankTone(rank: number) {
+  if (rank === 1) return 'gold';
+  if (rank === 2) return 'silver';
+  if (rank === 3) return 'bronze';
+  return 'standard';
+}
+
 export default function HomePage() {
   const { showAlert } = useAlert();
   const ABOUT_FALLBACK_TITLE = 'HUIT STARTUP LẦN THỨ VII 2026';
@@ -94,6 +110,7 @@ export default function HomePage() {
   const [candidates, setCandidates] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
   const [activeVoteCandidate, setActiveVoteCandidate] = useState<Candidate | null>(null);
   const [search, setSearch] = useState('');
+  const [showAllCandidates, setShowAllCandidates] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [hasLoadedBanners, setHasLoadedBanners] = useState(false);
@@ -367,27 +384,27 @@ export default function HomePage() {
     c.name.toLowerCase().includes(search.toLowerCase()) || c.sbd.includes(search)
   );
 
+  const visibleCandidates = showAllCandidates
+    ? filteredCandidates
+    : filteredCandidates.slice(0, 3);
+
   return (
     <>
       <style>{`
         @media (min-width: 812px) {
           .iUzfqH {
-            background-image: url(/background/background2.png);
-            background-color: white;
-            background-attachment: fixed;
-            background-size: cover;
-            background-repeat: no-repeat;
+            background: transparent;
           }
         }
       `}</style>
 
-      <main className="sc-908a50-0 iUzfqH flex-1">
+      <main className="sc-908a50-0 iUzfqH theme-page home-theme-page flex-1">
 
         {/* Banner Section with Slider & Video support */}
         {slides.length > 0 && (
           <div className="sc-1a037b37-0 fgDcug relative flex flex-col group select-none">
             <div
-              className="relative w-full h-auto aspect-[12/5] sm:h-[80vh] sm:aspect-auto max-h-[1500px] overflow-hidden cursor-grab active:cursor-grabbing"
+              className="relative w-full h-auto aspect-[3241/1294] overflow-hidden bg-[#07134d] cursor-grab active:cursor-grabbing"
               onMouseDown={handleDragStart}
               onMouseMove={handleDragMove}
               onMouseUp={handleDragEnd}
@@ -415,7 +432,7 @@ export default function HomePage() {
                         {slide.type === 'video' ? (
                           <video
                             src={slide.url}
-                            className="w-full h-full object-cover object-center pointer-events-none"
+                            className="w-full h-full object-contain object-center pointer-events-none"
                             autoPlay
                             muted
                             loop
@@ -425,7 +442,7 @@ export default function HomePage() {
                         ) : (
                           <img
                             alt={slide.title}
-                            className="w-full h-full object-cover object-center pointer-events-none"
+                            className="w-full h-full object-contain object-center pointer-events-none"
                             src={slide.url}
                             onDragStart={e => e.preventDefault()}
                           />
@@ -435,7 +452,7 @@ export default function HomePage() {
                       slide.type === 'video' ? (
                         <video
                           src={slide.url}
-                          className="w-full h-full object-cover object-center pointer-events-none"
+                          className="w-full h-full object-contain object-center pointer-events-none"
                           autoPlay
                           muted
                           loop
@@ -445,7 +462,7 @@ export default function HomePage() {
                       ) : (
                         <img
                           alt={slide.title}
-                          className="w-full h-full object-cover object-center"
+                          className="w-full h-full object-contain object-center"
                           src={slide.url}
                           onDragStart={e => e.preventDefault()}
                         />
@@ -455,44 +472,31 @@ export default function HomePage() {
                 ))}
               </div>
 
-              {/* Dot Indicators */}
-              {slides.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-10 flex gap-2 pointer-events-auto">
-                  {slides.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setCurrentBannerIndex(idx)}
-                      className={`h-1.5 transition-all duration-300 rounded-full ${idx === currentBannerIndex ? 'w-5 bg-cyan-400' : 'w-1.5 bg-white/40 hover:bg-white/70'}`}
-                      aria-label={`Go to slide ${idx + 1}`}
-                    />
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         )}
 
         {/* About Section */}
-        <div id="about-section" ref={aboutRef} className="sc-1a037b37-0 ekqPrV relative mt-8 sm:mt-[80px] overflow-hidden">
+        <div id="about-section" ref={aboutRef} className="sc-1a037b37-0 ekqPrV relative mt-6 sm:mt-12 overflow-hidden">
           {/* Ambient Glowing Orbs */}
           <div className={`absolute top-1/2 left-1/4 -translate-y-1/2 -translate-x-1/2 w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-[#0A2FFF]/10 to-[#79BCC2]/10 blur-[90px] pointer-events-none transition-opacity duration-[2800ms] ${aboutVisible ? 'opacity-100' : 'opacity-0'}`} />
           <div className={`absolute bottom-10 right-10 w-[250px] h-[250px] rounded-full bg-gradient-to-br from-[#79BCC2]/5 to-[#0A2FFF]/5 blur-[80px] pointer-events-none transition-opacity duration-[2800ms] ${aboutVisible ? 'opacity-100' : 'opacity-0'}`} />
 
-          <div className="pt-8 sm:pt-[40px] flex flex-col items-center relative z-10">
+          <div className="pt-6 sm:pt-8 flex flex-col items-center relative z-10">
 
             {/* Section Main Header Căn Giữa */}
-            <div className={`flex flex-col space-y-2 text-center mb-8 sm:mb-16 transform transition-all duration-[2800ms] ease-out ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
-              <h2 className="text-[24px] sm:text-[45px] tracking-[-1px] leading-[30px] sm:leading-[55px] font-extrabold uppercase bg-clip-text text-transparent bg-gradient-to-r from-black to-black/70 dark:from-white dark:to-white/70">
+            <div className={`flex flex-col space-y-2 text-center mb-6 sm:mb-10 transform transition-all duration-700 ease-out ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'}`}>
+              <h2 className="text-[26px] sm:text-[42px] tracking-[-0.7px] leading-[32px] sm:leading-[50px] font-extrabold uppercase bg-clip-text text-transparent bg-gradient-to-r from-black to-black/70 dark:from-white dark:to-white/70">
                 Giới thiệu cuộc thi
               </h2>
               <div
                 className="h-[3.5px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-2 transition-all duration-[3200ms] ease-out"
-                style={{ width: aboutVisible ? '100px' : '0px' }}
+                style={{ width: aboutVisible ? '64px' : '0px' }}
               />
             </div>
 
             {/* 2 Columns Content */}
-            <div className="flex flex-col md:flex-row items-start gap-10 md:gap-16 w-full px-4 sm:px-0">
+            <div className="flex flex-col items-start gap-7 md:gap-10 w-full max-w-[1080px] px-4 sm:px-0 mx-auto">
 
               {/* Left Column: Information */}
               <div
@@ -500,14 +504,14 @@ export default function HomePage() {
                   transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                   transitionDelay: '400ms'
                 }}
-                className={`flex-1 flex flex-col space-y-5 sm:space-y-8 text-left transform transition-all duration-[2800ms] ${aboutVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-12'}`}
+                className={`w-full flex flex-col space-y-4 sm:space-y-5 text-left transform transition-all duration-700 ${aboutVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-6'}`}
               >
                 <h3
-                  className="uppercase leading-tight"
+                  className="w-full text-center uppercase leading-tight"
                   style={{
-                    fontSize: 'clamp(26px, 4vw, 38px)',
+                    fontSize: 'clamp(18px, 2.2vw, 24px)',
                     fontWeight: 800,
-                    color: '#9FDBFF',
+                    color: 'var(--site-primary)',
                     fontFamily: 'Inter, Arial, Helvetica, sans-serif',
                     textShadow: '0 1px 10px rgba(121,188,194,0.18)',
                     display: 'inline-block',
@@ -520,20 +524,20 @@ export default function HomePage() {
                 <RichContent
                   value={settings?.aboutDescription}
                   fallback={ABOUT_FALLBACK_DESCRIPTION}
-                  className="rich-content text-[14px] sm:text-[16px] text-white/90 leading-relaxed font-light text-justify"
+                  className="rich-content about-description-copy text-[15px] sm:text-[18px] text-black dark:text-white leading-[1.95] font-normal text-justify"
                 />
 
                 {/* Staggered Stats Counters */}
-                <div className="grid grid-cols-3 gap-3 sm:gap-4 pt-2">
+                <div className="grid grid-cols-3 gap-2.5 sm:gap-3 pt-1">
                   <div
                     style={{
                       transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
                       transitionDelay: '800ms'
                     }}
-                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-xl p-2.5 sm:p-3 text-center transform transition-all duration-700 shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                       }`}
                   >
-                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
+                    <p className="text-[17px] sm:text-[22px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Thí sinh</p>
                   </div>
 
@@ -542,10 +546,10 @@ export default function HomePage() {
                       transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
                       transitionDelay: '1300ms'
                     }}
-                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-xl p-2.5 sm:p-3 text-center transform transition-all duration-700 shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                       }`}
                   >
-                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
+                    <p className="text-[17px] sm:text-[22px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Bình chọn</p>
                   </div>
 
@@ -554,10 +558,10 @@ export default function HomePage() {
                       transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
                       transitionDelay: '1800ms'
                     }}
-                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-2xl p-3 sm:p-4 text-center transform transition-all duration-[2800ms] shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                    className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-xl p-2.5 sm:p-3 text-center transform transition-all duration-700 shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                       }`}
                   >
-                    <p className="text-[20px] sm:text-[28px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
+                    <p className="text-[17px] sm:text-[22px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Lượt xem</p>
                   </div>
                 </div>
@@ -568,34 +572,19 @@ export default function HomePage() {
                     transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                     transitionDelay: '2200ms'
                   }}
-                  className={`flex flex-wrap items-center gap-3 transform transition-all duration-[2800ms] ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+                  className={`about-actions flex w-full flex-wrap items-center justify-center gap-3 transform transition-all duration-[2800ms] ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
                 >
                   <Link
                     href="/the-le"
-                    className="group hover-shine-effect inline-flex items-center justify-center border border-[#79BCC2]/50 bg-white/10 text-white font-bold rounded-full px-8 py-3.5 shadow-[0_4px_20px_rgba(121,188,194,0.16)] hover:shadow-[0_6px_24px_rgba(121,188,194,0.3)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 text-[14px] sm:text-[15px] uppercase tracking-wider"
+                    className="about-action about-action-secondary"
                   >
-                    <span>Đọc thêm</span>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="ml-2 w-4 h-4 transform group-hover:translate-x-1.5 transition-transform duration-300"
-                    >
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                      <polyline points="12 5 19 12 12 19"></polyline>
-                    </svg>
+                    <span>Xem thêm</span>
                   </Link>
                   <a
                     href={ABOUT_REGISTER_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group hover-shine-effect inline-flex items-center justify-center bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] text-white font-bold rounded-full px-8 py-3.5 shadow-[0_4px_20px_rgba(10,47,255,0.25)] hover:shadow-[0_6px_24px_rgba(10,47,255,0.45)] hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 text-[14px] sm:text-[15px] uppercase tracking-wider"
+                    className="about-action about-action-primary"
                   >
                     <span>Đăng ký</span>
                   </a>
@@ -608,20 +597,14 @@ export default function HomePage() {
                   transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                   transitionDelay: '600ms'
                 }}
-                className={`flex-1 w-full relative transform transition-all duration-[2800ms] ${aboutVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-12'}`}
+                className="hidden"
               >
-                {/* Glowing Aura Behind Image */}
-                <div className={`absolute -inset-3 bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] rounded-[28px] blur-2xl opacity-0 transition-opacity duration-[3500ms] delay-[1000ms] pointer-events-none ${aboutVisible ? 'opacity-25' : 'opacity-0'}`} />
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] rounded-[26px] opacity-15 blur-sm pointer-events-none" />
-
-                <div className="relative aspect-[4/5] w-full max-w-[560px] mx-auto overflow-hidden rounded-[24px] border border-white/10 shadow-2xl group hover-shine-effect bg-black/40">
+                <div className="relative aspect-[4/5] w-full max-w-[460px] mx-auto overflow-hidden rounded-[18px] group hover-shine-effect bg-transparent">
                   <img
                     alt="Poster HUIT STARTUP"
-                    className="w-full h-full object-contain object-center p-2 group-hover:scale-[1.02] transition-transform duration-700 ease-out"
+                    className="w-full h-full object-contain object-center p-1 group-hover:scale-[1.02] transition-transform duration-700 ease-out"
                     src={settings?.aboutImageUrl || "/uploads/poster-khoi-nghiep.jpg"}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-70 group-hover:opacity-40 transition-opacity duration-500"></div>
-
                 </div>
               </div>
 
@@ -639,12 +622,12 @@ export default function HomePage() {
             <div className="pt-3 sm:pt-[85px] flex flex-col items-center">
 
               {/* Leaderboard title */}
-              <div className={`flex flex-col space-y-4 text-center transform transition-all duration-[2800ms] ease-out ${candidatesVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+              <div className="flex flex-col space-y-4 text-center opacity-100 translate-y-0">
                 <div className="flex flex-col space-y-1.5">
                   <h2 className="text-[22px] sm:text-[42px] tracking-[-1px] leading-[27px] sm:leading-[52px] font-extrabold uppercase bg-clip-text text-transparent bg-gradient-to-r from-black to-black/70 dark:from-white dark:to-white/70">
                     Danh sách dự án
                   </h2>
-                  <h3 className="text-[16px] sm:text-[28px] py-1 leading-[24px] uppercase font-bold text-[#79BCC2]">
+                  <h3 className="candidate-section-subtitle hidden text-[16px] sm:text-[28px] py-1 leading-[24px] uppercase font-bold text-blue-600 dark:text-blue-400">
                     HUIT STARTUP LẦN THỨ VII 2026
                   </h3>
                 </div>
@@ -652,7 +635,7 @@ export default function HomePage() {
                   className="h-[3.5px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-1.5 transition-all duration-[3200ms] ease-out"
                   style={{ width: candidatesVisible ? '80px' : '0px' }}
                 />
-                <p className="mx-auto max-w-[760px] text-[14px] sm:text-[16px] leading-relaxed text-white/68">
+                <p className="mx-auto max-w-[760px] text-[14px] sm:text-[16px] leading-relaxed text-neutral-600 dark:text-white/68">
                   Khám phá các ý tưởng khởi nghiệp sáng tạo, theo dõi lượt bình chọn và ủng hộ dự án bạn yêu thích.
                 </p>
               </div>
@@ -663,7 +646,7 @@ export default function HomePage() {
                   transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                   transitionDelay: '400ms'
                 }}
-                className={`max-w-[615px] w-full mt-3 sm:mt-[64px] transform transition-all duration-[2800ms] ${candidatesVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'}`}
+                className="max-w-[615px] w-full mt-3 sm:mt-10 opacity-100 translate-y-0"
               >
                 <div className="flex items-center space-x-[8px] rounded-[20px] px-[8px] py-[7px] border border-grey-lightGrey1 dark:border-grey-darkGrey bg-grey-lightGrey2 dark:bg-grey-dimGrey h-[36px] sm:h-[60px] !px-2 rounded-[40px] w-full shadow-lg focus-within:border-[#79BCC2]/50 transition-all duration-300">
                   <div className="fill-neutral-neutral1 dark:fill-neutral-white pl-2">
@@ -685,18 +668,20 @@ export default function HomePage() {
               <div className="w-full mt-3 sm:mt-[64px]"></div>
 
               {isLoading ? (
-                <div className="flex justify-center items-center py-20 text-white">
+                <div className="flex justify-center items-center py-20 text-neutral-600 dark:text-white">
                   Đang tải danh sách dự án...
                 </div>
               ) : filteredCandidates.length === 0 ? (
-                <div className="text-center py-20 text-white/50">
+                <div className="text-center py-20 text-neutral-500 dark:text-white/50">
                   Không tìm thấy dự án phù hợp
                 </div>
               ) : (
-                <div className="w-full grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 justify-items-stretch max-w-[1320px] mx-auto px-4">
-                  {filteredCandidates.map((c, idx) => {
+                <div className="project-cards-grid w-full mx-auto">
+                  {visibleCandidates.map((c, idx) => {
                     // Find actual rank based on overall sorted position
                     const rank = sortedCandidates.findIndex(x => x.sbd === c.sbd) + 1;
+                    const rankTone = getProjectRankTone(rank);
+                    const candidateImage = getCandidateImageUrl(c.imageUrl);
 
                     return (
                       <div
@@ -705,82 +690,72 @@ export default function HomePage() {
                           transitionDelay: `${Math.min(idx * 250, 1500)}ms`,
                           transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
                         }}
-                        className={`h-full group w-full transform transition-all duration-[2500ms] ${candidatesVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-12 scale-95'
-                          }`}
+                        className="project-card-item h-full group w-full opacity-100 translate-y-0 scale-100 transition-all duration-300"
                       >
-                        <div className="relative h-full backdrop-blur-[8px] rounded-[24px] border border-white/10 bg-[rgba(222,222,222,0.13)] group-hover:bg-[rgba(222,222,222,0.18)] group-hover:dark:bg-[rgba(222,222,222,0.15)] group-hover:border-[#79BCC2]/40 group-hover:shadow-[0_20px_40px_rgba(121,188,194,0.15)] group-hover:-translate-y-2 group-hover:scale-[1.02] cursor-pointer transition-all duration-300 hover-shine-effect overflow-hidden">
+                        <div className="project-card-clear project-showcase-card relative h-full rounded-[20px] border transition-all duration-300 overflow-hidden">
 
                           {/* Project banner image */}
-                          <Link className="focus:outline-none relative block cursor-pointer w-full aspect-[16/9]" href={`/thi-sinh/${c.sbd}`}>
-                            <div className="m-3 mb-0 relative h-[calc(100%-12px)] overflow-hidden rounded-[18px] bg-black/20 border border-white/10">
+                          <div className="project-card-media project-showcase-media relative block w-full aspect-[16/8.6]">
+                            <div className="project-media-shell m-2 mb-0 relative h-[calc(100%-8px)] overflow-hidden rounded-[13px] bg-black/15 border border-white/10">
                               <img
                                 alt={c.name}
-                                className="object-cover object-center w-full h-full group-hover:scale-105 transition-transform duration-700 ease-out"
-                                src={c.imageUrl}
+                                className="project-media-image object-cover object-center w-full h-full"
+                                src={candidateImage}
+                                loading="lazy"
+                                onError={(event) => {
+                                  const target = event.currentTarget;
+                                  if (!target.dataset.fallbackApplied) {
+                                    target.dataset.fallbackApplied = 'true';
+                                    target.src = PROJECT_FALLBACK_IMAGE;
+                                  }
+                                }}
                               />
-                              
-                              {/* Hover overlay with detail indicator */}
-                              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-300 pointer-events-none z-10">
-                                <span className="bg-white/10 backdrop-blur-md border border-white/20 text-white text-[12px] font-bold uppercase tracking-wider px-4 py-2 rounded-full flex items-center gap-1.5 shadow-lg transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
-                                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                    <circle cx="12" cy="12" r="3"/>
-                                  </svg>
-                                  Xem chi tiết
-                                </span>
-                              </div>
-
-                              <div className="absolute left-3 top-3 rounded-full border border-white/15 bg-black/55 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white/90 backdrop-blur-md z-20">
-                                MDB {c.sbd}
-                              </div>
-                              <div className="absolute right-3 top-3 rounded-full border border-[#79BCC2]/30 bg-[#0A2FFF]/45 px-3 py-1 text-[11px] font-bold text-[#CFFAFE] backdrop-blur-md z-20">
-                                #{rank}
-                              </div>
                             </div>
-                          </Link>
+                          </div>
 
                           {/* Project details */}
-                          <div className="flex flex-1 flex-col px-4 pt-4 pb-4">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="min-w-0">
-                                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#79BCC2]">Dự án khởi nghiệp</p>
-                                <h4 className="mt-1 line-clamp-2 text-[18px] sm:text-[20px] font-extrabold text-neutral-neutral1 dark:text-neutral-white leading-snug group-hover:text-[#79BCC2] transition-colors duration-300">
-                                  <Link href={`/thi-sinh/${c.sbd}`} className="hover:underline focus:outline-none">
-                                    {c.name}
-                                  </Link>
-                                </h4>
-                              </div>
-                              <div className="shrink-0 rounded-[14px] bg-white/10 px-3 py-2 text-right border border-white/10">
-                                <p className="text-[10px] uppercase tracking-wider text-white/55">Bình chọn</p>
-                                <p className="text-[16px] font-extrabold text-[#FDE047] drop-shadow-[0_0_10px_rgba(253,224,71,0.35)]">
-                                  {c.votes.toLocaleString()}
-                                </p>
+                          <div className="project-card-body project-showcase-body flex flex-1 flex-col px-3 pt-3 pb-3">
+                            <div className="project-card-meta">
+                              <span className="project-card-code-badge">Mã dự án: {c.sbd}</span>
+                              <span className={`project-rank-badge ${rankTone}`}>Top {rank}</span>
+                            </div>
+
+                            <div className="project-title-group">
+                              <h4 className="project-card-title">
+                                <Link href={`/thi-sinh/${c.sbd}`} className="focus:outline-none">
+                                  {c.name}
+                                </Link>
+                              </h4>
+                            </div>
+
+                            <div className="project-vote-stat">
+                              <div>
+                                <p className="project-vote-stat-label">Lượt bình chọn</p>
+                                <p className="project-vote-stat-value">{c.votes.toLocaleString()}</p>
                               </div>
                             </div>
 
-                            <p className="mt-3 line-clamp-2 min-h-[40px] text-[13px] leading-relaxed text-white/68 text-justify">
+                            <p className="project-card-description mt-2 line-clamp-2 min-h-[34px] text-[11px] leading-relaxed text-neutral-600 dark:text-white/68 text-left">
                               {c.description || 'Ý tưởng khởi nghiệp đang được cập nhật thông tin giới thiệu.'}
                             </p>
 
-                            <div className="mt-4 flex items-center gap-3">
+                            <div className="project-card-actions flex items-center gap-2">
                               <button
                                 onClick={() => handleVote(c.sbd, c.name)}
-                                className={`sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-xl py-[11px] w-full border-0 cursor-pointer transition-all hover-shine-effect ${isGateCurrentlyOpen()
-                                    ? 'bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]'
-                                    : 'bg-slate-700/50 cursor-not-allowed opacity-50'
+                                className={`project-vote-button sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-xl py-2.5 w-full border-0 cursor-pointer transition-all hover-shine-effect ${isGateCurrentlyOpen()
+                                    ? 'active bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]'
+                                    : 'disabled bg-slate-700/50 cursor-not-allowed opacity-50'
                                   }`}
                               >
-                                <p className={`text-[16px] leading-[20px] font-bold uppercase tracking-wider ${isGateCurrentlyOpen()
+                                <span className="project-vote-button-glow" aria-hidden="true" />
+                                <p className={`project-vote-button-label text-[11px] leading-[16px] font-bold uppercase tracking-wider ${isGateCurrentlyOpen()
                                     ? 'text-neutral-white dark:text-primary'
                                     : 'text-slate-400'
                                   }`}>
-                                  {isGateCurrentlyOpen() ? 'Bình chọn dự án' : 'Đã đóng'}
+                                  {isGateCurrentlyOpen() ? 'Bình chọn' : 'Đã đóng'}
                                 </p>
                               </button>
 
-                              <div className="hidden sm:flex h-[44px] min-w-[74px] items-center justify-center rounded-xl border border-white/10 bg-white/10 text-[12px] font-bold uppercase tracking-wider text-white/70">
-                                MDB {c.sbd}
-                              </div>
                             </div>
 
                           </div>
@@ -791,51 +766,88 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* 2 Buttons: Toàn bộ xếp hạng & Danh sách dự án */}
+              {/* Expand projects, then continue to the complete project list */}
               <div
                 style={{
                   transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                   transitionDelay: '800ms'
                 }}
-                className={`flex flex-row justify-center items-center gap-4 sm:gap-6 mt-8 sm:mt-[56px] w-full transform transition-all duration-[2800ms] ${candidatesVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
-                  }`}
+                className="project-section-toolbar flex flex-row justify-center items-center gap-2.5 mt-6 sm:mt-8 mb-4 w-auto opacity-100"
               >
-                <Link
-                  href="/bang-xep-hang"
-                  className="flex items-center justify-center border border-white/20 hover:border-[#79BCC2] bg-white/5 hover:bg-white/10 text-white font-bold rounded-full px-6 py-3 sm:px-8 sm:py-3.5 transition-all duration-300 text-[12px] sm:text-[14px] uppercase tracking-wider shadow-lg hover:shadow-[#79BCC2]/10 hover-shine-effect hover:scale-105 active:scale-95"
-                >
-                  Toàn bộ xếp hạng
-                </Link>
-                <Link
-                  href="#candidates-section"
-                  className="flex items-center justify-center border border-white/20 hover:border-[#79BCC2] bg-white/5 hover:bg-white/10 text-white font-bold rounded-full px-6 py-3 sm:px-8 sm:py-3.5 transition-all duration-300 text-[12px] sm:text-[14px] uppercase tracking-wider shadow-lg hover:shadow-[#79BCC2]/10 hover-shine-effect hover:scale-105 active:scale-95"
-                >
-                  Danh sách dự án
-                </Link>
+                {!showAllCandidates && filteredCandidates.length > 3 ? (
+                  <button
+                    type="button"
+                    aria-expanded="false"
+                    onClick={() => setShowAllCandidates(true)}
+                    className="project-list-action active flex items-center justify-center rounded-full px-5 py-2.5 sm:px-6 sm:py-3 transition-all duration-200 text-[11px] sm:text-[13px] uppercase tracking-wider hover:-translate-y-0.5 active:scale-95"
+                  >
+                    Xem thêm
+                  </button>
+                ) : (
+                  <Link
+                    href="/bang-xep-hang#danh-sach-du-an"
+                    className="project-list-action active flex items-center justify-center rounded-full px-5 py-2.5 sm:px-6 sm:py-3 transition-all duration-200 text-[11px] sm:text-[13px] uppercase tracking-wider hover:-translate-y-0.5 active:scale-95"
+                  >
+                    Xem danh sách dự án
+                  </Link>
+                )}
               </div>
 
             </div>
           </div>
         </div>
 
+        <section className="modern-section alt" aria-labelledby="video-title">
+          <div className="modern-container video-feature">
+            <div className="modern-section-head">
+              <span className="modern-kicker">Video chủ đề</span>
+              <h2 id="video-title">Khởi nghiệp không chỉ là một ước mơ.</h2>
+              <p>Đó là hành trình nhìn thấy vấn đề, dám bắt đầu và kiên trì xây dựng một giải pháp tốt hơn cho cộng đồng.</p>
+              <Link href="/gioi-thieu" className="news-link">Khám phá câu chuyện HUIT Startup →</Link>
+            </div>
+            <div className="video-shell">
+              <video controls preload="metadata" poster="/uploads/baner.jpg">
+                <source src="/video/video-bg.mp4" type="video/mp4" />
+                Trình duyệt của bạn không hỗ trợ video.
+              </video>
+              <span className="video-play" aria-hidden="true">▶</span>
+            </div>
+          </div>
+        </section>
+
+        <section className="modern-section news-section-compact" aria-labelledby="news-title">
+          <div className="modern-container">
+            <div className="modern-section-head">
+              <span className="modern-kicker">Tin tức &amp; Thông báo</span>
+              <h2 id="news-title">Cập nhật mới nhất từ HUIT Startup</h2>
+              <p>Theo dõi các cột mốc, hoạt động huấn luyện và thông báo quan trọng trong suốt hành trình cuộc thi.</p>
+            </div>
+            <div className="news-grid-modern">
+              <article className="news-card-modern featured"><img src="/uploads/poster-khoi-nghiep.jpg" loading="lazy" alt="Poster HUIT Startup 2026" /><div className="news-card-body"><div className="news-meta"><strong>Thông báo</strong><time>18.06.2026</time></div><h3>Chính thức mở cổng đăng ký HUIT Startup lần VII năm 2026</h3><p>Cơ hội biến ý tưởng thành dự án thực tế với sự đồng hành của mentor, chuyên gia và doanh nghiệp.</p><a className="news-link" href={settings?.registrationUrl || ABOUT_REGISTER_URL} target="_blank" rel="noopener noreferrer">Xem chi tiết →</a></div></article>
+              <article className="news-card-modern"><img src="/original_assets/image6981.jpg" loading="lazy" alt="Hoạt động kết nối startup" /><div className="news-card-body"><div className="news-meta"><strong>Hoạt động</strong><time>15.06.2026</time></div><h3>Startup Tour: Kết nối hệ sinh thái đổi mới sáng tạo</h3><p>Trải nghiệm môi trường doanh nghiệp và học hỏi từ các startup thực chiến.</p><Link className="news-link" href="/thoi-gian">Xem chi tiết →</Link></div></article>
+              <article className="news-card-modern"><img src="/original_assets/image5999.jpg" loading="lazy" alt="Workshop khởi nghiệp" /><div className="news-card-body"><div className="news-meta"><strong>Kiến thức</strong><time>10.06.2026</time></div><h3>5 bước xây dựng mô hình kinh doanh thuyết phục</h3><p>Khung tư duy giúp đội thi kiểm chứng và phát triển ý tưởng hiệu quả.</p><Link className="news-link" href="/the-le">Xem chi tiết →</Link></div></article>
+            </div>
+          </div>
+        </section>
+
         {/* Sponsor Section matching sample web */}
-        <div className="relative w-full max-w-[1440px] mx-auto pb-8 sm:pb-[85px]" id="sponsor-section" ref={sponsorsRef}>
+        <div className="relative w-full max-w-[1180px] mx-auto pb-8 sm:pb-12" id="sponsor-section" ref={sponsorsRef}>
           {/* Ambient glowing orb for Sponsor Section */}
           <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-[#0A2FFF]/5 to-[#79BCC2]/5 blur-[100px] pointer-events-none transition-opacity duration-[2800ms] ${sponsorsVisible ? 'opacity-100' : 'opacity-0'}`} />
 
-          <div className="pt-8 sm:pt-[85px] flex flex-col space-y-8 items-center relative z-10">
-            <div className={`flex flex-col space-y-2 text-center transform transition-all duration-[2800ms] ease-out ${sponsorsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="pt-8 sm:pt-12 flex flex-col space-y-5 items-center relative z-10">
+            <div className={`flex flex-col space-y-1.5 text-center transform transition-all duration-700 ease-out ${sponsorsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
               <div className="flex flex-col space-y-1.5">
-                <h2 className="text-[22px] sm:text-[42px] tracking-[-1px] leading-[27px] sm:leading-[52px] font-extrabold uppercase bg-clip-text text-transparent bg-gradient-to-r from-black to-black/70 dark:from-white dark:to-white/70">
+                <h2 className="text-[19px] sm:text-[31px] tracking-[-0.5px] leading-[25px] sm:leading-[38px] font-extrabold uppercase bg-clip-text text-transparent bg-gradient-to-r from-black to-black/70 dark:from-white dark:to-white/70">
                   NHÀ TÀI TRỢ &amp; ĐỐI TÁC
                 </h2>
-                <h3 className="text-[16px] sm:text-[28px] py-1 leading-[24px] uppercase font-bold text-[#79BCC2]">
+                <h3 className="text-[13px] sm:text-[18px] py-0.5 leading-[22px] uppercase font-bold text-blue-600 dark:text-blue-400">
                   {settings?.eventTitle || "HUIT's Iconic"}
                 </h3>
               </div>
               <div
                 className="h-[3.5px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-2 transition-all duration-[3200ms] ease-out"
-                style={{ width: sponsorsVisible ? '80px' : '0px' }}
+                style={{ width: sponsorsVisible ? '52px' : '0px' }}
               />
             </div>
 
@@ -844,7 +856,7 @@ export default function HomePage() {
                 transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
                 transitionDelay: '600ms'
               }}
-              className={`w-full max-w-[1400px] px-4 transform transition-all duration-[2800ms] ${sponsorsVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-8'
+              className={`w-full max-w-[1080px] px-4 transform transition-all duration-700 ${sponsorsVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
                 }`}
             >
               <div className="relative group hover-shine-effect rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-white/[0.01]">
@@ -853,11 +865,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* Mobile Background bottom overlay */}
-        <div className="fixed left-0 top-0 right-0 supports-[height:100cqh]:h-[100cqh] supports-[height:100dvh]:h-[100dvh] sm:hidden -z-50">
-          <img alt="" className="absolute top-0 max-w-[1920px] max-h-[1080px] h-[1920px] w-[1080px]" src="/original_assets/image87ce.jpg" />
         </div>
 
       </main>

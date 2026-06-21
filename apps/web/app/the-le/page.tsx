@@ -1,41 +1,30 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import Link from 'next/link';
 import { apiUrl } from '../api';
 
-interface Step {
-  number: string;
-  description: string;
-  image: string;
-}
-
-interface SectionConfig {
-  title: string;
-  steps: Step[];
-}
-
-interface ExchangeRate {
-  points: string;
-  price: string;
-}
+interface Step { number: string; description: string; image: string; }
+interface SectionConfig { title: string; steps: Step[]; }
+interface ExchangeRate { points: string; price: string; }
 
 const defaultSections: SectionConfig[] = [
   {
-    title: 'Hướng dẫn bình chọn miễn phí',
+    title: 'Bình chọn miễn phí mỗi ngày',
     steps: [
-      { number: '01', description: 'Tạo tài khoản mới hoặc đăng nhập nhanh bằng tài khoản Google.', image: '/original_assets/imagefca6.png' },
-      { number: '02', description: 'Đăng nhập tài khoản để nhận lượt bình chọn miễn phí hằng ngày.', image: '/original_assets/imagef1be.png' },
-      { number: '03', description: 'Tìm kiếm và lựa chọn dự án bạn muốn bình chọn.', image: '/original_assets/image81d3.png' },
-      { number: '04', description: 'Chọn gói 5 điểm miễn phí, hệ thống ghi nhận điểm sau khi xác nhận thành công.', image: '/original_assets/image20da.png' },
+      { number: '01', description: 'Tạo tài khoản mới hoặc đăng nhập nhanh bằng tài khoản Google của bạn.', image: '/original_assets/imagefca6.png' },
+      { number: '02', description: 'Sau khi đăng nhập, hệ thống tự động cấp lượt bình chọn miễn phí hằng ngày (5 điểm/ngày).', image: '/original_assets/imagef1be.png' },
+      { number: '03', description: 'Tìm kiếm dự án bạn yêu thích từ danh sách hoặc bảng xếp hạng.', image: '/original_assets/image81d3.png' },
+      { number: '04', description: 'Chọn gói 5 điểm miễn phí và bấm "Bình chọn". Hệ thống xác nhận ngay lập tức!', image: '/original_assets/image20da.png' },
     ],
   },
   {
-    title: 'Thanh toán chuyển khoản tự động qua Sepay',
+    title: 'Thanh toán qua Sepay (Tích điểm)',
     steps: [
-      { number: '01', description: 'Truy cập danh sách dự án, chọn dự án bạn muốn ủng hộ.', image: '/original_assets/image17ae.png' },
-      { number: '02', description: 'Lựa chọn gói điểm mong muốn và bấm thanh toán.', image: '/original_assets/imageefc9.png' },
-      { number: '03', description: 'Quét mã QR thanh toán hiển thị trên màn hình hoặc chuyển khoản đúng cú pháp, số tiền qua cổng Sepay.', image: '/original_assets/image837f.png' },
-      { number: '04', description: 'Giao dịch hoàn tất, hệ thống Sepay tự động xác nhận và cộng điểm bình chọn sau vài giây.', image: '/original_assets/image20da.png' },
+      { number: '01', description: 'Truy cập danh sách dự án hoặc trang chi tiết, nhấn nút "Bình chọn".', image: '/original_assets/image17ae.png' },
+      { number: '02', description: 'Chọn gói điểm phù hợp (từ 10 điểm đến 7.000 điểm) và xác nhận.', image: '/original_assets/imageefc9.png' },
+      { number: '03', description: 'Quét mã QR Sepay hiển thị trên màn hình hoặc chuyển khoản đúng nội dung, số tiền.', image: '/original_assets/image837f.png' },
+      { number: '04', description: 'Hệ thống Sepay tự động xác nhận giao dịch và cộng điểm bình chọn sau vài giây!', image: '/original_assets/image20da.png' },
     ],
   },
 ];
@@ -51,67 +40,65 @@ const defaultExchangeRates: ExchangeRate[] = [
   { points: '7,000 Điểm', price: '3,000,000 VND' },
 ];
 
+const faqItems = [
+  { q: 'Bình chọn miễn phí có giới hạn không?', a: 'Mỗi tài khoản được cấp 5 điểm miễn phí mỗi ngày (mỗi ngày/01 lượt). Điểm miễn phí không cộng dồn sang ngày hôm sau.' },
+  { q: 'Giao dịch Sepay mất bao lâu để xác nhận?', a: 'Thông thường chỉ từ 3-10 giây sau khi hệ thống Sepay nhận được giao dịch hợp lệ. Nếu quá 5 phút chưa cộng điểm, vui lòng liên hệ hỗ trợ.' },
+  { q: 'Một số điện thoại được bình chọn bao nhiêu lần?', a: 'Mỗi số điện thoại (SĐT) khi đăng ký tài khoản được liên kết với 1 tài khoản duy nhất. Bạn có thể bình chọn không giới hạn số lần nếu có đủ điểm.' },
+  { q: 'Tôi có thể bình chọn cho nhiều dự án không?', a: 'Hoàn toàn có thể! Bạn có thể phân bổ điểm bình chọn cho bất kỳ số lượng dự án nào trong cùng một phiên hoặc nhiều phiên khác nhau.' },
+  { q: 'Điểm bình chọn có hết hạn không?', a: 'Điểm mua qua Sepay không hết hạn trong suốt thời gian diễn ra cuộc thi. Tuy nhiên điểm miễn phí hằng ngày sẽ reset lúc 00:00 mỗi đêm.' },
+  { q: 'Tôi quên mật khẩu thì phải làm gì?', a: 'Bạn có thể đăng nhập bằng Google (không cần mật khẩu), hoặc liên hệ ban tổ chức qua email iec@huit.edu.vn để được hỗ trợ reset tài khoản.' },
+];
+
 function normalizeSections(rawSections: any[]): SectionConfig[] {
-  const stepSections = rawSections.filter((section) => Array.isArray(section.steps) && section.steps.length > 0);
+  const stepSections = rawSections.filter((s) => Array.isArray(s.steps) && s.steps.length > 0);
   if (stepSections.length === 0) return defaultSections;
-  return stepSections.map((section, index) => ({
-    title: section.title || `Mục ${index + 1}`,
-    steps: section.steps,
-  }));
+  return stepSections.map((s, i) => ({ title: s.title || `Mục ${i + 1}`, steps: s.steps }));
 }
 
 function extractDigits(str: any): string {
   if (str === undefined || str === null) return '';
   const s = String(str).trim();
   const match = s.match(/\d+/g);
-  if (!match) {
-    if (s.toLowerCase().includes('miễn phí')) return '0';
-    return '';
-  }
+  if (!match) { return s.toLowerCase().includes('miễn phí') ? '0' : ''; }
   return match.join('');
 }
 
 function normalizeRates(rawRates: any[]): ExchangeRate[] {
-  const rates = rawRates
-    .map((rate) => {
-      const pointsNum = extractDigits(rate.points || rate.label);
-      const priceNum = extractDigits(rate.price || rate.priceLabel);
-
-      let pointsStr = '';
-      if (pointsNum !== '') {
-        pointsStr = `${Number(pointsNum).toLocaleString('vi-VN')} Điểm`;
-      }
-
-      let priceStr = '';
-      if (priceNum !== '') {
-        const num = Number(priceNum);
-        priceStr = num > 0 ? `${num.toLocaleString('vi-VN')} VND` : 'Miễn phí (01 lượt / ngày)';
-      }
-
-      return { points: pointsStr, price: priceStr };
-    })
-    .filter((rate) => rate.points && rate.price);
+  const rates = rawRates.map((rate) => {
+    const pn = extractDigits(rate.points || rate.label);
+    const prn = extractDigits(rate.price || rate.priceLabel);
+    const pointsStr = pn !== '' ? `${Number(pn).toLocaleString('vi-VN')} Điểm` : '';
+    const priceStr = prn !== '' ? (Number(prn) > 0 ? `${Number(prn).toLocaleString('vi-VN')} VND` : 'Miễn phí (01 lượt / ngày)') : '';
+    return { points: pointsStr, price: priceStr };
+  }).filter((r) => r.points && r.price);
   return rates.length > 0 ? rates : defaultExchangeRates;
 }
 
-const sectionIcons = [
-  (
-    <svg key="heart" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-    </svg>
-  ),
-  (
-    <svg key="qr" xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
-      <rect x="3" y="3" width="16" height="16" rx="2" />
-      <rect x="7" y="7" width="8" height="8" />
-      <rect x="10" y="10" width="2" height="2" />
-    </svg>
-  ),
+function useInView(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } }, { threshold });
+    if (ref.current) obs.observe(ref.current);
+    return () => obs.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
+const sectionColors = [
+  { gradient: 'linear-gradient(135deg, #0A2FFF, #79BCC2)', icon: '❤️', tag: 'Miễn phí' },
+  { gradient: 'linear-gradient(135deg, #f97316, #eab308)', icon: '💳', tag: 'Thanh toán' },
 ];
 
 export default function TheLePage() {
   const [sections, setSections] = useState<SectionConfig[]>(defaultSections);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>(defaultExchangeRates);
+  const [activeTab, setActiveTab] = useState(0);
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const heroSection = useInView(0.2);
+  const stepsSection = useInView(0.1);
+  const tableSection = useInView(0.1);
+  const faqSection = useInView(0.1);
 
   useEffect(() => {
     async function loadSettings() {
@@ -119,142 +106,227 @@ export default function TheLePage() {
         const res = await fetch(apiUrl('/api/settings'));
         if (!res.ok) return;
         const data = await res.json();
-        if (Array.isArray(data.guideSections) && data.guideSections.length > 0) {
-          setSections(normalizeSections(data.guideSections));
-        }
-        if (Array.isArray(data.exchangeRates) && data.exchangeRates.length > 0) {
-          setExchangeRates(normalizeRates(data.exchangeRates));
-        }
-      } catch (err) {
-        console.error('Failed to load guide settings', err);
-      }
+        if (Array.isArray(data.guideSections) && data.guideSections.length > 0) setSections(normalizeSections(data.guideSections));
+        if (Array.isArray(data.exchangeRates) && data.exchangeRates.length > 0) setExchangeRates(normalizeRates(data.exchangeRates));
+      } catch { }
     }
-
     loadSettings();
   }, []);
 
   return (
     <>
       <style>{`
-        .iUzfqH {
-          background-image: url(/background/background2.png);
-          background-color: #030612;
-          background-attachment: fixed;
-          background-size: cover;
-          background-repeat: no-repeat;
-          background-position: center;
-        }
+        .the-le-page { background: var(--site-bg); }
+        @keyframes fadeUp { from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)} }
+        .fade-up { animation: fadeUp 0.7s cubic-bezier(0.16,1,0.3,1) both; }
+        .fade-up-d1 { animation-delay: 100ms; }
+        .fade-up-d2 { animation-delay: 200ms; }
+        .fade-up-d3 { animation-delay: 300ms; }
+        .tab-btn { transition: all 0.25s ease; }
       `}</style>
-      <main className="sc-908a50-0 iUzfqH flex-1 min-h-screen pb-16 mt-[-80px] pt-[128px] sm:pt-[160px] relative overflow-hidden">
-        <div className="absolute inset-0 bg-black/55 pointer-events-none" />
 
-        <div className="max-w-[1140px] mx-auto px-4 sm:px-6 relative z-10">
-          <div className="flex flex-col space-y-3 text-center mb-16 sm:mb-24">
-            <span className="text-[#79BCC2] text-xs sm:text-sm font-semibold tracking-[0.3em] uppercase">
-              Cẩm nang bình chọn chính thức
-            </span>
-            <h2 className="text-[28px] sm:text-[46px] tracking-[-1px] font-extrabold uppercase text-white leading-none">
+      <main className="the-le-page flex-1 min-h-screen pb-20" style={{ background: 'var(--site-bg)' }}>
+
+        {/* === HERO SECTION === */}
+        <section ref={heroSection.ref} className="subpage-hero">
+          <div className="subpage-hero-bg" />
+          <div className="subpage-hero-content">
+            {/* Breadcrumb */}
+            <div className="subpage-breadcrumb">
+              <Link href="/">Trang chủ</Link>
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6" /></svg>
+              <span>Hướng dẫn & Thể lệ</span>
+            </div>
+
+            {/* Badge */}
+            <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-4 ${heroSection.visible ? 'fade-up' : 'opacity-0'}`}
+              style={{ background: 'color-mix(in srgb, var(--site-primary) 12%, var(--site-card))', color: 'var(--site-primary)', border: '1px solid color-mix(in srgb, var(--site-primary) 25%, transparent)' }}>
+              📖 Cẩm nang bình chọn
+            </div>
+
+            <h1 className={heroSection.visible ? 'fade-up fade-up-d1' : 'opacity-0'}>
               Hướng dẫn & Thể lệ
-            </h2>
-            <h3 className="text-[14px] sm:text-[18px] tracking-[0.2em] uppercase font-medium text-white/50">
-              HUIT STARTUP
-            </h3>
-            <div className="h-[3.5px] w-[70px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-3.5" />
+            </h1>
+            <p className={heroSection.visible ? 'fade-up fade-up-d2' : 'opacity-0'}>
+              Mọi thông tin về cách thức bình chọn, quy đổi điểm và các câu hỏi thường gặp đều được tổng hợp đầy đủ tại đây.
+            </p>
+
+            {/* Quick links */}
+            <div className={`flex flex-wrap gap-3 justify-center mt-6 ${heroSection.visible ? 'fade-up fade-up-d3' : 'opacity-0'}`}>
+              {['Bình chọn miễn phí ↓', 'Thanh toán Sepay ↓', 'Bảng điểm ↓', 'FAQ ↓'].map((label, i) => (
+                <a key={i} href={['#free-vote', '#sepay-vote', '#bang-diem', '#faq'][i]}
+                  className="px-4 py-2 rounded-full text-sm font-semibold transition hover:opacity-80"
+                  style={{ border: '1px solid var(--site-line)', background: 'var(--site-card)', color: 'var(--site-text)' }}>
+                  {label}
+                </a>
+              ))}
+            </div>
+
+            <div className="subpage-divider" />
           </div>
+        </section>
 
-          <div className="space-y-20 sm:space-y-28">
-            {sections.map((section, sIdx) => (
-              <div key={`${section.title}-${sIdx}`} className="space-y-8 sm:space-y-10">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/10 pb-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2.5 bg-[#79BCC2]/10 rounded-xl border border-[#79BCC2]/20">
-                      {sectionIcons[sIdx % sectionIcons.length]}
-                    </div>
-                    <h4 className="text-[18px] sm:text-[22px] font-extrabold text-white uppercase tracking-wider">
-                      {section.title}
-                    </h4>
-                  </div>
-                </div>
+        <div className="max-w-[1140px] mx-auto px-4 sm:px-6 py-12">
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {section.steps.map((step, idx) => (
-                    <div
-                      key={`${step.number}-${idx}`}
-                      className="group flex flex-col justify-between backdrop-blur-md bg-white/[0.04] hover:bg-white/[0.06] border border-white/10 hover:border-[#79BCC2]/30 rounded-[20px] p-6 transition-all duration-300"
-                    >
-                      <div>
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="text-[11px] font-black tracking-widest text-[#79BCC2] uppercase bg-[#79BCC2]/10 px-3 py-1 rounded-full border border-[#79BCC2]/20">
-                            Bước {step.number}
-                          </span>
-                        </div>
-                        <p className="text-[14px] sm:text-[15px] font-semibold text-white/90 leading-relaxed mb-5 whitespace-pre-line text-justify">
-                          {step.description}
-                        </p>
-                      </div>
-
-                      {step.image ? (
-                        <div className="relative overflow-hidden rounded-xl border border-white/10 bg-black/50 aspect-[431/244] w-full shadow-2xl">
-                          <img
-                            alt={`Bước ${step.number}`}
-                            loading="lazy"
-                            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
-                            src={step.image}
-                          />
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-              </div>
+          {/* === TAB NAVIGATION === */}
+          <div className="flex flex-wrap gap-3 justify-center mb-10" ref={stepsSection.ref}>
+            {sections.map((s, i) => (
+              <button
+                key={i}
+                onClick={() => setActiveTab(i)}
+                className="tab-btn flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold"
+                style={activeTab === i ? {
+                  background: sectionColors[i % sectionColors.length].gradient,
+                  color: '#fff',
+                  boxShadow: '0 8px 24px rgba(10,47,255,0.25)',
+                } : {
+                  background: 'var(--site-card)',
+                  color: 'var(--site-text)',
+                  border: '1px solid var(--site-line)',
+                }}
+              >
+                <span>{sectionColors[i % sectionColors.length].icon}</span>
+                {s.title}
+              </button>
             ))}
           </div>
 
-          <div className="mt-24 sm:mt-32 pt-12 sm:pt-16 border-t border-white/10">
-            <div className="flex items-center space-x-3 mb-8 sm:mb-10">
-              <div className="p-2.5 bg-[#79BCC2]/10 rounded-xl border border-[#79BCC2]/20 text-[#79BCC2]">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="1" x2="12" y2="23" />
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
+          {/* === STEPS for active tab === */}
+          {sections.map((section, sIdx) => (
+            <div key={`sec-${sIdx}`} id={sIdx === 0 ? 'free-vote' : 'sepay-vote'} style={{ display: activeTab === sIdx ? 'block' : 'none' }}>
+              <div className="mb-8 flex items-center gap-3">
+                <div className="step-num-circle" style={{ background: sectionColors[sIdx % sectionColors.length].gradient, width: 48, height: 48, fontSize: 20 }}>
+                  {sectionColors[sIdx % sectionColors.length].icon}
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--site-primary)' }}>
+                    {sectionColors[sIdx % sectionColors.length].tag}
+                  </div>
+                  <h2 style={{ fontSize: 'clamp(18px, 2.5vw, 26px)', fontWeight: 900, color: 'var(--site-text)', margin: 0 }}>
+                    {section.title}
+                  </h2>
+                </div>
               </div>
-              <h4 className="text-[18px] sm:text-[22px] font-extrabold text-white uppercase tracking-wider">
-                Bảng quy đổi điểm & giá trị quy đổi
-              </h4>
+
+              <div className="step-flow">
+                {section.steps.map((step, idx) => (
+                  <div key={`step-${idx}`} className="step-card-h" style={{ animationDelay: `${idx * 80}ms` }}>
+                    <div className="step-num-circle" style={{ background: sectionColors[sIdx % sectionColors.length].gradient }}>
+                      {parseInt(step.number, 10)}
+                    </div>
+                    <div className={`step-card-info ${!step.image ? 'md:col-span-2' : ''}`}>
+                      <h4>Bước {step.number}</h4>
+                      <p>{step.description}</p>
+                    </div>
+                    {step.image && (
+                      <div className="step-screenshot">
+                        <img src={step.image} alt={`Bước ${step.number}`} loading="lazy" />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          {/* === EXCHANGE RATE TABLE === */}
+          <div id="bang-diem" ref={tableSection.ref} className="mt-20">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="step-num-circle" style={{ background: 'linear-gradient(135deg, #eab308, #f97316)', fontSize: 20 }}>💰</div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--site-primary)' }}>
+                  Bảng quy đổi
+                </div>
+                <h2 style={{ fontSize: 'clamp(18px, 2.5vw, 26px)', fontWeight: 900, color: 'var(--site-text)', margin: 0 }}>
+                  Điểm bình chọn & Giá trị quy đổi
+                </h2>
+              </div>
             </div>
 
-            <div className="backdrop-blur-md bg-white/[0.04] border border-white/10 rounded-2xl overflow-hidden shadow-2xl w-full max-w-5xl mx-auto">
-              <div className="p-6 border-b border-white/10">
-                <p className="text-[13px] text-white/60 leading-relaxed">
-                  Điểm bình chọn được tự động cộng sau khi hệ thống xác nhận giao dịch thành công. Giá hiển thị đã bao gồm VAT 10%.
-                </p>
-              </div>
+            <p className={`text-sm mb-6 ${tableSection.visible ? 'fade-up' : 'opacity-0'}`} style={{ color: 'var(--site-muted)' }}>
+              Điểm được cộng tự động sau khi xác nhận giao dịch. Giá hiển thị đã bao gồm VAT 10%.
+            </p>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-white/[0.05] text-white/60 text-[11px] sm:text-[12px] font-bold uppercase tracking-wider border-b border-white/10">
-                      <th className="py-4 px-6">Gói bình chọn</th>
-                      <th className="py-4 px-6 text-right">Giá trị tương ứng</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/10">
-                    {exchangeRates.map((rate, index) => (
-                      <tr key={index} className="text-[13px] sm:text-[14px] text-white/80 hover:bg-[#79BCC2]/5 transition-all duration-150">
-                        <td className="py-3.5 px-6 font-semibold flex items-center gap-2.5">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#79BCC2] shadow-[0_0_8px_#79BCC2]" />
-                          {rate.points}
-                        </td>
-                        <td className="py-3.5 px-6 text-right font-medium text-white">
-                          {rate.price}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className={`exchange-table-wrap ${tableSection.visible ? 'fade-up fade-up-d1' : 'opacity-0'}`}>
+              <div className="exchange-table-head">
+                <span>Gói bình chọn</span>
+                <span>Giá trị</span>
+                <span>Ghi chú</span>
               </div>
+              {exchangeRates.map((rate, index) => {
+                const isFree = rate.price.toLowerCase().includes('miễn phí') || rate.price === '0';
+                const isPopular = rate.points === '220 Điểm' || rate.points === '50 Điểm';
+                return (
+                  <div key={index} className={`exchange-row ${isFree ? 'free-row' : isPopular ? 'popular-row' : ''}`}>
+                    <span className="exchange-points">
+                      {isFree && <span style={{ marginRight: 6 }}>🆓</span>}
+                      {rate.points}
+                    </span>
+                    <span className="exchange-price">{rate.price}</span>
+                    <span>
+                      {isFree && <span className="exchange-badge free">Miễn phí</span>}
+                      {isPopular && <span className="exchange-badge popular">⭐ Phổ biến</span>}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </div>
+
+          {/* === FAQ SECTION === */}
+          <div id="faq" ref={faqSection.ref} className="mt-20">
+            <div className="flex items-center gap-3 mb-8">
+              <div className="step-num-circle" style={{ background: 'linear-gradient(135deg, #8b5cf6, #c084fc)', fontSize: 20 }}>❓</div>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--site-primary)' }}>
+                  Câu hỏi thường gặp
+                </div>
+                <h2 style={{ fontSize: 'clamp(18px, 2.5vw, 26px)', fontWeight: 900, color: 'var(--site-text)', margin: 0 }}>
+                  Giải đáp thắc mắc
+                </h2>
+              </div>
+            </div>
+
+            <div className={`flex flex-col gap-3 ${faqSection.visible ? 'fade-up' : 'opacity-0'}`}>
+              {faqItems.map((item, i) => (
+                <div key={i} className={`faq-item ${openFaq === i ? 'open' : ''}`}>
+                  <button
+                    className="faq-question"
+                    onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                    aria-expanded={openFaq === i}
+                  >
+                    <span>{item.q}</span>
+                    <div className="faq-icon">
+                      <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                      </svg>
+                    </div>
+                  </button>
+                  <div className="faq-answer">{item.a}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* === CTA Section === */}
+          <div className="mt-20 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, #0A2FFF 0%, #79BCC2 100%)', padding: '48px 32px', textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🚀</div>
+            <h3 style={{ fontSize: 'clamp(22px, 3vw, 32px)', fontWeight: 900, color: '#fff', margin: '0 0 8px' }}>
+              Sẵn sàng bình chọn?
+            </h3>
+            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 15, maxWidth: 480, margin: '0 auto 24px' }}>
+              Hãy đăng nhập và ủng hộ dự án yêu thích của bạn ngay hôm nay!
+            </p>
+            <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Link href="/bang-xep-hang" className="hero-btn-primary">
+                🏆 Xem Bảng Xếp Hạng
+              </Link>
+              <Link href="/dang-nhap" className="hero-btn-secondary" style={{ border: '1px solid rgba(255,255,255,0.4)' }}>
+                Đăng nhập bình chọn →
+              </Link>
+            </div>
+          </div>
+
         </div>
       </main>
     </>

@@ -149,12 +149,12 @@ export default function CandidateDetailPage() {
   };
 
   if (isLoading) {
-    return <main className="min-h-[60vh] bg-[#f6faf8] px-4 py-12 text-center text-sm font-semibold text-[#52605b]">Đang tải hồ sơ dự án...</main>;
+    return <main className="project-detail-page min-h-[60vh] bg-[#f6faf8] px-4 py-12 text-center text-sm font-semibold text-[#52605b]">Đang tải hồ sơ dự án...</main>;
   }
 
   if (!candidate) {
     return (
-      <main className="min-h-[60vh] bg-[#f6faf8] px-4 py-12 text-center">
+      <main className="project-detail-page min-h-[60vh] bg-[#f6faf8] px-4 py-12 text-center">
         <h1 className="text-xl font-black text-[#123c34]">Không tìm thấy dự án</h1>
         <Link href="/" className="mt-4 inline-block text-sm font-bold text-[#0f766e]">Quay lại trang chủ</Link>
       </main>
@@ -162,7 +162,7 @@ export default function CandidateDetailPage() {
   }
 
   return (
-    <main className="bg-[#f6faf8] pb-28">
+    <main className="project-detail-page bg-[#f6faf8] pb-28">
       <section className="bg-[#123c34] px-4 py-8 text-white">
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[420px_1fr]">
           <div className="flex flex-col gap-3">
