@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { AlertProvider } from './AlertProvider';
 import { apiUrl } from './api';
+import { initDevToolsProtection } from '../src/utils/devtoolsProtection';
 
 export interface SystemSettings {
   isGateOpen: boolean;
@@ -18,30 +19,58 @@ export interface SystemSettings {
   isMaintenanceMode: boolean;
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const fullSiteTitle = "HUIT STARTUP - Đổi mới sáng tạo hướng tới phát triển bền vững";
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const fullSiteTitle = 'HUIT STARTUP - Đổi mới sáng tạo hướng tới phát triển bền vững';
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [scrolledDown, setScrolledDown] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [currentHash, setCurrentHash] = useState('');
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [lang, setLang] = useState<'vi' | 'en'>('vi');
+
+  useEffect(() => {
+    const savedLang = localStorage.getItem('huit_lang') as 'vi' | 'en' | null;
+    if (savedLang) setLang(savedLang);
+  }, []);
+
+  const toggleLang = () => {
+    const nextLang = lang === 'vi' ? 'en' : 'vi';
+    setLang(nextLang);
+    localStorage.setItem('huit_lang', nextLang);
+  };
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('huit_theme_v2') as 'light' | 'dark' | null;
+    const initialTheme = savedTheme || 'light';
+    setTheme(initialTheme);
+    document.documentElement.dataset.theme = initialTheme;
+    const onScroll = () => setShowScrollTop(window.scrollY > 520);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    document.documentElement.dataset.theme = nextTheme;
+    localStorage.setItem('huit_theme_v2', nextTheme);
+  };
+
+  useEffect(() => {
+    const cleanup = initDevToolsProtection();
+    return cleanup;
+  }, []);
 
   useEffect(() => {
     const readUser = () => {
       if (typeof window !== 'undefined') {
         const rawUser = localStorage.getItem('huit_web_user');
         if (rawUser) {
-          try {
-            setCurrentUser(JSON.parse(rawUser));
-          } catch (e) {
-            setCurrentUser(null);
-          }
+          try { setCurrentUser(JSON.parse(rawUser)); }
+          catch { setCurrentUser(null); }
         } else {
           setCurrentUser(null);
         }
@@ -68,12 +97,10 @@ export default function RootLayout({
         if (res.ok) {
           const data = await res.json();
           setSettings(data);
-          if (typeof document !== 'undefined') {
-            document.title = fullSiteTitle;
-          }
+          if (typeof document !== 'undefined') document.title = fullSiteTitle;
         }
       } catch (err) {
-        console.error("Failed to fetch system settings", err);
+        console.error('Failed to fetch system settings', err);
       }
     }
     fetchSettings();
@@ -81,18 +108,13 @@ export default function RootLayout({
     return () => clearInterval(interval);
   }, []);
 
-
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setCurrentHash(window.location.hash);
-      const handleHashChange = () => {
-        setCurrentHash(window.location.hash);
-      };
+      const handleHashChange = () => setCurrentHash(window.location.hash);
       window.addEventListener('hashchange', handleHashChange);
       const interval = setInterval(() => {
-        if (window.location.hash !== currentHash) {
-          setCurrentHash(window.location.hash);
-        }
+        if (window.location.hash !== currentHash) setCurrentHash(window.location.hash);
       }, 200);
       return () => {
         window.removeEventListener('hashchange', handleHashChange);
@@ -104,23 +126,13 @@ export default function RootLayout({
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      
-      // Nếu scroll xuống và lớn hơn 100px
-      if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        setScrolledDown(true);
-      } else {
-        // Nếu scroll lên
-        setScrolledDown(false);
-      }
       setLastScrollY(currentScrollY);
     };
-
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-    };
+    return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
+  // ─── Maintenance Mode ─────────────────────────────────
   if (settings?.isMaintenanceMode) {
     return (
       <html lang="vi">
@@ -131,40 +143,24 @@ export default function RootLayout({
           <link rel="stylesheet" href="/css/82aef30d151230ac.css" />
           <link rel="stylesheet" href="/css/be16ba848ed13f21.css" />
           <link rel="stylesheet" href="/css/431944509084d071.css" />
-          <style>{`
-            body {
-              background-color: #030612 !important;
-              color: #ffffff;
-              font-family: Inter, sans-serif;
-              margin: 0;
-            }
-          `}</style>
+          <style>{`body { background-color: #030612 !important; color: #ffffff; font-family: Inter, sans-serif; margin: 0; }`}</style>
         </head>
         <body className="dark bg-[#030612] flex items-center justify-center min-h-screen p-4 overflow-hidden relative">
-          <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none"></div>
-          <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] rounded-full bg-cyan-600/10 blur-[120px] pointer-events-none"></div>
-          
+          <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
+          <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] rounded-full bg-cyan-600/10 blur-[120px] pointer-events-none" />
           <div className="max-w-md w-full text-center z-10 bg-white/[0.02] backdrop-blur-xl border border-white/5 p-8 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col items-center">
-            <div className="w-20 h-20 bg-blue-500/10 border border-blue-500/20 rounded-2xl flex items-center justify-center mb-6 animate-pulse">
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="none" stroke="#79BCC2" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="animate-[spin_10s_linear_infinite]">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-            </div>
-            
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70 tracking-wide uppercase">{settings.eventTitle}</h1>
+            <h1 className="text-xl font-bold text-white tracking-wide uppercase">{settings.eventTitle}</h1>
             <p className="text-[12px] text-cyan-400/80 font-medium mt-1 uppercase tracking-wider">{settings.organizer}</p>
-            
-            <div className="h-[1px] w-full bg-white/10 my-6"></div>
-            
+            <div className="h-[1px] w-full bg-white/10 my-6" />
             <h2 className="text-lg font-semibold text-slate-100">Hệ thống đang bảo trì</h2>
             <p className="text-[14px] text-slate-400 mt-2 leading-relaxed">
-              Chúng tôi đang tiến hành nâng cấp định kỳ để cải thiện trải nghiệm bình chọn của bạn. Cổng bình chọn sẽ sớm hoạt động trở lại.
+              Chúng tôi đang tiến hành nâng cấp định kỳ để cải thiện trải nghiệm bình chọn của bạn.
             </p>
-            
             <div className="mt-8 p-4 bg-white/[0.02] border border-white/5 rounded-xl w-full text-left">
               <p className="text-[12px] text-slate-400">Đơn vị hỗ trợ kỹ thuật:</p>
-              <p className="text-[14px] font-medium text-slate-200 mt-0.5">Email: <a href={`mailto:${settings.contactEmail}`} className="text-[#79BCC2] hover:underline">{settings.contactEmail}</a></p>
+              <p className="text-[14px] font-medium text-slate-200 mt-0.5">
+                Email: <a href={`mailto:${settings.contactEmail}`} className="text-[var(--site-primary)] hover:underline">{settings.contactEmail}</a>
+              </p>
             </div>
           </div>
         </body>
@@ -172,299 +168,379 @@ export default function RootLayout({
     );
   }
 
+  // ─── Nav links ────────────────────────────────────────
+  const navLinks = [
+    { href: '/', label: 'Trang chủ' },
+    { href: '/gioi-thieu', label: 'Giới thiệu' },
+    { href: '/thoi-gian', label: 'Thời gian' },
+    { href: '/bang-xep-hang', label: 'Bảng xếp hạng' },
+    { href: '/the-le', label: 'Hướng dẫn' },
+  ];
+
+  const drawerLinks = [
+    {
+      href: '/', label: 'Trang chủ',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    },
+    {
+      href: '/gioi-thieu', label: 'Giới thiệu',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    },
+    {
+      href: '/thoi-gian', label: 'Thời gian',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    },
+    {
+      href: '/bang-xep-hang', label: 'Bảng xếp hạng',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="18 20 18 10"/><polyline points="12 20 12 4"/><polyline points="6 20 6 14"/></svg>
+    },
+    {
+      href: '/the-le', label: 'Hướng dẫn',
+      icon: <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    },
+  ];
+
+  // ─── Main Layout ─────────────────────────────────────
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('huit_theme_v2');document.documentElement.dataset.theme=t||'light'}catch(e){document.documentElement.dataset.theme='light'}})()` }} />
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{fullSiteTitle}</title>
-        <meta name="description" content={settings?.eventTitle ? `Bình chọn ${settings.eventTitle}` : "Bình chọn HUIT STARTUP"} />
+        <meta name="description" content={settings?.eventTitle ? `Bình chọn ${settings.eventTitle}` : 'Bình chọn HUIT STARTUP'} />
         <link rel="icon" href="/favicon.png" type="image/png" />
-        
-        {/* Load Google Fonts Inter */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
 
-        {/* Load original CSS files copied from Binhchon mirror */}
+
+
+        {/* Original CSS */}
         <link rel="stylesheet" href="/css/82aef30d151230ac.css" />
         <link rel="stylesheet" href="/css/be16ba848ed13f21.css" />
         <link rel="stylesheet" href="/css/431944509084d071.css" />
         <link rel="stylesheet" href="/eventista-platform-api.1vote.vn/v1/internal/tenants/tAtj0/colors.css" />
 
         <style suppressHydrationWarning>{`
-          /* Custom overrides for monorepo layouts */
           body {
-            background-color: #030612 !important;
+            background-color: var(--site-bg) !important;
             margin: 0;
             font-family: Inter, sans-serif;
           }
           .RKByV {
-            padding: 0px 128px;
-            padding-top: 0;
+            padding: 0px 128px; padding-top: 0;
             width: calc(1311px + 128px * 2);
-            margin-left: auto;
-            margin-right: auto;
+            margin-left: auto; margin-right: auto;
           }
-          @media (max-width: 1504px) {
-            .RKByV { width: 1312px; padding: 0px 0px; }
-          }
-          @media (max-width: 1312px) {
-            .RKByV { width: 1110px; padding: 0px 0px; }
-          }
-          @media (max-width: 1199px) {
-            .RKByV { width: calc(984px + 69px * 2); padding: 0px 0px; }
-          }
-          @media (max-width: 1121px) {
-            .RKByV { width: calc(744px + 37px * 2); padding: 0px 37px; }
-          }
-          @media (max-width: 812px) {
-            .RKByV { width: 100%; padding: 0px 0px; margin-left: 0; margin-right: 0; }
-          }
+          @media (max-width: 1504px) { .RKByV { width: 1312px; padding: 0; } }
+          @media (max-width: 1312px) { .RKByV { width: 1110px; padding: 0; } }
+          @media (max-width: 1199px) { .RKByV { width: calc(984px + 69px * 2); padding: 0; } }
+          @media (max-width: 1121px) { .RKByV { width: calc(744px + 37px * 2); padding: 0 37px; } }
+          @media (max-width: 812px)  { .RKByV { width: 100%; padding: 0; margin: 0; } }
           .ekqPrV {
-            padding: 0px 128px;
-            padding-top: 0;
+            padding: 0px 128px; padding-top: 0;
             width: calc(1311px + 128px * 2);
-            margin-left: auto;
-            margin-right: auto;
+            margin-left: auto; margin-right: auto;
           }
-          @media (max-width: 1504px) {
-            .ekqPrV { width: 1312px; padding: 0px 0px; }
-          }
-          @media (max-width: 1312px) {
-            .ekqPrV { width: 1110px; padding: 0px 0px; }
-          }
-          @media (max-width: 1199px) {
-            .ekqPrV { width: calc(984px + 69px * 2); padding: 0px 0px; }
-          }
-          @media (max-width: 1121px) {
-            .ekqPrV { width: calc(744px + 37px * 2); padding: 0px 37px; }
-          }
-          @media (max-width: 812px) {
-            .ekqPrV { width: auto; padding: 0px 16px; margin-left: auto; margin-right: auto; }
-          }
+          @media (max-width: 1504px) { .ekqPrV { width: 1312px; padding: 0; } }
+          @media (max-width: 1312px) { .ekqPrV { width: 1110px; padding: 0; } }
+          @media (max-width: 1199px) { .ekqPrV { width: calc(984px + 69px * 2); padding: 0; } }
+          @media (max-width: 1121px) { .ekqPrV { width: calc(744px + 37px * 2); padding: 0 37px; } }
+          @media (max-width: 812px)  { .ekqPrV { width: auto; padding: 0 16px; margin: 0 auto; } }
         `}</style>
       </head>
-      <body className="dark">
+
+      <body>
         <AlertProvider>
           <main suppressHydrationWarning>
-          {/* Header section identical to sample website */}
-          <div className="sticky-outer-wrapper" style={{ height: '80px' }}>
-            <div 
-              className="sticky-inner-wrapper" 
-              style={{ 
-                position: 'fixed', 
-                top: '0px', 
-                left: '0px', 
-                right: '0px', 
-                zIndex: 1001,
-                transform: scrolledDown ? 'translateY(-65px)' : 'translateY(0px)',
-                transition: 'transform 0.3s ease-in-out',
-                height: '80px'
-              }}
-            >
-              <div className="absolute h-[80px] top-0 left-0 right-0 w-full flex justify-center bg-white border-b border-slate-200 shadow-sm">
-                <div className="sc-1a037b37-0 RKByV flex w-full md:justify-between items-center h-full">
-                  <div className="flex-1 flex md:flex-auto items-center h-full">
 
-                    {/* Mobile Menu Icon */}
-                    <div className="flex items-center sm-desktop:hidden h-[80px]">
+            {/* ── STICKY HEADER ── */}
+            <div className="sticky-outer-wrapper" style={{ height: '80px' }}>
+              <div
+                className="sticky-inner-wrapper"
+                style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1001, height: '80px' }}
+              >
+                {/* Glass header bar */}
+                <div className="absolute h-[80px] top-0 left-0 right-0 w-full flex justify-center header-glass">
+                  <div className="header-accent-line" />
+
+                  <div className="sc-1a037b37-0 RKByV flex w-full items-center h-full px-4 sm:px-0">
+
+                    {/* Logo */}
+                    <div className="flex shrink-0 items-center h-full">
+                      <div className="h-full flex items-center gap-2 md:gap-5">
+                        <Link className="focus:outline-none flex items-center" href="/">
+                          <img alt="IEC" width="120" height="26" className="object-contain max-w-[90px] sm:max-w-[120px]" src="/images/ieclogo.png" />
+                        </Link>
+                        <img alt="HUIT STARTUP" width="110" height="34" className="object-contain max-h-[56px] max-w-[68px] sm:max-w-[110px]" src="/images/startuplogo.png" />
+                      </div>
+                    </div>
+
+                    {/* Desktop nav */}
+                    <nav className="ml-auto hidden sm-desktop:flex items-center h-full gap-1">
+                      {navLinks.map(({ href, label }) => (
+                        <Link
+                          key={href}
+                          href={href}
+                          className={`nav-link-modern ${pathname === href ? 'active' : ''}`}
+                        >
+                          {label}
+                          <span className="nav-underline" />
+                        </Link>
+                      ))}
+                    </nav>
+
+                    {/* Right side actions */}
+                    <div className="ml-2 flex items-center gap-2">
+                      {/* Desktop user / login */}
+                      {currentUser ? (
+                        <div className="hidden sm:flex items-center gap-2 ml-1">
+                          <span className="text-[13px] font-bold max-w-[130px] truncate" style={{ color: 'var(--site-text)' }}>
+                            {currentUser.fullName}
+                          </span>
+                          <button
+                            onClick={handleLogout}
+                            className="flex items-center justify-center w-[38px] h-[38px] border border-red-200/50 hover:border-red-500 rounded-xl text-red-500 hover:bg-red-500/10 transition cursor-pointer"
+                            title="Đăng xuất"
+                            aria-label="Đăng xuất"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                              <polyline points="16 17 21 12 16 7" />
+                              <line x1="21" y1="12" x2="9" y2="12" />
+                            </svg>
+                          </button>
+                        </div>
+                      ) : (
+                        <Link
+                          id="loginHeaderBtn"
+                          href="/dang-nhap"
+                          className="hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl transition-all ml-1 text-[13px] font-semibold"
+                          style={{ color: 'var(--site-text)' }}
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+                          </svg>
+                          Đăng nhập
+                        </Link>
+                      )}
+
+                      {/* Language toggle (Temporarily hidden until English translation is complete)
+                      <button
+                        onClick={toggleLang}
+                        className="site-theme-toggle font-extrabold text-[12px] uppercase"
+                        aria-label="Đổi ngôn ngữ / Switch language"
+                        title="Đổi ngôn ngữ (VI/EN)"
+                      >
+                        {lang}
+                      </button>
+                      */}
+
+                      {/* Theme toggle (Far right) */}
+                      <button
+                        onClick={toggleTheme}
+                        className="site-theme-toggle"
+                        aria-label={theme === 'dark' ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
+                        title="Đổi giao diện sáng/tối"
+                      >
+                        {theme === 'dark' ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                          </svg>
+                        )}
+                      </button>
+
+                      {/* Mobile hamburger */}
                       <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="focus:outline-none sc-f65501b1-0 eCoCwA h-[80px] pl-[20px] pr-1 w-[48px] flex justify-center items-center bg-transparent border-0 cursor-pointer"
+                        className="flex sm-desktop:hidden items-center justify-center w-[38px] h-[38px] rounded-xl transition-all"
+                        style={{ color: 'var(--site-text)' }}
+                        aria-label="Mở menu"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                          <path d="M2 6C2 5.44772 2.44772 5 3 5H21C21.5523 5 22 5.44772 22 6C22 6.55228 21.5523 7 21 7H3C2.44772 7 2 6.55228 2 6Z" fill="#334155"></path>
-                          <path d="M2 12C2 11.4477 2.44772 11 3 11H21C21.5523 11 22 11.4477 22 12C22 12.5523 21.5523 13 21 13H3C2.44772 13 2 12.5523 2 12Z" fill="#334155"></path>
-                          <path d="M3 17C2.44772 17 2 17.4477 2 18C2 18.5523 2.44772 19 3 19H21C21.5523 19 22 18.5523 22 18C22 17.4477 21.5523 17 21 17H3Z" fill="#334155"></path>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <line x1="3" y1="6" x2="21" y2="6"/>
+                          <line x1="3" y1="12" x2="21" y2="12"/>
+                          <line x1="3" y1="18" x2="21" y2="18"/>
                         </svg>
                       </button>
                     </div>
+                  </div>
+                </div>
 
-                    {/* Logo Section */}
-                    <div className="h-full flex items-center gap-1 md:gap-[40px]">
-                      <Link className="focus:outline-none w-[105px] sm:w-[139px] flex items-center" href="/">
-                        <img alt="IEC" width="139" height="28" className="mobile:max-w-[105px] object-contain" src="/images/ieclogo.png" />
-                      </Link>
-                      <img alt="HUIT STARTUP" width="125" height="36" className="object-contain max-h-[60px] mobile:max-w-[72px]" src="/images/startuplogo.png" />
-                    </div>
+                {/* ── MOBILE DRAWER OVERLAY ── */}
+                <div
+                  className={`mobile-drawer-overlay sm-desktop:hidden ${mobileMenuOpen ? 'open' : ''}`}
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+
+                {/* ── MOBILE SLIDE-IN DRAWER ── */}
+                <nav className={`mobile-drawer sm-desktop:hidden ${mobileMenuOpen ? 'open' : ''}`} aria-label="Mobile navigation">
+                  {/* Drawer header */}
+                  <div className="mobile-drawer-header">
+                    <img alt="IEC" width="90" height="22" className="object-contain" src="/images/ieclogo.png" />
+                    <button
+                      className="mobile-drawer-close"
+                      onClick={() => setMobileMenuOpen(false)}
+                      aria-label="Đóng menu"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
                   </div>
 
-                  {/* Desktop Navigation Links */}
-                  <div className="flex items-center gap-1 md:gap-[28px] mobile:pr-1 h-full">
-                    <div className="items-center hidden sm-desktop:flex h-full">
-                      <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/">
-                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF] font-normal'}`}>
-                          Trang chủ
-                        </p>
-                        {pathname === '/' && <div className="h-[3px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#00C6FF] bottom-3"></div>}
+                  {/* Drawer links */}
+                  <div className="mobile-drawer-nav">
+                    {drawerLinks.map(({ href, label, icon }) => (
+                      <Link
+                        key={href}
+                        href={href}
+                        className={`mobile-drawer-link ${pathname === href ? 'active' : ''}`}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        {icon}
+                        {label}
                       </Link>
-                      <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/gioi-thieu">
-                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/gioi-thieu' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF] font-normal'}`}>
-                          Giới thiệu
-                        </p>
-                        {pathname === '/gioi-thieu' && <div className="h-[3px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#00C6FF] bottom-3"></div>}
-                      </Link>
-                      <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/thoi-gian">
-                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/thoi-gian' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF] font-normal'}`}>
-                          Thời gian
-                        </p>
-                        {pathname === '/thoi-gian' && <div className="h-[3px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#00C6FF] bottom-3"></div>}
-                      </Link>
-                      <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/bang-xep-hang">
-                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/bang-xep-hang' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF] font-normal'}`}>
-                          Bảng xếp hạng
-                        </p>
-                        {pathname === '/bang-xep-hang' && <div className="h-[3px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#00C6FF] bottom-3"></div>}
-                      </Link>
-                      <Link className="focus:outline-none px-3 relative text-center flex items-center h-full" href="/the-le">
-                        <p className={`text-caption1 leading-[23px] transition-colors duration-200 ${pathname === '/the-le' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF] font-normal'}`}>
-                          Hướng dẫn
-                        </p>
-                        {pathname === '/the-le' && <div className="h-[3px] rounded-sm w-[24px] absolute left-[calc(50%-12px)] bg-gradient-to-r from-[#0A2FFF] to-[#00C6FF] bottom-3"></div>}
-                      </Link>
-                    </div>
+                    ))}
+                  </div>
 
-                    {/* Desktop User Status/Login Button */}
+                  {/* Drawer footer (user / login) */}
+                  <div className="mobile-drawer-footer">
                     {currentUser ? (
-                      <div className="hidden sm:flex items-center gap-3 h-full">
-                        <div className="flex items-center gap-2 text-slate-800">
-                          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0A2FFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" style={{ stroke: '#0A2FFF' }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                          <span className="text-caption1 font-bold leading-[23px] text-slate-800 max-w-[150px] truncate">{currentUser.fullName}</span>
-                        </div>
-                        <button onClick={handleLogout} className="text-caption1 font-medium text-red-600 hover:text-red-800 hover:underline transition-colors bg-transparent border-0 outline-none cursor-pointer">
+                      <div className="flex flex-col gap-2">
+                        <p className="text-sm font-semibold" style={{ color: 'var(--site-text)' }}>
+                          Xin chào, <span style={{ color: 'var(--site-primary)' }}>{currentUser.fullName}</span>
+                        </p>
+                        <button
+                          onClick={() => { handleLogout(); setMobileMenuOpen(false); }}
+                          className="w-full py-2.5 rounded-xl text-sm font-bold text-red-600 border border-red-200 bg-red-50 hover:bg-red-100 transition"
+                        >
                           Đăng xuất
                         </button>
                       </div>
                     ) : (
-                      <Link id="loginHeaderBtn" href="/dang-nhap" className="group hidden sm:flex cursor-pointer gap-2 relative justify-center items-center text-slate-800 hover:text-[#0A2FFF] transition-colors h-full">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" style={{ stroke: 'currentColor' }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                        <p className="text-caption1 font-medium leading-[23px] text-slate-800 group-hover:text-[#0A2FFF] transition-colors">Đăng nhập</p>
-                      </Link>
-                    )}
-
-                    {/* Mobile User Status/Login Button */}
-                    {currentUser ? (
-                      <button
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="flex sm:hidden cursor-pointer justify-center items-center p-2 hover:border-[#0A2FFF]/50 hover:bg-[#0A2FFF]/10 transition-all rounded-full text-[#0A2FFF] border-[#0A2FFF]/30 bg-[#0A2FFF]/5"
-                        style={{ height: '36px', width: '36px', border: '1px solid rgba(10, 47, 255, 0.3)' }}
+                      <Link
+                        href="/dang-nhap"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center justify-center gap-2 w-full py-3 rounded-xl text-sm font-bold text-white-force"
+                        style={{ background: 'linear-gradient(135deg, #0A2FFF, #79BCC2)' }}
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" style={{ stroke: 'currentColor' }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                      </button>
-                    ) : (
-                      <Link id="loginHeaderBtnMobile" href="/dang-nhap" className="flex sm:hidden cursor-pointer justify-center items-center p-2 hover:border-[#0A2FFF]/50 hover:bg-[#0A2FFF]/10 transition-all rounded-full text-slate-800 hover:text-[#0A2FFF]" style={{ height: '36px', width: '36px', border: '1px solid rgba(0,0,0,0.15)' }}>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-[18px] h-[18px]" style={{ stroke: 'currentColor' }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Mobile Dropdown Navigation Menu */}
-              {mobileMenuOpen && (
-                <div className="flex flex-col absolute top-[80px] left-0 right-0 bg-white/95 backdrop-blur-[16px] p-4 z-50 w-full sm-desktop:hidden border-b border-black/10 space-y-3">
-                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/" onClick={() => setMobileMenuOpen(false)}>
-                    Trang chủ
-                  </Link>
-                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/gioi-thieu' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/gioi-thieu" onClick={() => setMobileMenuOpen(false)}>
-                    Giới thiệu
-                  </Link>
-                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/thoi-gian' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/thoi-gian" onClick={() => setMobileMenuOpen(false)}>
-                    Thời gian
-                  </Link>
-                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/bang-xep-hang' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/bang-xep-hang" onClick={() => setMobileMenuOpen(false)}>
-                    Bảng xếp hạng
-                  </Link>
-                  <Link className={`focus:outline-none py-2 block text-center transition-all ${pathname === '/the-le' ? 'text-[#0A2FFF] font-bold' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/the-le" onClick={() => setMobileMenuOpen(false)}>
-                    Hướng dẫn
-                  </Link>
-                  {currentUser ? (
-                    <>
-                      <div className="py-2 text-center text-slate-800 font-semibold border-t border-slate-100">
-                        Xin chào, <span className="text-[#0A2FFF]">{currentUser.fullName}</span>
-                      </div>
-                      <button
-                        onClick={() => {
-                          handleLogout();
-                          setMobileMenuOpen(false);
-                        }}
-                        className="py-2 block w-full text-center text-red-600 hover:text-red-800 font-bold transition-all border-b border-slate-100 bg-transparent border-0 cursor-pointer"
-                      >
-                        Đăng xuất
-                      </button>
-                    </>
-                  ) : (
-                    <Link className={`focus:outline-none py-2 block text-center font-bold transition-all ${pathname === '/dang-nhap' ? 'text-[#0A2FFF]' : 'text-slate-800 hover:text-[#0A2FFF]'}`} href="/dang-nhap" onClick={() => setMobileMenuOpen(false)}>
-                      Đăng nhập
-                    </Link>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Main Children View */}
-          {children}
-
-          {/* Footer identical to sample website */}
-          <div className="relative bg-footer-gradient border-t border-white/5">
-            <div className="sc-1a037b37-0 ekqPrV">
-              <div className="flex flex-col space-y-6 py-8 items-center">
-                <div className="flex flex-col items-start sm:items-center space-y-1 sm:space-y-0 justify-center">
-                  <img alt="HUIT STARTUP" width="176" height="40" className="object-contain my-[10px]" src="/images/startuplogo.png" />
-                  <div className="max-w-[884px] pt-1.5">
-                    <p className="text-body text-neutral-grey text-center text-[12px] leading-relaxed">
-                      Cuộc thi HUIT Startup lần thứ 7 năm 2026 cấp Thành phố với chủ đề “Đổi mới sáng tạo hướng tới phát triển bền vững” nhằm tìm kiếm và ươm tạo các ý tưởng, dự án sáng tạo của học sinh, sinh viên, học viên và doanh nghiệp; góp phần giải quyết các vấn đề xã hội và thúc đẩy phát triển bền vững.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="max-w-[1248px] w-full flex gap-3 px-0 sm:px-3 flex-col sm:flex-row flex-wrap justify-between pt-4">
-                  <div className="flex flex-col space-y-2 max-w-[300px]">
-                    <span className="text-button text-white text-[18px] font-bold">Hỗ trợ</span>
-                    <div className="flex flex-col gap-1 text-[13px] text-white/70">
-                      <p>Email: <a href="mailto:iec@huit.edu.vn" className="hover:underline">iec@huit.edu.vn</a></p>
-                      <p>Website: <a href="https://iec.huit.edu.vn" target="_blank" rel="noopener noreferrer" className="hover:underline">https://iec.huit.edu.vn</a></p>
-                      <p>Hotline: Điện thoại 0963 621 124 hoặc (028) 3816 3318 - 142</p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col space-y-2 max-w-[300px]">
-                    <span className="text-button text-white text-[18px] font-bold">Kết nối với chúng tôi</span>
-                    <div className="flex space-x-2">
-                      <a target="_blank" rel="noopener noreferrer" href="https://www.facebook.com/huit.startup">
-                        <img alt="Facebook" width="32" height="32" src="/images/imaged2ec.png" />
-                      </a>
-                      <a target="_blank" rel="noopener noreferrer" href="https://www.tiktok.com/@huit_media">
-                        <img alt="Tiktok" width="32" height="32" src="/images/image7782.png" />
-                      </a>
-                      <a target="_blank" rel="noopener noreferrer" href="https://www.instagram.com/dh_congthuong/">
-                        <img alt="Instagram" width="32" height="32" src="/images/instagram.png" />
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col space-y-2 max-w-[300px] w-full">
-                    <span className="text-button text-white text-[18px] font-bold">Phương thức thanh toán</span>
-                    <div className="flex flex-wrap gap-2">
-                      <div className="flex items-center space-x-2.5 bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-[13px] text-white/90 font-medium hover:bg-white/10 hover:border-[#79BCC2]/30 transition-all duration-300 select-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]">
-                          <rect x="2" y="2" width="20" height="20" rx="3" />
-                          <rect x="6" y="6" width="4" height="4" />
-                          <rect x="14" y="6" width="4" height="4" />
-                          <rect x="6" y="14" width="4" height="4" />
-                          <rect x="14" y="14" width="4" height="4" />
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
                         </svg>
-                        <span>Chuyển khoản QR (Sepay)</span>
-                      </div>
-                    </div>
+                        Đăng nhập
+                      </Link>
+                    )}
                   </div>
-                </div>
-
+                </nav>
               </div>
             </div>
-          </div>
+
+            {/* ── PAGE CONTENT ── */}
+            {children}
+
+            {/* ── FLOATING ACTION BUTTONS ── */}
+            {/* ── FLOATING ACTION BUTTONS ── */}
+            <aside className="site-floating-actions" aria-label="Liên hệ nhanh">
+              <a href="https://zalo.me/0975702463" target="_blank" rel="noopener noreferrer" className="float-action zalo" data-label="Zalo" aria-label="Liên hệ qua Zalo">
+                <img src="/images/zalo.png" alt="Zalo" className="w-full h-full object-contain" />
+              </a>
+              <a href="tel:0975702463" className="float-action phone" data-label="Gọi điện" aria-label="Gọi điện hỗ trợ">
+                <img src="/images/telephone.png" alt="Điện thoại" className="w-full h-full object-contain" />
+              </a>
+              <a href="mailto:iec@huit.edu.vn" className="float-action chat" data-label="Liên hệ" aria-label="Gửi email liên hệ">
+                <img src="/images/mail.png" alt="Email" className="w-full h-full object-contain" />
+              </a>
+              <button
+                className={`float-action scroll-top ${showScrollTop ? 'visible' : ''}`}
+                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                data-label="Lên đầu trang"
+                aria-label="Cuộn lên đầu trang"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" width="20" height="20">
+                  <polyline points="18 15 12 9 6 15"/>
+                </svg>
+              </button>
+            </aside>
+
+            {/* ── FOOTER ── */}
+            <footer className="site-footer-modern">
+              <div className="site-footer-grid">
+                <div className="footer-brand-column">
+                  <div className="footer-logos">
+                    <img alt="HUIT Startup" src="/images/startuplogo.png" />
+                    <img alt="IEC" src="/images/ieclogo.png" />
+                  </div>
+                  <p>Cuộc thi khởi nghiệp đổi mới sáng tạo cấp Thành phố, nơi kết nối ý tưởng, tri thức và nguồn lực để kiến tạo những giải pháp phát triển bền vững.</p>
+                  <p style={{ fontSize: '12px', marginTop: '6px', fontStyle: 'italic', opacity: 0.7 }}>Đổi mới sáng tạo · Phát triển bền vững</p>
+                </div>
+
+                <div>
+                  <h3>Về chúng tôi</h3>
+                  <Link href="/gioi-thieu">Giới thiệu cuộc thi</Link>
+                  <Link href="/gioi-thieu">Sứ mệnh &amp; Tầm nhìn</Link>
+                  <Link href="/thoi-gian">Lịch trình thi</Link>
+                  <Link href="/bang-xep-hang">Bảng xếp hạng</Link>
+                </div>
+
+                <div>
+                  <h3>Hỗ trợ</h3>
+                  <Link href="/the-le">Hướng dẫn bình chọn</Link>
+                  <Link href="/the-le#faq">Câu hỏi thường gặp</Link>
+                  <a href="mailto:iec@huit.edu.vn">Liên hệ hỗ trợ</a>
+                  <a href="https://docs.google.com/forms/d/e/1FAIpQLSdlRmaBRgPAl_rbLjDOY__ROcyZsCOnoxec2izDhRVJTcHBfA/viewform" target="_blank" rel="noopener noreferrer">Đăng ký tham dự</a>
+                </div>
+
+                <div className="footer-contact-column">
+                  <h3>Thông tin liên hệ</h3>
+                  <a href="mailto:iec@huit.edu.vn" className="flex items-center gap-2 text-[13px] hover:text-[var(--site-primary)] transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="text-[var(--site-primary)] shrink-0">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                      <polyline points="22,6 12,13 2,6" />
+                    </svg>
+                    iec@huit.edu.vn
+                  </a>
+                  <a href="tel:0975702463" className="flex items-center gap-2 text-[13px] hover:text-[var(--site-primary)] transition">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="text-[var(--site-primary)] shrink-0">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.3 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z" />
+                    </svg>
+                    0975 702 463
+                  </a>
+                  <p className="flex items-start gap-2 text-[13px] text-left">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="text-[var(--site-primary)] mt-0.5 shrink-0">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    <span>140 Lê Trọng Tấn, P. Tây Thạnh, TP.HCM</span>
+                  </p>
+                  <div className="footer-socials">
+                    <a href="https://www.facebook.com/huit.startup" aria-label="Facebook" title="Facebook HUIT Startup">
+                      <img src="/images/facebook.png" alt="Facebook" className="w-full h-full object-contain" />
+                    </a>
+                    <a href="https://www.tiktok.com/@huit_media" aria-label="TikTok" title="TikTok HUIT Media">
+                      <img src="/images/tiktok.png" alt="TikTok" className="w-full h-full object-contain" />
+                    </a>
+                    <a href="https://www.instagram.com/dh_congthuong/" aria-label="Instagram" title="Instagram Đại học Công Thương">
+                      <img src="/images/instagram.png" alt="Instagram" className="w-full h-full object-contain" />
+                    </a>
+                  </div>
+                </div>
+              </div>
+              <div className="site-footer-bottom">
+                <span>© 2026 HUIT Startup · Trường Đại học Công Thương TP.HCM</span>
+                <span style={{ fontSize: '11px' }}>
+                  Thiết kế bởi IEC · <a href="mailto:iec@huit.edu.vn" style={{ color: 'inherit' }}>iec@huit.edu.vn</a>
+                </span>
+              </div>
+            </footer>
+
           </main>
         </AlertProvider>
       </body>

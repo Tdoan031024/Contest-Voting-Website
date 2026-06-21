@@ -4,8 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useAlert } from '../AlertProvider';
 import { apiUrl } from '../api';
 
-type RegisterMode = 'normal' | 'quick';
-
 declare global {
   interface Window {
     google?: any;
@@ -66,7 +64,6 @@ export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
-  const [registerMode, setRegisterMode] = useState<RegisterMode>('normal');
   const [registerForm, setRegisterForm] = useState(defaultRegisterForm);
 
   useEffect(() => {
@@ -163,23 +160,10 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     try {
-      const endpoint = registerMode === 'normal'
-        ? '/api/web/auth/register'
-        : '/api/web/auth/quick-register';
-      const payload = registerMode === 'normal'
-        ? registerForm
-        : {
-            fullName: registerForm.fullName,
-            email: registerForm.email,
-            phone: registerForm.phone,
-            schoolOrCompany: registerForm.schoolOrCompany,
-            contestTable: registerForm.contestTable,
-          };
-
-      const res = await fetch(apiUrl(endpoint), {
+      const res = await fetch(apiUrl('/api/web/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(registerForm),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok) throw new Error(data?.message || 'Không thể đăng ký tài khoản.');
@@ -207,11 +191,7 @@ export default function LoginPage() {
       <style>{`
         @media (min-width: 812px) {
           .iUzfqH {
-            background-image: url(/background/background2.png);
-            background-color: white;
-            background-attachment: fixed;
-            background-size: cover;
-            background-repeat: no-repeat;
+            background: transparent;
           }
         }
         @keyframes fadeSlideUp {
@@ -339,7 +319,7 @@ export default function LoginPage() {
         }
       `}</style>
 
-      <main className="sc-908a50-0 iUzfqH flex-1 w-full min-h-[calc(100vh-80px-200px)] flex flex-col justify-center items-center py-16 sm:py-24 px-6 overflow-hidden relative">
+      <main className="sc-908a50-0 iUzfqH theme-page auth-theme-page flex-1 w-full min-h-[calc(100vh-80px-200px)] flex flex-col justify-center items-center py-16 sm:py-24 px-6 overflow-hidden relative">
 
         {/* Multi-layer ambient glows */}
         <div className="orb1 absolute -top-20 -left-20 w-[450px] h-[450px] rounded-full bg-gradient-to-br from-[#0A2FFF]/12 to-transparent blur-[120px] pointer-events-none" />
@@ -511,8 +491,8 @@ export default function LoginPage() {
 
         {registerOpen && (
           <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/65 px-4 pb-6 pt-[84px] sm:px-8 sm:pb-8 sm:pt-[96px] backdrop-blur-md">
-            <form onSubmit={handleRegisterSubmit} className="login-card w-full max-w-[960px] rounded-[28px] p-6 sm:p-8">
-              <div className="grid gap-6 md:grid-cols-[0.95fr_1.05fr]">
+            <form onSubmit={handleRegisterSubmit} className="login-card official-register-modal w-full max-w-[720px] rounded-[28px] p-6 sm:p-8">
+              <div className="grid gap-6">
                 <div className="space-y-5">
                   <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
                     <div>
@@ -533,22 +513,6 @@ export default function LoginPage() {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-2 rounded-[14px] border border-white/10 bg-white/[0.03] p-1 text-[12px] font-bold">
-                    <button
-                      type="button"
-                      onClick={() => setRegisterMode('normal')}
-                      className={`rounded-[11px] px-3 py-2 transition ${registerMode === 'normal' ? 'bg-[#0A2FFF] text-white' : 'text-white/50 hover:text-white'}`}
-                    >
-                      Đăng ký thường
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRegisterMode('quick')}
-                      className={`rounded-[11px] px-3 py-2 transition ${registerMode === 'quick' ? 'bg-[#0A2FFF] text-white' : 'text-white/50 hover:text-white'}`}
-                    >
-                      Đăng ký nhanh
-                    </button>
-                  </div>
                 </div>
 
                 <div className="space-y-5">
@@ -581,19 +545,18 @@ export default function LoginPage() {
 
                 <label className="space-y-2">
                   <span className="text-[12px] font-semibold text-white/75 flex items-center gap-1">
-                    Email {registerMode === 'normal' && <span className="text-red-500 font-bold">*</span>}
+                    Email <span className="text-red-500 font-bold">*</span>
                   </span>
                   <input
                     type="email"
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.email}
                     onChange={(event) => updateRegisterForm('email', event.target.value)}
-                    placeholder={registerMode === 'normal' ? "Nhập địa chỉ email" : "Nhập email (tùy chọn)"}
-                    required={registerMode === 'normal'}
+                    placeholder="Nhập địa chỉ email"
+                    required
                   />
                 </label>
 
-                {registerMode === 'normal' && (
                   <label className="space-y-2 sm:col-span-2">
                     <span className="text-[12px] font-semibold text-white/75 flex items-center gap-1">
                       Mật khẩu <span className="text-red-500 font-bold">*</span>
@@ -607,7 +570,6 @@ export default function LoginPage() {
                       required
                     />
                   </label>
-                )}
 
                 <label className="space-y-2">
                   <span className="text-[12px] font-semibold text-white/75">Trường học / Đơn vị</span>

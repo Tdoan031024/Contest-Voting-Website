@@ -190,6 +190,10 @@ export default function IntroductionAdminPage() {
   const [statsCandidates, setStatsCandidates] = useState('20+');
   const [statsVotes, setStatsVotes] = useState('100K+');
   const [statsViews, setStatsViews] = useState('30M+');
+  const [statsYear, setStatsYear] = useState('2025');
+  const [statsParticipants, setStatsParticipants] = useState('650');
+  const [statsMedia, setStatsMedia] = useState('20+');
+  const [statsSchools, setStatsSchools] = useState('45+');
   const [aboutImageUrl, setAboutImageUrl] = useState('/uploads/poster-khoi-nghiep.jpg');
   
   // New fields
@@ -222,6 +226,10 @@ export default function IntroductionAdminPage() {
           if (data.statsCandidates) setStatsCandidates(data.statsCandidates);
           if (data.statsVotes) setStatsVotes(data.statsVotes);
           if (data.statsViews) setStatsViews(data.statsViews);
+          if (data.statsYear) setStatsYear(data.statsYear);
+          if (data.statsParticipants) setStatsParticipants(data.statsParticipants);
+          if (data.statsMedia) setStatsMedia(data.statsMedia);
+          if (data.statsSchools) setStatsSchools(data.statsSchools);
           if (data.aboutImageUrl) setAboutImageUrl(data.aboutImageUrl);
           
           if (data.aboutOrganizerDetail) setAboutOrganizerDetail(data.aboutOrganizerDetail);
@@ -258,6 +266,10 @@ export default function IntroductionAdminPage() {
           statsCandidates,
           statsVotes,
           statsViews,
+          statsYear,
+          statsParticipants,
+          statsMedia,
+          statsSchools,
           aboutImageUrl,
           aboutOrganizerDetail,
           aboutSectors,
@@ -639,6 +651,50 @@ export default function IntroductionAdminPage() {
                   type="text" 
                   value={statsViews} 
                   onChange={(e) => setStatsViews(e.target.value)} 
+                  className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-bold text-[#0f766e] outline-none transition focus:border-[#0f766e] focus:bg-white" 
+                  required 
+                />
+              </label>
+
+              <label className="block space-y-1.5">
+                <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Năm thống kê (ví dụ: 2025)</span>
+                <input 
+                  type="text" 
+                  value={statsYear} 
+                  onChange={(e) => setStatsYear(e.target.value)} 
+                  className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-bold text-[#0f766e] outline-none transition focus:border-[#0f766e] focus:bg-white" 
+                  required 
+                />
+              </label>
+
+              <label className="block space-y-1.5">
+                <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Số lượng sinh viên tham gia</span>
+                <input 
+                  type="text" 
+                  value={statsParticipants} 
+                  onChange={(e) => setStatsParticipants(e.target.value)} 
+                  className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-bold text-[#0f766e] outline-none transition focus:border-[#0f766e] focus:bg-white" 
+                  required 
+                />
+              </label>
+
+              <label className="block space-y-1.5">
+                <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Đơn vị truyền thông đưa tin</span>
+                <input 
+                  type="text" 
+                  value={statsMedia} 
+                  onChange={(e) => setStatsMedia(e.target.value)} 
+                  className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-bold text-[#0f766e] outline-none transition focus:border-[#0f766e] focus:bg-white" 
+                  required 
+                />
+              </label>
+
+              <label className="block space-y-1.5">
+                <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Trường tham gia (ĐH/CĐ/THPT...)</span>
+                <input 
+                  type="text" 
+                  value={statsSchools} 
+                  onChange={(e) => setStatsSchools(e.target.value)} 
                   className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-bold text-[#0f766e] outline-none transition focus:border-[#0f766e] focus:bg-white" 
                   required 
                 />

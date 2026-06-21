@@ -243,7 +243,7 @@ export default function VoteModal({ candidate, onClose, onSuccess, initialPackag
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {step !== 'success' && (
             <div className="text-left">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#79BCC2]">
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-blue-400">
                 Sự kiện: {settings?.eventTitle || 'Thí sinh được yêu thích nhất'}
               </p>
             </div>
@@ -277,11 +277,11 @@ export default function VoteModal({ candidate, onClose, onSuccess, initialPackag
                         }}
                         className={`rounded-2xl border p-4 text-left transition relative select-none flex flex-col justify-between h-24 ${
                           isSelected 
-                            ? 'border-[#79BCC2] bg-[#79BCC2]/10 shadow-[0_0_15px_rgba(121,188,194,0.15)]' 
+                            ? 'border-blue-500 bg-blue-500/10 shadow-[0_0_15px_rgba(59,130,246,0.15)]'
                             : 'border-white/10 bg-white/[0.02] hover:border-white/20'
                         }`}
                       >
-                        <p className="text-xs font-black text-[#79BCC2]">{pkg.points.toLocaleString()} điểm</p>
+                        <p className="text-xs font-black text-blue-400">{pkg.points.toLocaleString()} điểm</p>
                         <p className="text-[14px] font-bold text-white/80 mt-1">
                           {pkg.price === 0 ? 'Miễn phí' : formattedPrice(pkg.price)}
                         </p>
@@ -294,7 +294,7 @@ export default function VoteModal({ candidate, onClose, onSuccess, initialPackag
               {/* Right Column: Checkout info / Login wall */}
               <div className="flex flex-col h-full justify-between">
                 <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-4 text-left">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-[#79BCC2] border-b border-white/5 pb-2">Thông tin</h4>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-blue-400 border-b border-white/5 pb-2">Thông tin</h4>
 
                   {/* Case A: Not logged in */}
                   {!currentUser ? (
@@ -335,11 +335,11 @@ export default function VoteModal({ candidate, onClose, onSuccess, initialPackag
                                 id="payment_sepay" 
                                 name="payment_method" 
                                 defaultChecked 
-                                className="accent-[#79BCC2] h-4 w-4" 
+                                className="accent-blue-500 h-4 w-4"
                               />
                               <label htmlFor="payment_sepay" className="text-xs font-bold text-white/90">Chuyển khoản QR (Sepay)</label>
                             </div>
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#79BCC2]"><rect x="2" y="2" width="20" height="20" rx="3" /><rect x="6" y="6" width="4" height="4" /><rect x="14" y="6" width="4" height="4" /><rect x="6" y="14" width="4" height="4" /><rect x="14" y="14" width="4" height="4" /></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400"><rect x="2" y="2" width="20" height="20" rx="3" /><rect x="6" y="6" width="4" height="4" /><rect x="14" y="6" width="4" height="4" /><rect x="6" y="14" width="4" height="4" /><rect x="14" y="14" width="4" height="4" /></svg>
                           </div>
                           <div className="p-3.5 rounded-xl bg-white/[0.02] border border-white/5 text-[11px] text-white/60 leading-relaxed">
                             Quét mã QR thanh toán ngân hàng tự động. Hệ thống sẽ nhận diện cú pháp chuyển khoản và ghi nhận điểm bình chọn sau vài giây.
@@ -353,11 +353,11 @@ export default function VoteModal({ candidate, onClose, onSuccess, initialPackag
                           type="checkbox"
                           checked={agreeToTerms}
                           onChange={(e) => setAgreeToTerms(e.target.checked)}
-                          className="mt-1 accent-[#79BCC2] h-4 w-4 shrink-0 rounded"
+                          className="mt-1 accent-blue-500 h-4 w-4 shrink-0 rounded"
                         />
                         <span className="text-[11px] leading-5 text-white/60 text-justify">
                           Bằng việc thanh toán, tôi đồng ý với các nội dung trong{' '}
-                          <a href="/the-le" target="_blank" className="text-[#79BCC2] hover:underline font-bold">Điều khoản sử dụng</a>,{' '}
+                          <a href="/the-le" target="_blank" className="text-blue-400 hover:underline font-bold">Điều khoản sử dụng</a>,{' '}
                           <span className="font-medium text-white/70">Điều kiện vận chuyển và giao nhận</span>,{' '}
                           <span className="font-medium text-white/70">Chính sách đổi trả và hoàn tiền</span> của HUIT Startup. Tôi cũng xác nhận đã đọc{' '}
                           <span className="font-medium text-white/70">Chính sách quyền riêng tư</span>.
@@ -386,7 +386,7 @@ export default function VoteModal({ candidate, onClose, onSuccess, initialPackag
                 {/* Subtotal */}
                 <div className="border-t border-white/5 pt-4 flex justify-end items-center px-2 mt-4 text-left">
                   <div>
-                    <span className={`text-xl font-black ${selectedPackage?.price === 0 ? 'text-[#79BCC2]' : 'text-[#FDE047]'}`}>
+                    <span className={`text-xl font-black ${selectedPackage?.price === 0 ? 'text-blue-400' : 'text-[#FDE047]'}`}>
                       {selectedPackage ? formattedPrice(selectedPackage.price) : 'Miễn phí'}
                     </span>
                   </div>
@@ -422,19 +422,19 @@ export default function VoteModal({ candidate, onClose, onSuccess, initialPackag
 
               {/* Instructions and complete confirmation */}
               <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-5 text-left">
-                <h4 className="text-xs font-black uppercase tracking-wider text-[#79BCC2] border-b border-white/5 pb-2">Hướng dẫn thanh toán</h4>
+                <h4 className="text-xs font-black uppercase tracking-wider text-blue-400 border-b border-white/5 pb-2">Hướng dẫn thanh toán</h4>
                 
                 <div className="space-y-4 text-xs leading-6 text-white/80">
                   <div className="flex gap-2.5 items-start">
-                    <span className="w-5 h-5 rounded-full bg-[#79BCC2]/10 border border-[#79BCC2]/20 flex items-center justify-center text-[10px] font-bold text-[#79BCC2] shrink-0 mt-0.5">1</span>
+                    <span className="w-5 h-5 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-400 shrink-0 mt-0.5">1</span>
                     <p>Mở ứng dụng ngân hàng và <b>quét mã QR</b> hiển thị bên cạnh.</p>
                   </div>
                   <div className="flex gap-2.5 items-start">
-                    <span className="w-5 h-5 rounded-full bg-[#79BCC2]/10 border border-[#79BCC2]/20 flex items-center justify-center text-[10px] font-bold text-[#79BCC2] shrink-0 mt-0.5">2</span>
+                    <span className="w-5 h-5 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-400 shrink-0 mt-0.5">2</span>
                     <p>Đảm bảo chuyển khoản <b>đúng số tiền</b> và giữ nguyên <b>nội dung chuyển khoản</b> tự động để hệ thống ghi nhận.</p>
                   </div>
                   <div className="flex gap-2.5 items-start">
-                    <span className="w-5 h-5 rounded-full bg-[#79BCC2]/10 border border-[#79BCC2]/20 flex items-center justify-center text-[10px] font-bold text-[#79BCC2] shrink-0 mt-0.5">3</span>
+                    <span className="w-5 h-5 rounded-full bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-[10px] font-bold text-blue-400 shrink-0 mt-0.5">3</span>
                     <p>Hệ thống tự động kiểm tra giao dịch và cộng điểm bình chọn sau khi nhận được thanh toán thành công (thông thường từ 15-30 giây).</p>
                   </div>
                 </div>
@@ -446,8 +446,8 @@ export default function VoteModal({ candidate, onClose, onSuccess, initialPackag
                 )}
 
                 <div className="pt-2 flex flex-col gap-3">
-                  <div className="flex items-center justify-center gap-2 text-xs font-semibold text-[#79BCC2] py-2 border-t border-white/5 mt-2">
-                    <div className="h-4 w-4 border-2 border-[#79BCC2]/20 border-t-[#79BCC2] rounded-full animate-spin"></div>
+                  <div className="flex items-center justify-center gap-2 text-xs font-semibold text-blue-400 py-2 border-t border-white/5 mt-2">
+                    <div className="h-4 w-4 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
                     <span className="animate-pulse">Đang chờ hệ thống kiểm tra giao dịch tự động...</span>
                   </div>
                   <button

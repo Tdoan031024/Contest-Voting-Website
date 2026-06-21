@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ['@huitfest/shared'],
   basePath: '/admin',
+  productionBrowserSourceMaps: false,
   typescript: {
     ignoreBuildErrors: true,
   },

@@ -21,6 +21,10 @@ export interface SystemSettings {
   statsCandidates?: string;
   statsVotes?: string;
   statsViews?: string;
+  statsYear?: string;
+  statsParticipants?: string;
+  statsMedia?: string;
+  statsSchools?: string;
   aboutSubtitle?: string;
   aboutTheme?: string;
   aboutOrganizerDetail?: string;
@@ -78,11 +82,15 @@ export class AppService implements OnModuleInit {
     isMaintenanceMode: false,
     sponsorBannerUrl: "/original_assets/image4b12.png",
     aboutTitle: "HUIT STARTUP LẦN THỨ VII 2026",
-    aboutDescription: "Cuộc thi HUIT Startup lần 07 năm 2026 với chủ đề “Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững\" cấp thành phố (HUIT STARTUP LẦN THỨ VII) là hoạt động thường niên do Trường Đại học Công Thương TP. Hồ Chí Minh tổ chức, nhằm tìm kiếm và ươm tạo các ý tưởng, dự án sáng tạo của học sinh, sinh viên, học viên và doanh nghiệp góp phần giải quyết các vấn đề xã hội và thúc đẩy phát triển bền vững. Đây không chỉ là sân chơi học thuật mà còn là bệ phóng cho những ý tưởng sáng tạo, những giải pháp thiết thực được hình thành, phát triển và hiện thực hóa, mang lại giá trị thiết thực cho bản thân, gia đình, cộng đồng và toàn xã hội. Năm 2026, cuộc thi trở lại với quy mô mở rộng và chủ đề đầy cảm hứng: \"Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững\". Cuộc thi chào đón sự tham gia của Học sinh, sinh viên, học viên ở các trường đại học, cao đắng, trung cấp, THPT, GDTX và Các cá nhân, tổ chức, doanh nghiệp (HTX, hộ kinh doanh, doanh nghiệp vừa và nhỏ trên địa bàn Thành phố Hồ Chí Minh và các tỉnh lân cận yêu thích hoạt động khởi nghiệp, có ý tưởng, dự án khởi nghiệp sáng. Mục tiêu là tìm kiếm và ươm mầm những ý tưởng, giải pháp đổi mới sáng tạo, góp phần giải quyết các vấn đề cấp thiết của cộng đồng, xã hội và thúc đẩy phát triển kinh tế – xã hội một cách bền vững. Thông qua cuộc thi, ban tổ chức mong muốn lan tỏa mạnh mẽ tinh thần khởi nghiệp, đổi mới sáng tạo trong giới trẻ; đồng thời kết nối và mở rộng hệ sinh thái khởi nghiệp đổi mới sáng tạo trong khối các cơ sở giáo dục, các startup tạo tiền đề cho sự phát triển nguồn nhân lực sáng tạo, thích ứng và bản lĩnh trong thời đại mới.",
+    aboutDescription: "Cuộc thi HUIT Startup lần thứ VII năm 2026 cấp Thành phố với chủ đề “Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững” là hoạt động thường niên do Trường Đại học Công Thương TP. Hồ Chí Minh tổ chức. Cuộc thi hướng đến việc tìm kiếm, ươm tạo và phát triển các ý tưởng, dự án khởi nghiệp sáng tạo có khả năng giải quyết những vấn đề thực tiễn của cộng đồng và đóng góp tích cực cho sự phát triển kinh tế – xã hội.\n\nĐây không chỉ là một sân chơi học thuật mà còn là bệ phóng để các đội thi hoàn thiện tư duy kinh doanh, kiểm chứng mô hình, kết nối nguồn lực và từng bước hiện thực hóa dự án. Thông qua các hoạt động đào tạo, cố vấn chuyên sâu, tham quan doanh nghiệp, kiểm chứng thị trường và kết nối đầu tư, thí sinh có cơ hội nâng cao kiến thức, kỹ năng và bản lĩnh cần thiết trên hành trình khởi nghiệp.\n\nNăm 2026, cuộc thi được tổ chức với quy mô mở rộng, chào đón học sinh, sinh viên, học viên, cá nhân, tổ chức và doanh nghiệp tại Thành phố Hồ Chí Minh cùng các tỉnh lân cận. Ba bảng thi gồm Học sinh, Sinh viên và Doanh nghiệp tạo điều kiện để những ý tưởng ở nhiều giai đoạn phát triển đều có cơ hội tham gia, được đánh giá và tiếp tục hoàn thiện.\n\nThông qua cuộc thi, Ban Tổ chức mong muốn lan tỏa mạnh mẽ tinh thần khởi nghiệp và đổi mới sáng tạo; đồng thời kết nối các cơ sở giáo dục, chuyên gia, doanh nghiệp, quỹ đầu tư và tổ chức hỗ trợ để mở rộng hệ sinh thái khởi nghiệp. Những dự án tiềm năng sẽ có cơ hội tiếp cận các chương trình ươm tạo, nguồn lực cố vấn và mạng lưới đối tác nhằm phát triển bền vững sau cuộc thi.",
     aboutImageUrl: "/uploads/poster-khoi-nghiep.jpg",
-    statsCandidates: "20+",
-    statsVotes: "100K+",
-    statsViews: "30M+",
+    statsYear: "2025",
+    statsCandidates: "153+",
+    statsVotes: "300K+",
+    statsParticipants: "650",
+    statsViews: "3.7 triệu",
+    statsMedia: "20+",
+    statsSchools: "45+",
     aboutSubtitle: "Cuộc thi HUIT Startup lần VII - Cấp Thành phố năm 2026",
     aboutTheme: "Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững",
     aboutOrganizerDetail: "Đơn vị tổ chức: Trường Đại học Công Thương TP. HCM (HUIT) và IEC.\nTài trợ kim cương: Sài Gòn Thăng Long; Quỹ đầu tư VinaTech.\nĐơn vị phối hợp: Diễn đàn Doanh nghiệp; Khởi nghiệp Quốc gia phía Nam; VNEI.\nĐơn vị bảo trợ: Các đơn vị/biểu trưng bảo trợ theo poster cuộc thi.",
@@ -872,7 +880,9 @@ export class AppService implements OnModuleInit {
 
   // --- TIMELINE ---
   async getTimeline(): Promise<TimelineEvent[]> {
-    return this.prisma.timelineEvent.findMany() as any;
+    return this.prisma.timelineEvent.findMany({
+      orderBy: { createdAt: 'asc' }
+    }) as any;
   }
 
   async addTimelineEvent(newEvent: Partial<TimelineEvent>): Promise<TimelineEvent> {
