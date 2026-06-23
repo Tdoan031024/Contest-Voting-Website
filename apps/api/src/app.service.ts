@@ -826,7 +826,7 @@ export class AppService implements OnModuleInit {
       }
     }
 
-    const updatedCandidate = await this.prisma.$transaction(async (tx) => {
+    const updatedCandidate = await this.prisma.$transaction(async (tx: any) => {
       const candidateUpdate = await tx.candidate.update({
         where: { id: candidate.id },
         data: { votes: { increment: points } },
