@@ -167,13 +167,13 @@ function PodiumItem({ candidate, rank, maxVotes, onVote, isGateOpen }: {
               aria-label={isGateOpen ? `Bình chọn cho dự án ${candidate.name}` : 'Cổng bình chọn đã đóng'}
               className={`project-vote-button sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-xl py-2.5 w-full border-0 cursor-pointer transition-all hover-shine-effect ${isGateOpen
                   ? 'active bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]'
-                  : 'disabled bg-slate-700/50 cursor-not-allowed opacity-50'
+                  : 'disabled bg-slate-200 dark:bg-slate-800/50 cursor-not-allowed'
                 }`}
             >
               <span className="project-vote-button-glow" aria-hidden="true" />
               <p className={`project-vote-button-label text-[11px] leading-[16px] font-bold uppercase tracking-wider ${isGateOpen
                   ? 'text-neutral-white dark:text-primary'
-                  : 'text-slate-400'
+                  : 'text-slate-500 dark:text-slate-400'
                 }`}>
                 {isGateOpen ? 'Bình chọn' : 'Đã đóng'}
               </p>
@@ -284,13 +284,13 @@ function CandidateCard({ c, rank, maxVotes, visible, animationDelay, onVote, isG
               aria-label={isGateOpen ? `Bình chọn cho dự án ${c.name}` : 'Cổng bình chọn đã đóng'}
               className={`project-vote-button sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-xl py-2.5 w-full border-0 cursor-pointer transition-all hover-shine-effect ${isGateOpen
                   ? 'active bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]'
-                  : 'disabled bg-slate-700/50 cursor-not-allowed opacity-50'
+                  : 'disabled bg-slate-200 dark:bg-slate-800/50 cursor-not-allowed'
                 }`}
             >
               <span className="project-vote-button-glow" aria-hidden="true" />
               <p className={`project-vote-button-label text-[11px] leading-[16px] font-bold uppercase tracking-wider ${isGateOpen
                   ? 'text-neutral-white dark:text-primary'
-                  : 'text-slate-400'
+                  : 'text-slate-500 dark:text-slate-400'
                 }`}>
                 {isGateOpen ? 'Bình chọn' : 'Đã đóng'}
               </p>

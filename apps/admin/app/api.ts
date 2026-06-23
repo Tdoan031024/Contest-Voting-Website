@@ -1,9 +1,9 @@
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : '');
-
 export function apiUrl(path: string) {
-  return `${API_BASE_URL}${path}`;
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `/admin${cleanPath}`;
 }
 
 export function formatAssetUrl(url: string | undefined | null): string {

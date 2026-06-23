@@ -64,15 +64,25 @@ body {
 
 :root {
   color-scheme: light;
-  --site-bg: #f6f8fc;
-  --site-soft: #eef3fa;
+  --site-bg: #f7f8fb;
+  --site-soft: #f1f4f9;
   --site-card: #ffffff;
-  --site-text: #000000;
-  --site-muted: #333333;
-  --site-line: #dde6f2;
-  --site-primary: #0b5bd3;
-  --site-accent: #00a99d;
-  --site-shadow: 0 18px 55px rgba(25, 55, 96, .12);
+  --site-card-soft: #f8faff;
+  --site-text: #111827;
+  --site-muted: #667085;
+  --site-line: #e4e7ec;
+  --site-primary: #0a2fff;
+  --site-primary-hover: #0825cc;
+  --site-accent: #35b8c4;
+  --site-success: #067647;
+  --site-warning: #b54708;
+  --site-danger: #b42318;
+  --site-focus: #528bff;
+  --site-shadow: 0 12px 36px rgba(16, 24, 40, .10);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
 }
 
 :root[data-theme='dark'] {
@@ -80,16 +90,18 @@ body {
   --site-bg: #07101f;
   --site-soft: #0b1729;
   --site-card: #0e1c30;
+  --site-card-soft: #122238;
   --site-text: #edf5ff;
   --site-muted: #9aabc2;
   --site-line: #20344f;
-  --site-primary: #4d9cff;
+  --site-primary: #6da8ff;
+  --site-primary-hover: #91bdff;
   --site-accent: #36d4c6;
   --site-shadow: 0 20px 60px rgba(0, 0, 0, .34);
 }
 
 .iUzfqH { background: var(--site-bg); color: var(--site-text); }
-.site-theme-toggle { width: 40px; height: 40px; display: grid; place-items: center; flex: none; border: 1px solid #dbe3ee; border-radius: 13px; background: #fff; color: #163052; font-size: 20px; cursor: pointer; transition: .2s ease; }
+.site-theme-toggle { width: 44px; height: 44px; display: grid; place-items: center; flex: none; border: 1px solid #dbe3ee; border-radius: 13px; background: #fff; color: #163052; font-size: 20px; cursor: pointer; transition: .2s ease; }
 .site-theme-toggle:hover { transform: translateY(-2px); color: #0b5bd3; border-color: #9dc2f4; }
 :root[data-theme='dark'] .sticky-inner-wrapper > div { background: rgba(10, 21, 38, .94) !important; border-color: var(--site-line) !important; }
 :root[data-theme='dark'] .sticky-inner-wrapper p, :root[data-theme='dark'] .sticky-inner-wrapper a { color: #e9f2ff !important; }
@@ -125,7 +137,7 @@ body {
 .footer-socials a:hover img { filter: drop-shadow(0 8px 16px rgba(15, 23, 42, 0.18)); }
 .footer-contact-column { display: flex; flex-direction: column; align-items: flex-start; gap: 3px !important; }
 .footer-contact-column p, .footer-contact-column a { margin: 0 !important; }
-.footer-contact-column p span { white-space: nowrap; }
+.footer-contact-column p span { white-space: normal; overflow-wrap: anywhere; }
 .footer-contact-column .footer-socials { margin-top: 4px !important; gap: 6px !important; }
 .site-footer-bottom { display: flex; justify-content: space-between; gap: 20px; max-width: 1180px; margin: 44px auto 0; padding-top: 19px; border-top: 1px solid var(--site-line); color: var(--site-muted); font-size: 11px; }
 
@@ -237,7 +249,7 @@ body {
   .modern-hero-copy h1 { margin: 12px 0; font-size: clamp(32px, 10vw, 46px); }
   .modern-hero-copy p { display: none; }
   .modern-hero-actions { margin-top: 16px; }
-  .modern-button { min-height: 42px; padding: 0 14px; font-size: 12px; }
+  .modern-button { min-height: 44px; padding: 0 14px; font-size: 13px; }
   .modern-section { padding: 66px 15px; }
   .video-feature { gap: 30px; }
   .video-play { width: 58px; height: 58px; }
@@ -1128,6 +1140,131 @@ body,
 }
 
 html, body { overflow-x: hidden; }
+
+/* ============================================================
+   COMMERCIAL UI FOUNDATION — 2026 REVIEW IMPLEMENTATION
+   ============================================================ */
+
+body {
+  min-width: 320px;
+  font-size: 16px;
+  line-height: 1.6;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--site-focus) 45%, transparent);
+  outline-offset: 3px;
+}
+
+button, a { -webkit-tap-highlight-color: transparent; }
+
+.sticky-outer-wrapper {
+  min-height: 72px !important;
+  height: 72px !important;
+  flex-basis: 72px;
+}
+
+.sticky-inner-wrapper { height: 72px !important; }
+
+.mobile-drawer-overlay {
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity .22s ease, visibility 0s linear .22s;
+}
+
+.mobile-drawer-overlay.open {
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+
+.mobile-drawer {
+  visibility: hidden;
+  transition: transform .28s cubic-bezier(.16, 1, .3, 1), visibility 0s linear .28s;
+}
+
+.mobile-drawer.open {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.mobile-drawer-close { width: 44px; height: 44px; }
+.mobile-drawer-link { min-height: 48px; }
+
+.vote-dialog-panel {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.vote-stepper {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.vote-stepper li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  color: rgba(255,255,255,.45);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.vote-stepper li::after {
+  content: '';
+  height: 1px;
+  flex: 1;
+  background: rgba(255,255,255,.12);
+}
+
+.vote-stepper li:last-child::after { display: none; }
+
+.vote-stepper li > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 50%;
+  font-size: 12px;
+}
+
+.vote-stepper li.active { color: #fff; }
+.vote-stepper li.active > span { border-color: #6da8ff; background: #0a2fff; }
+.vote-stepper li.active::after { background: linear-gradient(90deg, #0a2fff, #35b8c4); }
+
+@media (max-width: 640px) {
+  .sticky-outer-wrapper { min-height: 64px !important; height: 64px !important; flex-basis: 64px; }
+  .sticky-inner-wrapper { height: 64px !important; }
+  .site-theme-toggle { width: 44px; height: 44px; }
+  .vote-dialog-backdrop { padding: 0; align-items: flex-end; }
+  .vote-dialog-panel { max-height: 100dvh; border-radius: 24px 24px 0 0; }
+  .vote-stepper li { flex-direction: column; align-items: flex-start; gap: 4px; font-size: 12px; }
+  .vote-stepper li::after { display: none; }
+  .site-floating-actions .zalo,
+  .site-floating-actions .phone { display: none; }
+  .site-floating-actions { right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); }
+  .footer-contact-column p { max-width: 100%; }
+  .about-description-copy { text-align: left !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    transition-delay: 0ms !important;
+  }
+}
 
 .project-card-clear:hover {
   transform: translateY(-4px);
@@ -2135,7 +2272,7 @@ html, body { overflow-x: hidden; }
 }
 .exchange-table-head {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, .65fr);
   padding: 14px 24px;
   background: color-mix(in srgb, var(--site-primary) 8%, var(--site-card));
   font-size: 11px;
@@ -2147,7 +2284,7 @@ html, body { overflow-x: hidden; }
 }
 .exchange-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(140px, .65fr);
   padding: 14px 24px;
   align-items: center;
   border-bottom: 1px solid var(--site-line);
@@ -2824,6 +2961,32 @@ html, body { overflow-x: hidden; }
   border-color: var(--site-primary);
 }
 
+.rules-login-cta {
+  min-height: 50px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 28px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 16px;
+  background: #ffffff;
+  color: #0A2FFF !important;
+  box-shadow: 0 10px 28px rgba(3, 10, 35, 0.18);
+  font-size: 15px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform 0.25s ease, background-color 0.25s ease, box-shadow 0.25s ease;
+}
+.rules-login-cta:hover {
+  transform: translateY(-2px);
+  background: #eef4ff;
+  box-shadow: 0 14px 34px rgba(3, 10, 35, 0.24);
+}
+.rules-login-cta:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.55);
+  outline-offset: 3px;
+}
+
 /* ================================================
    SEARCH ENHANCED
    ================================================ */
@@ -3085,4 +3248,72 @@ html, body { overflow-x: hidden; }
 .countdown-cta-btn:hover {
   transform: scale(1.03);
   box-shadow: 0 12px 36px rgba(255, 165, 0, 0.45) !important;
+}
+
+/* Project detail uses the same blue/cyan product language as the app shell. */
+.project-detail-hero {
+  background:
+    radial-gradient(circle at 15% 20%, rgba(53,184,196,.26), transparent 32%),
+    linear-gradient(135deg, #071b55 0%, #0a2fff 58%, #087f9b 100%);
+}
+
+.hero-carousel-controls {
+  position: absolute;
+  z-index: 30;
+  left: 24px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hero-carousel-controls > button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  opacity: 0.8;
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.hero-carousel-controls > button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+  opacity: 1;
+}
+
+.hero-carousel-controls > button:active {
+  transform: scale(0.92);
+}
+
+.hero-carousel-dots { display: flex; gap: 6px; align-items: center; }
+.hero-carousel-dots button {
+  width: 6px;
+  height: 6px;
+  border: 0;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.hero-carousel-dots button:hover {
+  background: rgba(255, 255, 255, 0.75);
+}
+.hero-carousel-dots button.active {
+  width: 16px;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+@media (max-width: 640px) {
+  .hero-carousel-controls { left: 14px; bottom: 12px; gap: 6px; }
+  .hero-carousel-controls > button { width: 28px; height: 28px; }
 }

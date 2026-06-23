@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAlert } from '../AlertProvider';
 import { apiUrl } from '../api';
 
@@ -24,6 +24,7 @@ const defaultRegisterForm = {
 function saveSession(payload: any) {
   localStorage.setItem('huit_web_user', JSON.stringify(payload.user));
   localStorage.setItem('huit_web_token', payload.token);
+  window.dispatchEvent(new Event('huit-auth-changed'));
 }
 
 function redirectAfterAuth() {
@@ -60,18 +61,48 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [hydrated, setHydrated] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [mounted] = useState(true);
   const [loading, setLoading] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [registerForm, setRegisterForm] = useState(defaultRegisterForm);
+  const registerDialogRef = useRef<HTMLFormElement>(null);
+  const registerCloseRef = useRef<HTMLButtonElement>(null);
+  const registerTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setHydrated(true);
-    // Trigger entrance animation on mount
-    const t = setTimeout(() => setMounted(true), 50);
-    return () => clearTimeout(t);
-  }, []);
+    if (!registerOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    registerCloseRef.current?.focus();
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setRegisterOpen(false);
+        return;
+      }
+      if (event.key !== 'Tab' || !registerDialogRef.current) return;
+      const controls = Array.from(registerDialogRef.current.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ));
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (!first || !last) return;
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      registerTriggerRef.current?.focus();
+    };
+  }, [registerOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,11 +178,6 @@ export default function LoginPage() {
     window.location.href = '/';
   };
 
-  const handleOfflineAlert = (e: React.MouseEvent) => {
-    e.preventDefault();
-    showAlert('Tính năng đang được phát triển ở chế độ offline!', 'info', 'Thông báo');
-  };
-
   const updateRegisterForm = (key: keyof typeof defaultRegisterForm, value: string) => {
     setRegisterForm((prev) => ({ ...prev, [key]: value }));
   };
@@ -176,15 +202,6 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
-  if (!hydrated) {
-    return (
-      <main
-        suppressHydrationWarning
-        className="sc-908a50-0 iUzfqH flex-1 w-full min-h-[calc(100vh-80px-200px)] bg-[#030612]"
-      />
-    );
-  }
 
   return (
     <>
@@ -363,7 +380,7 @@ export default function LoginPage() {
 
               {/* Email input */}
               <div className="flex flex-col space-y-2 w-full">
-                <label className="text-white/80 text-[13px] font-semibold tracking-wide flex items-center gap-2">
+                <label htmlFor="login-email" className="text-white/80 text-[14px] font-semibold tracking-wide flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="#79BCC2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
                     <polyline points="22,4 12,13 2,4"></polyline>
@@ -371,7 +388,11 @@ export default function LoginPage() {
                   Địa chỉ email
                 </label>
                 <input
+                  id="login-email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
+                  inputMode="email"
                   className="login-input w-full h-[48px] px-4 rounded-[14px] bg-white/90 text-neutral-800 border-2 border-transparent text-[15px]"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
@@ -382,7 +403,7 @@ export default function LoginPage() {
 
               {/* Password input */}
               <div className="flex flex-col space-y-2 w-full relative">
-                <label className="text-white/80 text-[13px] font-semibold tracking-wide flex items-center gap-2">
+                <label htmlFor="login-password" className="text-white/80 text-[14px] font-semibold tracking-wide flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="#79BCC2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
@@ -391,7 +412,10 @@ export default function LoginPage() {
                 </label>
                 <div className="relative w-full h-[48px]">
                   <input
+                    id="login-password"
+                    name="password"
                     type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
                     className="login-input w-full h-full pl-4 pr-12 rounded-[14px] bg-white/90 text-neutral-800 border-2 border-transparent text-[15px]"
                     value={password}
                     onChange={e => setPassword(e.target.value)}
@@ -401,7 +425,9 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700 transition-colors focus:outline-none"
+                    className="absolute right-1 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-lg text-neutral-500 hover:text-neutral-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+                    aria-pressed={showPassword}
                   >
                     {showPassword ? (
                       <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
@@ -412,23 +438,23 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Forgot Password */}
+              {/* Support link — avoids presenting an unavailable password-reset flow */}
               <div className="text-right -mt-1">
                 <a
-                  href="#"
-                  onClick={handleOfflineAlert}
-                  className="link-hover text-white/50 text-[12px] font-medium underline-offset-4 hover:underline"
+                  href="mailto:iec@huit.edu.vn?subject=Hỗ trợ tài khoản HUIT Startup"
+                  className="link-hover text-white/60 text-[13px] font-medium underline-offset-4 hover:underline"
                 >
-                  Quên mật khẩu?
+                  Cần hỗ trợ tài khoản?
                 </a>
               </div>
 
               {/* Submit button */}
               <button
                 type="submit"
+                disabled={loading}
                 className="btn-login w-full h-[50px] bg-gradient-to-r from-[#0A2FFF] to-[#1a5aff] border border-[#79BCC2]/30 rounded-[14px] text-white font-bold flex items-center justify-center text-[15px] tracking-widest uppercase"
               >
-                Đăng nhập
+                {loading ? 'Đang đăng nhập…' : 'Đăng nhập'}
               </button>
             </form>
 
@@ -473,16 +499,14 @@ export default function LoginPage() {
               {/* Register link */}
               <div className="flex flex-col items-center gap-2 pt-2">
                 <p className="text-white/30 text-[12px]">Chưa có tài khoản?</p>
-                <a
-                  href="#"
-                  onClick={(event) => {
-                    event.preventDefault();
-                    setRegisterOpen(true);
-                  }}
+                <button
+                  ref={registerTriggerRef}
+                  type="button"
+                  onClick={() => setRegisterOpen(true)}
                   className="link-hover text-[#79BCC2] text-[14px] font-semibold underline-offset-4 hover:underline"
                 >
                   Đăng ký ngay →
-                </a>
+                </button>
               </div>
 
             </div>
@@ -490,20 +514,33 @@ export default function LoginPage() {
         </div>
 
         {registerOpen && (
-          <div className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/65 px-4 pb-6 pt-[84px] sm:px-8 sm:pb-8 sm:pt-[96px] backdrop-blur-md">
-            <form onSubmit={handleRegisterSubmit} className="login-card official-register-modal w-full max-w-[720px] rounded-[28px] p-6 sm:p-8">
+          <div
+            className="fixed inset-0 z-[1100] flex items-start justify-center overflow-y-auto bg-black/65 px-4 pb-[calc(24px+env(safe-area-inset-bottom))] pt-[72px] sm:px-8 sm:pb-8 sm:pt-[88px] backdrop-blur-md"
+            onMouseDown={(event) => {
+              if (event.target === event.currentTarget) setRegisterOpen(false);
+            }}
+          >
+            <form
+              ref={registerDialogRef}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="register-dialog-title"
+              onSubmit={handleRegisterSubmit}
+              className="login-card official-register-modal w-full max-w-[720px] rounded-[28px] p-6 sm:p-8"
+            >
               <div className="grid gap-6">
                 <div className="space-y-5">
                   <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
                     <div>
-                      <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-[#79BCC2]">Tạo tài khoản</p>
-                      <h2 className="mt-1 text-[24px] font-extrabold uppercase tracking-wide text-white">Đăng ký bình chọn khán giả</h2>
-                      <p className="mt-1 text-[12px] text-white/45">Tài khoản khán giả dùng để nhận lượt miễn phí hằng ngày và lưu lịch sử bình chọn.</p>
+                      <p className="text-[13px] font-bold uppercase tracking-[0.18em] text-[#79BCC2]">Tạo tài khoản</p>
+                      <h2 id="register-dialog-title" className="mt-1 text-[24px] font-extrabold tracking-wide text-white">Đăng ký bình chọn khán giả</h2>
+                      <p className="mt-1 text-[14px] leading-relaxed text-white/65">Tài khoản khán giả dùng để nhận lượt miễn phí hằng ngày và lưu lịch sử bình chọn.</p>
                     </div>
                     <button
+                      ref={registerCloseRef}
                       type="button"
                       onClick={() => setRegisterOpen(false)}
-                      className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition hover:border-[#79BCC2]/50 hover:text-white"
+                      className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition hover:border-[#79BCC2]/50 hover:text-white"
                       aria-label="Đóng"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -522,6 +559,8 @@ export default function LoginPage() {
                     Họ và tên <span className="text-red-500 font-bold">*</span>
                   </span>
                   <input
+                    name="fullName"
+                    autoComplete="name"
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.fullName}
                     onChange={(event) => updateRegisterForm('fullName', event.target.value)}
@@ -535,6 +574,10 @@ export default function LoginPage() {
                     Số điện thoại <span className="text-red-500 font-bold">*</span>
                   </span>
                   <input
+                    name="phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.phone}
                     onChange={(event) => updateRegisterForm('phone', event.target.value)}
@@ -548,7 +591,10 @@ export default function LoginPage() {
                     Email <span className="text-red-500 font-bold">*</span>
                   </span>
                   <input
+                    name="email"
                     type="email"
+                    inputMode="email"
+                    autoComplete="email"
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.email}
                     onChange={(event) => updateRegisterForm('email', event.target.value)}
@@ -562,7 +608,10 @@ export default function LoginPage() {
                       Mật khẩu <span className="text-red-500 font-bold">*</span>
                     </span>
                     <input
+                      name="password"
                       type="password"
+                      autoComplete="new-password"
+                      minLength={6}
                       className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                       value={registerForm.password}
                       onChange={(event) => updateRegisterForm('password', event.target.value)}
@@ -574,6 +623,8 @@ export default function LoginPage() {
                 <label className="space-y-2">
                   <span className="text-[12px] font-semibold text-white/75">Trường học / Đơn vị</span>
                   <input
+                    name="organization"
+                    autoComplete="organization"
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.schoolOrCompany}
                     onChange={(event) => updateRegisterForm('schoolOrCompany', event.target.value)}
@@ -584,6 +635,7 @@ export default function LoginPage() {
                 <label className="space-y-2">
                   <span className="text-[12px] font-semibold text-white/75">Bảng dự án quan tâm</span>
                   <select
+                    name="contestTable"
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.contestTable}
                     onChange={(event) => updateRegisterForm('contestTable', event.target.value)}

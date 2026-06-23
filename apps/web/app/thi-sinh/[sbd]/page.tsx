@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Candidate, VotePackage, WebUser } from '@huitfest/shared';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
@@ -24,6 +24,12 @@ function getStoredUser(): WebUser | null {
   }
 }
 
+function getCandidateImageUrl(url?: string | null) {
+  if (!url) return '/uploads/poster-khoi-nghiep.jpg';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  return url;
+}
+
 export default function CandidateDetailPage() {
   const { showAlert } = useAlert();
   const params = useParams();
@@ -39,6 +45,9 @@ export default function CandidateDetailPage() {
   const [activeImage, setActiveImage] = useState<string>('');
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const lightboxRef = useRef<HTMLDivElement>(null);
+  const lightboxCloseRef = useRef<HTMLButtonElement>(null);
+  const lightboxTriggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     setCurrentUser(getStoredUser());
@@ -55,7 +64,7 @@ export default function CandidateDetailPage() {
         const data = await candidateRes.json();
         setCandidate(data);
         if (data) {
-          setActiveImage(data.imageUrl || '');
+          setActiveImage(getCandidateImageUrl(data.imageUrl));
         }
       }
       if (packageRes.ok) {
@@ -83,10 +92,11 @@ export default function CandidateDetailPage() {
   const allImages = useMemo(() => {
     if (!candidate) return [];
     const list: string[] = [];
-    if (candidate.imageUrl) list.push(candidate.imageUrl);
+    if (candidate.imageUrl) list.push(getCandidateImageUrl(candidate.imageUrl));
     showcaseUrls.forEach(url => {
-      if (url && !list.includes(url)) {
-        list.push(url);
+      const normalizedUrl = getCandidateImageUrl(url);
+      if (normalizedUrl && !list.includes(normalizedUrl)) {
+        list.push(normalizedUrl);
       }
     });
     return list;
@@ -117,6 +127,9 @@ export default function CandidateDetailPage() {
 
   useEffect(() => {
     if (!isLightboxOpen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    lightboxCloseRef.current?.focus();
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -125,12 +138,25 @@ export default function CandidateDetailPage() {
         handlePrevImage();
       } else if (e.key === 'ArrowRight') {
         handleNextImage();
+      } else if (e.key === 'Tab' && lightboxRef.current) {
+        const controls = Array.from(lightboxRef.current.querySelectorAll<HTMLElement>('button:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+        const first = controls[0];
+        const last = controls[controls.length - 1];
+        if (first && last && e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (first && last && !e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = previousOverflow;
+      lightboxTriggerRef.current?.focus();
     };
   }, [isLightboxOpen, allImages]);
 
@@ -144,35 +170,46 @@ export default function CandidateDetailPage() {
   };
 
   const copyLink = async () => {
-    await navigator.clipboard.writeText(window.location.href);
-    showAlert('Đã sao chép đường dẫn dự án.', 'success', 'Chia sẻ');
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      showAlert('Đã sao chép đường dẫn dự án.', 'success', 'Chia sẻ');
+    } catch {
+      showAlert('Không thể sao chép tự động. Hãy sao chép đường dẫn trên thanh địa chỉ.', 'warning', 'Chia sẻ');
+    }
   };
 
   if (isLoading) {
-    return <main className="project-detail-page min-h-[60vh] bg-[#f6faf8] px-4 py-12 text-center text-sm font-semibold text-[#52605b]">Đang tải hồ sơ dự án...</main>;
+    return <main className="project-detail-page min-h-[60vh] bg-[var(--site-bg)] px-4 py-12 text-center text-sm font-semibold text-[var(--site-muted)]">Đang tải hồ sơ dự án...</main>;
   }
 
   if (!candidate) {
     return (
-      <main className="project-detail-page min-h-[60vh] bg-[#f6faf8] px-4 py-12 text-center">
-        <h1 className="text-xl font-black text-[#123c34]">Không tìm thấy dự án</h1>
-        <Link href="/" className="mt-4 inline-block text-sm font-bold text-[#0f766e]">Quay lại trang chủ</Link>
+      <main className="project-detail-page min-h-[60vh] bg-[var(--site-bg)] px-4 py-12 text-center">
+        <h1 className="text-xl font-black text-[var(--site-text)]">Không tìm thấy dự án</h1>
+        <Link href="/" className="mt-4 inline-block text-sm font-bold text-[var(--site-primary)]">Quay lại trang chủ</Link>
       </main>
     );
   }
 
   return (
-    <main className="project-detail-page bg-[#f6faf8] pb-28">
-      <section className="bg-[#123c34] px-4 py-8 text-white">
+    <main className="project-detail-page bg-[var(--site-bg)] pb-28">
+      <section className="project-detail-hero px-4 py-8 text-white">
+        <nav className="mx-auto mb-5 max-w-6xl text-sm text-white/70" aria-label="Breadcrumb">
+          <Link href="/" className="hover:text-white">Dự án</Link>
+          <span className="mx-2" aria-hidden="true">/</span>
+          <span aria-current="page" className="text-white">{candidate.name}</span>
+        </nav>
         <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[420px_1fr]">
           <div className="flex flex-col gap-3">
-            <div 
-              onClick={() => handleOpenLightbox(activeImage || candidate.imageUrl)}
-              className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 cursor-zoom-in relative group"
-              title="Click để phóng to hình ảnh"
+            <button
+              ref={lightboxTriggerRef}
+              type="button"
+              onClick={() => handleOpenLightbox(activeImage || getCandidateImageUrl(candidate.imageUrl))}
+              className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 cursor-zoom-in relative group text-left"
+              aria-label={`Phóng to ảnh dự án ${candidate.name}`}
             >
               <img 
-                src={activeImage || candidate.imageUrl} 
+                src={activeImage || getCandidateImageUrl(candidate.imageUrl)}
                 alt={candidate.name} 
                 className="aspect-[4/3] w-full object-cover transition duration-300 ease-in-out group-hover:scale-105" 
               />
@@ -184,11 +221,11 @@ export default function CandidateDetailPage() {
                   <line x1="8" y1="11" x2="14" y2="11" />
                 </svg>
               </div>
-            </div>
+            </button>
             {allImages.length > 1 && (
               <div className="flex flex-wrap gap-2 justify-center">
                 {allImages.map((imgUrl, index) => {
-                  const isActive = (activeImage || candidate.imageUrl) === imgUrl;
+                  const isActive = (activeImage || getCandidateImageUrl(candidate.imageUrl)) === imgUrl;
                   return (
                     <button
                       key={index}
@@ -205,7 +242,7 @@ export default function CandidateDetailPage() {
             )}
           </div>
           <div className="flex flex-col justify-center">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#79d4bd]">Hồ sơ dự án HUIT Startup 2026</p>
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Hồ sơ dự án HUIT Startup 2026</p>
             <h1 className="mt-3 text-3xl font-black leading-tight md:text-4xl">{candidate.name}</h1>
             <p className="mt-4 max-w-3xl text-sm leading-6 text-white/75">{candidate.description}</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-4">
@@ -227,8 +264,8 @@ export default function CandidateDetailPage() {
 
       <section className="mx-auto grid max-w-6xl gap-5 px-4 py-6 lg:grid-cols-[1fr_360px]">
         <div className="space-y-5">
-          <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#123c34]">Thông tin nhóm dự thi</h2>
+          <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-5 shadow-sm">
+            <h2 className="text-lg font-black text-[var(--site-text)]">Thông tin nhóm dự thi</h2>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {[
                 ['Tên nhóm', candidate.teamName || 'Chưa cập nhật'],
@@ -241,55 +278,55 @@ export default function CandidateDetailPage() {
                 ['Trạng thái', candidate.status || 'Đang cập nhật'],
                 ['Thành viên nhóm', candidate.members || 'Chưa cập nhật'],
               ].map(([label, value]) => (
-                <div key={label} className={`rounded-lg bg-[#fbfdfc] p-3 ${label === 'Thành viên nhóm' ? 'sm:col-span-2' : ''}`}>
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7a8b85]">{label}</p>
-                  <p className="mt-1 text-sm font-bold text-[#123c34] whitespace-pre-line">{value}</p>
+                <div key={label} className={`rounded-xl bg-[var(--site-soft)] p-3 ${label === 'Thành viên nhóm' ? 'sm:col-span-2' : ''}`}>
+                  <p className="text-[13px] font-semibold text-[var(--site-muted)]">{label}</p>
+                  <p className="mt-1 text-sm font-bold text-[var(--site-text)] whitespace-pre-line">{value}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm">
-            <h2 className="text-lg font-black text-[#123c34]">Thuyết minh dự án</h2>
-            <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[#52605b]">{candidate.biography || candidate.description}</p>
+          <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-5 shadow-sm">
+            <h2 className="text-lg font-black text-[var(--site-text)]">Thuyết minh dự án</h2>
+            <p className="mt-3 whitespace-pre-line text-base leading-7 text-[var(--site-muted)]">{candidate.biography || candidate.description}</p>
           </div>
 
           <div className="grid gap-5 md:grid-cols-2">
-            <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm">
-              <h3 className="font-black text-[#123c34]">Nhu cầu hỗ trợ</h3>
-              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#52605b]">{candidate.supportNeeds || 'Chưa cập nhật nhu cầu hỗ trợ.'}</p>
+            <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-5 shadow-sm">
+              <h3 className="font-black text-[var(--site-text)]">Nhu cầu hỗ trợ</h3>
+              <p className="mt-3 whitespace-pre-line text-base leading-7 text-[var(--site-muted)]">{candidate.supportNeeds || 'Chưa cập nhật nhu cầu hỗ trợ.'}</p>
             </div>
-            <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm">
-              <h3 className="font-black text-[#123c34]">Kỳ vọng sau cuộc thi</h3>
-              <p className="mt-3 whitespace-pre-line text-sm leading-6 text-[#52605b]">{candidate.expectations || 'Chưa cập nhật kỳ vọng.'}</p>
+            <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-5 shadow-sm">
+              <h3 className="font-black text-[var(--site-text)]">Kỳ vọng sau cuộc thi</h3>
+              <p className="mt-3 whitespace-pre-line text-base leading-7 text-[var(--site-muted)]">{candidate.expectations || 'Chưa cập nhật kỳ vọng.'}</p>
             </div>
           </div>
         </div>
 
-        <aside className="space-y-4">
-          <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#0f766e]">Thí sinh được yêu thích nhất</p>
-            <h2 className="mt-2 text-lg font-black text-[#123c34]">Bình chọn cho dự án</h2>
+        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
+          <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-5 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--site-primary)]">Thí sinh được yêu thích nhất</p>
+            <h2 className="mt-2 text-lg font-black text-[var(--site-text)]">Bình chọn cho dự án</h2>
             <div className="mt-4 grid grid-cols-2 gap-2">
               {packages.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => setSelectedPackageId(item.id)}
-                  className={`rounded-lg border p-3 text-left transition ${selectedPackageId === item.id ? 'border-[#e45136] bg-[#fff5f2]' : 'border-[#dce5e1] bg-[#fbfdfc] hover:border-[#0f766e]'}`}
+                  className={`rounded-xl border p-3 text-left transition ${selectedPackageId === item.id ? 'border-[#0A2FFF] bg-blue-50 dark:bg-blue-500/10' : 'border-[var(--site-line)] bg-[var(--site-soft)] hover:border-[var(--site-primary)]'}`}
                 >
-                  <p className="text-sm font-black text-[#123c34]">{item.points.toLocaleString()} điểm</p>
-                  <p className="mt-1 text-xs font-bold text-[#e45136]">{formatMoney(item.price)}</p>
+                  <p className="text-sm font-black text-[var(--site-text)]">{item.points.toLocaleString()} điểm</p>
+                  <p className="mt-1 text-xs font-bold text-[var(--site-primary)]">{formatMoney(item.price)}</p>
                 </button>
               ))}
             </div>
-            <div className="mt-4 rounded-lg bg-[#fbfdfc] p-4">
+            <div className="mt-4 rounded-xl bg-[var(--site-soft)] p-4">
               <div className="flex justify-between text-sm">
-                <span className="font-bold text-[#52605b]">Thành tiền</span>
-                <span className="font-black text-[#123c34]">{formatMoney(selectedPackage?.price || 0)}</span>
+                <span className="font-bold text-[var(--site-muted)]">Thành tiền</span>
+                <span className="font-black text-[var(--site-text)]">{formatMoney(selectedPackage?.price || 0)}</span>
               </div>
-              <p className="mt-2 text-[11px] leading-5 text-[#7a8b85]">Giá hiển thị đã bao gồm VAT 10%. Gói miễn phí yêu cầu đăng nhập và được cấp theo ngày cho mỗi tài khoản.</p>
+              <p className="mt-2 text-[13px] leading-5 text-[var(--site-muted)]">Giá hiển thị đã bao gồm VAT 10%. Gói miễn phí yêu cầu đăng nhập và được cấp theo ngày cho mỗi tài khoản.</p>
               {selectedPackage?.packageType === 'PAID' && (
-                <div className="mt-3 pt-3 border-t border-[#dce5e1] flex items-center gap-2 text-[11px] text-[#0f766e] font-bold select-none">
+                <div className="mt-3 pt-3 border-t border-[var(--site-line)] flex items-center gap-2 text-[13px] text-[var(--site-primary)] font-bold select-none">
                   <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
                     <rect x="2" y="2" width="20" height="20" rx="3" />
                     <rect x="6" y="6" width="4" height="4" />
@@ -301,17 +338,27 @@ export default function CandidateDetailPage() {
                 </div>
               )}
             </div>
-            <button onClick={handleVote} disabled={!isGateOpen} className="mt-4 h-11 w-full rounded-lg bg-[#e45136] text-sm font-black text-white shadow transition hover:bg-[#c83f28] disabled:cursor-not-allowed disabled:opacity-60 animate-all duration-300">
-              {selectedPackage?.packageType === 'FREE' ? 'Bình chọn miễn phí' : 'Thanh toán QR (Sepay) & Bình chọn'}
+            <button
+              onClick={handleVote}
+              disabled={!isGateOpen}
+              className={`mt-4 h-11 w-full rounded-lg text-sm font-black transition-all duration-200 shadow ${isGateOpen
+                  ? 'bg-gradient-to-r from-primary to-secondary dark:bg-neutral-white dark:from-transparent dark:to-transparent text-white dark:text-primary hover:opacity-90 active:scale-[0.98]'
+                  : 'bg-slate-200 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                }`}
+            >
+              {isGateOpen
+                ? (selectedPackage?.packageType === 'FREE' ? 'Bình chọn miễn phí' : 'Thanh toán QR (Sepay) & Bình chọn')
+                : 'Cổng bình chọn đã đóng'
+              }
             </button>
             {!currentUser && selectedPackage?.packageType === 'FREE' && (
-              <Link href={`/dang-nhap?redirect=/thi-sinh/${candidate.sbd}`} className="mt-3 block text-center text-xs font-bold text-[#0f766e]">
+              <Link href={`/dang-nhap?redirect=/thi-sinh/${candidate.sbd}`} className="mt-3 block text-center text-sm font-bold text-[var(--site-primary)]">
                 Đăng nhập ngay để dùng lượt miễn phí
               </Link>
             )}
           </div>
 
-          <button onClick={copyLink} className="h-11 w-full rounded-lg border border-[#dce5e1] bg-white text-sm font-bold text-[#123c34] hover:border-[#0f766e]">
+          <button onClick={copyLink} className="h-11 w-full rounded-xl border border-[var(--site-line)] bg-[var(--site-card)] text-sm font-bold text-[var(--site-text)] hover:border-[var(--site-primary)]">
             Sao chép liên kết dự án
           </button>
         </aside>
@@ -319,15 +366,21 @@ export default function CandidateDetailPage() {
 
       {isLightboxOpen && (
         <div 
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/50 transition-opacity duration-300 animate-in fade-in"
+          ref={lightboxRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Bộ sưu tập ảnh dự án ${candidate.name}`}
+          className="fixed inset-0 z-[1200] flex flex-col items-center justify-center bg-black/80 transition-opacity duration-300 animate-in fade-in"
           onClick={() => setIsLightboxOpen(false)}
         >
           {/* Close button */}
           <button 
+            ref={lightboxCloseRef}
             type="button"
             onClick={() => setIsLightboxOpen(false)}
-            className="absolute top-4 right-4 z-50 rounded-full bg-white/10 hover:bg-white/25 p-2.5 text-white transition duration-200 focus:outline-none"
+            className="absolute top-4 right-4 z-50 grid h-11 w-11 place-items-center rounded-full bg-white/10 hover:bg-white/25 text-white transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             title="Đóng (ESC)"
+            aria-label="Đóng bộ sưu tập ảnh"
           >
             <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
@@ -343,8 +396,9 @@ export default function CandidateDetailPage() {
                 e.stopPropagation();
                 handlePrevImage();
               }}
-              className="absolute left-4 z-50 rounded-full bg-white/10 hover:bg-white/25 p-3 text-white transition duration-200 focus:outline-none active:scale-95"
+              className="absolute left-4 z-50 grid h-11 w-11 place-items-center rounded-full bg-white/10 hover:bg-white/25 text-white transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:scale-95"
               title="Ảnh trước (Mũi tên trái)"
+              aria-label="Xem ảnh trước"
             >
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
@@ -372,8 +426,9 @@ export default function CandidateDetailPage() {
                 e.stopPropagation();
                 handleNextImage();
               }}
-              className="absolute right-4 z-50 rounded-full bg-white/10 hover:bg-white/25 p-3 text-white transition duration-200 focus:outline-none active:scale-95"
+              className="absolute right-4 z-50 grid h-11 w-11 place-items-center rounded-full bg-white/10 hover:bg-white/25 text-white transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:scale-95"
               title="Ảnh tiếp theo (Mũi tên phải)"
+              aria-label="Xem ảnh tiếp theo"
             >
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6" />

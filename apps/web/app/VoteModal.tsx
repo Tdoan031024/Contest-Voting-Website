@@ -98,9 +98,15 @@ export default function VoteModal({ candidate, onClose, onSuccess, initialPackag
     setErrorMessage('');
 
     try {
+      const token = localStorage.getItem('huit_web_token');
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const res = await fetch(apiUrl(`/api/voting/candidates/${candidate.sbd}`), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           packageId: selectedPackage.id,
           userId: currentUser?.id,
@@ -169,9 +175,15 @@ export default function VoteModal({ candidate, onClose, onSuccess, initialPackag
       isSubmitting = true;
 
       try {
+        const token = localStorage.getItem('huit_web_token');
+        const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const res = await fetch(apiUrl(`/api/voting/candidates/${candidate.sbd}`), {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({
             packageId: selectedPackage.id,
             userId: currentUser?.id,

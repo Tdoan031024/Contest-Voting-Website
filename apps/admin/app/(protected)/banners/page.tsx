@@ -52,11 +52,21 @@ function BannerModal({
           {/* Left Column: Preview Area */}
           <div className="flex flex-col space-y-2">
             <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider block">Xem trước hiển thị</span>
-            <div className="overflow-hidden rounded-lg border border-[#dce5e1] bg-[#f4f7f6] flex-1 flex items-center justify-center min-h-[220px] md:min-h-[280px]">
-              {formImageUrl && formImageUrl.toLowerCase().endsWith('.mp4') ? (
-                <video src={formatAssetUrl(formImageUrl)} controls className="max-h-[280px] w-full object-contain rounded-md shadow-sm" />
+            <div className="overflow-hidden rounded-lg border border-[#dce5e1] bg-[#f4f7f6] flex-1 flex items-center justify-center min-h-[220px] md:min-h-[280px] p-4 text-center">
+              {formImageUrl ? (
+                formImageUrl.toLowerCase().endsWith('.mp4') ? (
+                  <video src={formatAssetUrl(formImageUrl)} controls className="max-h-[280px] w-full object-contain rounded-md shadow-sm" />
+                ) : (
+                  <img src={formatAssetUrl(formImageUrl)} alt="Xem trước" className="max-h-[280px] w-full object-contain rounded-md shadow-sm" />
+                )
               ) : (
-                <img src={formatAssetUrl(formImageUrl || '/original_assets/image974c.jpg')} alt="Xem trước" className="max-h-[280px] w-full object-contain rounded-md shadow-sm" />
+                <div className="space-y-2">
+                  <svg viewBox="0 0 24 24" className="h-10 w-10 text-[#8aa098] mx-auto" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                  </svg>
+                  <p className="text-xs font-bold text-slate-500">Chưa chọn hình ảnh/video banner</p>
+                  <p className="text-[10px] text-slate-400 font-semibold max-w-[200px] mx-auto">Vui lòng nhập đường dẫn hoặc tải lên tệp tin từ máy tính để hiển thị xem trước.</p>
+                </div>
               )}
             </div>
           </div>
@@ -70,7 +80,7 @@ function BannerModal({
 
             <div className="space-y-1.5">
               <label className="block space-y-1.5">
-                <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Đường dẫn hình ảnh</span>
+                <span className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Đường dẫn hình ảnh hoặc video</span>
                 <input className="h-9 w-full rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-semibold text-[#18211f] outline-none transition focus:border-[#0f766e] focus:bg-white" value={formImageUrl} onChange={(event) => setFormImageUrl(event.target.value)} required />
               </label>
               <div className="block space-y-1.5">
@@ -140,6 +150,299 @@ function BannerModal({
     </div>
   );
 }
+const csvHeadersMap: Record<string, string> = {
+  'ID': 'id',
+  'Tiêu đề banner': 'title',
+  'Đường dẫn hình ảnh hoặc video': 'imageUrl',
+  'Liên kết điều hướng': 'link',
+  'Hiển thị': 'isActive',
+};
+
+function parseCSVText(text: string): Record<string, string>[] {
+  const lines: string[][] = [];
+  let row: string[] = [];
+  let inQuotes = false;
+  let currentVal = '';
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const nextChar = text[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && nextChar === '"') {
+        currentVal += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      row.push(currentVal);
+      currentVal = '';
+    } else if ((char === '\r' || char === '\n') && !inQuotes) {
+      if (char === '\r' && nextChar === '\n') {
+        i++;
+      }
+      row.push(currentVal);
+      lines.push(row);
+      row = [];
+      currentVal = '';
+    } else {
+      currentVal += char;
+    }
+  }
+  if (currentVal || row.length > 0) {
+    row.push(currentVal);
+    lines.push(row);
+  }
+
+  if (lines.length < 2) return [];
+
+  const headers = lines[0].map(h => h.trim());
+  const result: Record<string, string>[] = [];
+
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i];
+    if (values.length === 1 && values[0] === '') continue;
+    
+    const obj: Record<string, string> = {};
+    for (let j = 0; j < headers.length; j++) {
+      obj[headers[j]] = values[j] ? values[j].trim() : '';
+    }
+    result.push(obj);
+  }
+
+  return result;
+}
+
+function escapeCSVValue(val: any): string {
+  if (val === null || val === undefined) return '';
+  let str = String(val);
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    str = str.replace(/"/g, '""');
+    return `"${str}"`;
+  }
+  return str;
+}
+
+function ImportModal({
+  onClose,
+  onSuccess,
+}: {
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [fileData, setFileData] = useState<any[]>([]);
+  const [fileName, setFileName] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [errorLogs, setErrorLogs] = useState<string[]>([]);
+  const [successMsg, setSuccessMsg] = useState<string>('');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setFileName(file.name);
+    setErrorLogs([]);
+    setSuccessMsg('');
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const text = event.target?.result as string;
+        const parsedRows = parseCSVText(text);
+
+        if (parsedRows.length === 0) {
+          alert('File CSV trống hoặc không đúng định dạng!');
+          return;
+        }
+
+        const bannerItems = parsedRows.map((row) => {
+          const item: any = {};
+          for (const [colName, fieldKey] of Object.entries(csvHeadersMap)) {
+            const val = row[colName] || '';
+            if (fieldKey === 'isActive') {
+              item[fieldKey] = val.toLowerCase() === 'có' || val.toLowerCase() === 'true' || val === '1' || val === '';
+            } else {
+              item[fieldKey] = val;
+            }
+          }
+          return item;
+        }).filter(item => item.title && item.imageUrl);
+
+        setFileData(bannerItems);
+      } catch (err: any) {
+        alert('Lỗi đọc file: ' + err.message);
+      }
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+
+  const handleDownloadTemplate = () => {
+    const headers = [
+      'ID',
+      'Tiêu đề banner',
+      'Đường dẫn hình ảnh hoặc video',
+      'Liên kết điều hướng',
+      'Hiển thị'
+    ];
+
+    const sampleRow = [
+      '',
+      'Banner HUIT Startup 2026',
+      '/uploads/baner.jpg',
+      '#about-section',
+      'Có'
+    ];
+
+    const csvContent = '\uFEFF' + [headers.join(','), sampleRow.map(escapeCSVValue).join(',')].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'banners_import_template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleImport = async () => {
+    if (fileData.length === 0) {
+      alert('Vui lòng chọn file CSV chứa dữ liệu hợp lệ trước!');
+      return;
+    }
+
+    setLoading(true);
+    setErrorLogs([]);
+    setSuccessMsg('');
+
+    try {
+      const res = await fetch(apiUrl('/api/admin/banners/bulk'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(fileData),
+      });
+
+      if (!res.ok) {
+        throw new Error('Lỗi từ hệ thống server hoặc chưa đăng nhập quản trị.');
+      }
+
+      const result = await res.json();
+      if (result.errors && result.errors.length > 0) {
+        setErrorLogs(result.errors);
+      }
+      setSuccessMsg(`Đã nhập thành công ${result.successCount}/${fileData.length} banner!`);
+      if (result.successCount > 0) {
+        onSuccess();
+      }
+    } catch (err: any) {
+      setErrorLogs([err.message || 'Lỗi không xác định khi tải lên hệ thống.']);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/55 p-4 backdrop-blur-sm flex items-center justify-center">
+      <div className="w-full max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl space-y-5">
+        <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Nhập dữ liệu banner</p>
+            <h3 className="mt-1 text-xl font-black text-slate-900">Nhập danh sách banner từ CSV</h3>
+          </div>
+          <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:border-emerald-600 hover:text-emerald-700">
+            Đóng
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div>
+              <p className="text-xs font-bold text-slate-800">Tải tệp tin CSV mẫu để điền thông tin</p>
+              <p className="text-[10px] text-slate-500 font-semibold mt-1">Đảm bảo cấu trúc cột và định dạng tiếng Việt đúng chuẩn.</p>
+            </div>
+            <button
+              onClick={handleDownloadTemplate}
+              className="shrink-0 flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:border-emerald-500 hover:text-emerald-500 transition animate-pulse"
+            >
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              Tải CSV mẫu
+            </button>
+          </div>
+
+          <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-xl p-6 bg-slate-50 hover:bg-slate-100 transition relative">
+            <input
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+            />
+            <svg viewBox="0 0 24 24" className="h-10 w-10 text-slate-400" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+              <polyline points="14 2 14 8 20 8" />
+              <line x1="12" y1="18" x2="12" y2="12" />
+              <polyline points="9 15 12 12 15 15" />
+            </svg>
+            <p className="mt-2 text-xs font-bold text-slate-700">Kéo thả hoặc nhấp để chọn tệp tin CSV</p>
+            <p className="text-[10px] text-slate-400 font-bold mt-1">Chỉ chấp nhận file định dạng .csv</p>
+            {fileName && (
+              <div className="mt-3 px-3 py-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-lg font-bold">
+                Tệp đã chọn: {fileName} ({fileData.length} dòng hợp lệ)
+              </div>
+            )}
+          </div>
+        </div>
+
+        {successMsg && (
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-800 text-xs font-bold">
+            {successMsg}
+          </div>
+        )}
+
+        {errorLogs.length > 0 && (
+          <div className="rounded-xl border border-red-200 bg-red-50 p-4 space-y-2 max-h-40 overflow-y-auto">
+            <p className="text-xs font-bold text-red-800 uppercase tracking-wide">Danh sách lỗi / cảnh báo:</p>
+            <ul className="list-disc list-inside text-[11px] text-red-700 font-semibold space-y-1">
+              {errorLogs.map((log, idx) => (
+                <li key={idx}>{log}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
+          <button type="button" onClick={onClose} className="rounded-lg border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 hover:border-emerald-600 hover:text-emerald-700">
+            Hủy
+          </button>
+          <button
+            type="button"
+            disabled={loading || fileData.length === 0}
+            onClick={handleImport}
+            className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-1.5 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                Đang xử lý...
+              </>
+            ) : (
+              <>Nhập dữ liệu ({fileData.length})</>
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function BannersAdminPage() {
   const [banners, setBanners] = useState<AdminBanner[]>([]);
@@ -151,6 +454,8 @@ export default function BannersAdminPage() {
   const [formImageUrl, setFormImageUrl] = useState('');
   const [formLink, setFormLink] = useState('');
   const [formActive, setFormActive] = useState(true);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
 
   async function loadBanners() {
     try {
@@ -167,7 +472,7 @@ export default function BannersAdminPage() {
 
   const openAddModal = () => {
     setFormTitle('');
-    setFormImageUrl('/original_assets/image974c.jpg');
+    setFormImageUrl('');
     setFormLink('#');
     setFormActive(true);
     setIsAddModalOpen(true);
@@ -257,6 +562,40 @@ export default function BannersAdminPage() {
     }
   };
 
+  const handleExportBanners = () => {
+    const headers = [
+      'ID',
+      'Tiêu đề banner',
+      'Đường dẫn hình ảnh hoặc video',
+      'Liên kết điều hướng',
+      'Hiển thị'
+    ];
+
+    const csvRows = [headers.join(',')];
+
+    for (const b of banners) {
+      const row = [
+        escapeCSVValue(b.id),
+        escapeCSVValue(b.title),
+        escapeCSVValue(b.imageUrl),
+        escapeCSVValue(b.link),
+        b.isActive !== false ? 'Có' : 'Không'
+      ];
+      csvRows.push(row.join(','));
+    }
+
+    const csvContent = '\uFEFF' + csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `banners_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const filteredBanners = banners.filter((banner) =>
     banner.title.toLowerCase().includes(search.toLowerCase())
   );
@@ -270,10 +609,34 @@ export default function BannersAdminPage() {
           <h2 className="mt-0.5 text-lg font-black text-[#123c34]">Banner trang chủ</h2>
           <p className="text-xs text-[#6b7773] mt-0.5">Quản lý banner đầu trang công khai và ẩn hiện nhanh.</p>
         </div>
-        <button onClick={openAddModal} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#e45136] px-3.5 py-2 text-xs font-bold text-white shadow transition hover:bg-[#c83f28] active:scale-[0.98]">
-          <span className="text-lg leading-none">+</span>
-          Thêm banner mới
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleExportBanners}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow transition hover:border-[#0f766e] hover:text-[#0f766e] active:scale-[0.98]"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Xuất CSV
+          </button>
+          <button
+            onClick={() => setIsImportModalOpen(true)}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow transition hover:border-[#0f766e] hover:text-[#0f766e] active:scale-[0.98]"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Nhập CSV
+          </button>
+          <button onClick={openAddModal} className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#e45136] px-3.5 py-2 text-xs font-bold text-white shadow transition hover:bg-[#c83f28] active:scale-[0.98]">
+            <span className="text-lg leading-none">+</span>
+            Thêm banner mới
+          </button>
+        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
@@ -401,6 +764,15 @@ export default function BannersAdminPage() {
           setFormActive={setFormActive}
           onClose={() => setIsEditModalOpen(false)}
           onSubmit={handleEditSubmit}
+        />
+      )}
+
+      {isImportModalOpen && (
+        <ImportModal
+          onClose={() => setIsImportModalOpen(false)}
+          onSuccess={() => {
+            loadBanners();
+          }}
         />
       )}
     </div>
