@@ -130,9 +130,6 @@ export default function GioiThieuPage() {
       return url;
     }
     const cleanPath = url.startsWith('/') ? url : `/${url}`;
-    if (cleanPath.startsWith('/uploads/')) {
-      return apiUrl(cleanPath);
-    }
     return cleanPath;
   }
 

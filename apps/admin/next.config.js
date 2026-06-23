@@ -13,6 +13,14 @@ const nextConfig = {
   experimental: {
     webpackBuildWorker: false,
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.ADMIN_API_URL || 'http://localhost:5000'}/api/:path*`,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

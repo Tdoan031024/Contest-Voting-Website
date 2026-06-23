@@ -78,6 +78,23 @@ const guidesIcon = (
   </svg>
 );
 
+const toggleSidebarIcon = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <rect width="18" height="18" x="3" y="3" rx="2" />
+    <path d="M9 3v18" />
+  </svg>
+);
+
+const newsIcon = (
+  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+    <path d="M16 8h2" />
+    <path d="M16 12h2" />
+    <path d="M16 16h2" />
+    <path d="M6 8h6v8H6z" />
+  </svg>
+);
+
 const navGroups = [
   {
     title: 'Quản lý',
@@ -86,6 +103,7 @@ const navGroups = [
       { href: '/candidates', label: 'Dự án', icon: candidatesIcon },
       { href: '/users', label: 'Quản lý người dùng', icon: usersIcon },
       { href: '/sponsors', label: 'Nhà tài trợ', icon: sponsorsIcon },
+      { href: '/news', label: 'Tin tức & Thông báo', icon: newsIcon },
     ],
   },
   {
@@ -112,13 +130,24 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const pathname = usePathname();
   const [sidebarWidth, setSidebarWidth] = React.useState(280);
   const [isResizing, setIsResizing] = React.useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
 
   React.useEffect(() => {
     const savedWidth = localStorage.getItem('admin_sidebar_width');
     if (savedWidth) {
       setSidebarWidth(parseInt(savedWidth, 10));
     }
+    const savedCollapsed = localStorage.getItem('admin_sidebar_collapsed');
+    if (savedCollapsed) {
+      setIsSidebarCollapsed(savedCollapsed === 'true');
+    }
   }, []);
+
+  const toggleSidebar = () => {
+    const nextState = !isSidebarCollapsed;
+    setIsSidebarCollapsed(nextState);
+    localStorage.setItem('admin_sidebar_collapsed', String(nextState));
+  };
 
   const handleLogout = async () => {
     try {
@@ -182,35 +211,51 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     };
   }, [isResizing, resize, stopResizing]);
 
-  const isCollapsed = sidebarWidth <= 120;
+  const isCollapsed = isSidebarCollapsed || sidebarWidth <= 120;
 
   return (
     <div className={`flex h-screen w-screen overflow-hidden bg-[#f5f7fa] ${isResizing ? 'select-none cursor-col-resize' : ''}`}>
       {/* Sidebar - macOS Styled */}
       <aside 
-        style={{ width: `${sidebarWidth}px` }}
-        className={`relative hidden h-screen shrink-0 border-r border-slate-200/60 bg-white/80 backdrop-blur-xl lg:flex lg:flex-col shadow-[1px_0_0_rgba(0,0,0,0.01)] ${
-          isResizing ? '' : 'transition-[width] duration-200 ease-in-out'
+        style={{ width: isCollapsed ? '80px' : `${sidebarWidth}px` }}
+        className={`relative hidden h-screen shrink-0 border-r border-slate-200/60 bg-white/80 backdrop-blur-xl lg:flex lg:flex-col shadow-[1px_0_0_rgba(0,0,0,0.01)] overflow-hidden ${
+          isResizing ? '' : 'transition-[width] duration-300 ease-in-out'
         }`}
       >
         
         {/* Brand header */}
-        <div className={`shrink-0 border-b border-slate-100/60 transition-all duration-200 ${
-          isCollapsed ? 'px-0 py-6 flex justify-center' : 'px-6 py-6'
+        <div className={`shrink-0 border-b border-slate-100/60 transition-all duration-200 flex items-center justify-between ${
+          isCollapsed ? 'px-2 py-4 flex-col gap-3 justify-center' : 'px-6 py-5'
         }`}>
           <Link href="/" className={`flex items-center gap-3 select-none active:scale-[0.98] transition-transform duration-200 ${
             isCollapsed ? 'justify-center' : ''
           }`}>
-            <div className="h-9 w-9 overflow-hidden rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center shrink-0">
+            <div className="h-10 w-10 overflow-hidden rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center shrink-0">
               <img src="/admin/uploads/logo-startup.png" alt="Logo" className="h-full w-full object-contain p-1" />
             </div>
             {!isCollapsed && (
               <span className="transition-opacity duration-200 animate-in fade-in">
-                <span className="block text-[13px] font-semibold text-slate-800 tracking-wide font-heading leading-tight whitespace-nowrap">HUIT STARTUP</span>
-                <span className="block text-[10px] font-medium text-slate-400 mt-0.5 leading-none whitespace-nowrap">Hệ thống quản trị</span>
+                <span className="block text-[14px] font-bold text-slate-800 tracking-wide font-heading leading-tight whitespace-nowrap">HUIT STARTUP</span>
+                <span className="block text-[10px] font-semibold text-slate-400 mt-0.5 leading-none whitespace-nowrap">Hệ thống quản trị</span>
               </span>
             )}
           </Link>
+          
+          <button
+            onClick={toggleSidebar}
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/60 bg-white text-slate-500 shadow-sm transition hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-[var(--primary-soft)] active:scale-[0.95] shrink-0"
+            title={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
+          >
+            {isCollapsed ? (
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            )}
+          </button>
         </div>
 
         {/* Navigation list */}
@@ -218,7 +263,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           {navGroups.map((group) => (
             <div key={group.title} className="space-y-1.5">
               {!isCollapsed && (
-                <p className="px-4 text-[10px] font-medium uppercase tracking-wider text-slate-400 font-heading pb-1 truncate animate-in fade-in">
+                <p className="px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 font-heading pb-1 truncate animate-in fade-in">
                   {group.title}
                 </p>
               )}
@@ -230,11 +275,11 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                       key={item.href}
                       href={item.href}
                       className={`group flex items-center rounded-xl transition-all duration-200 ${
-                        isCollapsed ? 'justify-center p-2.5 mx-1' : 'gap-3 px-4 py-2 mx-2'
-                      } text-xs ${
+                        isCollapsed ? 'justify-center p-3 mx-1' : 'gap-3 px-4 py-2 mx-2'
+                      } text-[13px] md:text-sm ${
                         active
-                           ? 'bg-[var(--primary-soft)] text-[var(--primary)] font-semibold border border-[var(--primary)]/5 shadow-sm'
-                           : 'text-slate-600 font-medium hover:bg-slate-50 hover:text-[var(--primary)]'
+                           ? 'bg-[var(--primary-soft)] text-[var(--primary)] font-bold border border-[var(--primary)]/5 shadow-sm'
+                           : 'text-slate-600 font-semibold hover:bg-slate-50 hover:text-[var(--primary)]'
                        }`}
                       title={isCollapsed ? item.label : undefined}
                     >
@@ -256,12 +301,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             isCollapsed ? 'p-2 flex flex-col items-center justify-center' : 'p-4'
           }`}>
             {!isCollapsed && (
-              <p className="text-[9px] font-medium uppercase tracking-wider text-slate-400 font-heading animate-in fade-in">Tài khoản quản trị</p>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 font-heading animate-in fade-in">Tài khoản quản trị</p>
             )}
             
             <div className={`mt-2 flex items-center justify-between gap-3 ${isCollapsed ? 'mt-0 justify-center w-full' : ''}`}>
               {isCollapsed ? (
-                <div className="relative h-8 w-8 select-none">
+                <div className="relative h-9 w-9 select-none">
                   <div className="absolute inset-0 overflow-hidden rounded-full border border-slate-200 bg-white flex items-center justify-center transition-opacity duration-200 group-hover:opacity-0">
                     <img src="/admin/uploads/logo-startup.png" alt="AD" className="h-full w-full object-contain p-0.5" />
                   </div>
@@ -270,18 +315,18 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                     className="absolute inset-0 opacity-0 group-hover:opacity-100 grid place-items-center rounded-full text-red-500 hover:bg-red-50 transition-all duration-200"
                     title="Đăng xuất"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
                   </button>
                 </div>
               ) : (
                 <>
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-8 w-8 overflow-hidden rounded-full border border-slate-200 bg-white flex items-center justify-center shrink-0">
+                    <div className="h-9 w-9 overflow-hidden rounded-full border border-slate-200 bg-white flex items-center justify-center shrink-0">
                       <img src="/admin/uploads/logo-startup.png" alt="AD" className="h-full w-full object-contain p-0.5" />
                     </div>
                     <div className="min-w-0">
-                      <span className="block truncate text-xs font-semibold text-slate-700 font-heading">Administrator</span>
-                      <span className="block text-[9px] font-medium text-slate-400 mt-0.5">Quản trị viên</span>
+                      <span className="block truncate text-[13px] font-bold text-slate-700 font-heading">Administrator</span>
+                      <span className="block text-[10px] font-semibold text-slate-400 mt-0.5">Quản trị viên</span>
                     </div>
                   </div>
                   
@@ -290,7 +335,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                     className="opacity-0 group-hover:opacity-100 p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200 shrink-0"
                     title="Đăng xuất"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
                   </button>
                 </>
               )}
@@ -299,12 +344,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         </div>
 
         {/* Resize Handle */}
-        <div 
-          onMouseDown={startResizing}
-          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-slate-300/50 active:bg-slate-400/80 transition-colors z-30 select-none ${
-            isResizing ? 'bg-slate-400/80' : ''
-          }`}
-        />
+        {!isCollapsed && (
+          <div 
+            onMouseDown={startResizing}
+            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-slate-300/50 active:bg-slate-400/80 transition-colors z-30 select-none ${
+              isResizing ? 'bg-slate-400/80' : ''
+            }`}
+          />
+        )}
       </aside>
 
       {/* Main Panel */}
@@ -313,7 +360,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         {/* Top Header - macOS styled toolbar */}
         <header className="z-20 shrink-0 border-b border-slate-200/50 bg-white/80 px-6 py-4 backdrop-blur-md flex flex-col gap-4 md:flex-row md:items-center md:justify-between shadow-sm select-none">
           <div className="space-y-1">
-            <h1 className="text-sm md:text-base font-black tracking-wide font-heading leading-tight">
+            <h1 className="text-sm md:text-base font-black tracking-wide font-heading leading-tight flex items-center">
               <span className="typewriter-title">Hệ thống quản lý bình chọn HUIT STARTUP</span>
             </h1>
             <p className="text-[10px] md:text-xs font-semibold text-slate-500">

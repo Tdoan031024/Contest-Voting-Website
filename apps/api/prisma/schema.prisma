@@ -114,3 +114,17 @@ model WebUser {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 }
+
+model Post {
+  id           String   @id @default(uuid())
+  title        String
+  slug         String   @unique
+  summary      String?  @db.Text
+  content      String   @db.Text
+  thumbnailUrl String?
+  isActive     Boolean  @default(true)
+  category     String   @default("Tin tức")
+  views        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

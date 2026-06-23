@@ -77,7 +77,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
       {children}
       
       {/* Toast List Container */}
-      <div className="fixed top-6 right-6 z-[9999] flex flex-col gap-3 w-full max-w-[350px] pointer-events-none">
+      <div className="fixed left-4 right-4 top-[calc(16px+env(safe-area-inset-top))] z-[9999] ml-auto flex w-auto max-w-[380px] flex-col gap-3 pointer-events-none sm:left-auto sm:right-6 sm:top-6 sm:w-full" aria-live="polite" aria-relevant="additions">
         <style dangerouslySetInnerHTML={{ __html: `
           @keyframes shrinkWidth {
             from { width: 100%; }
@@ -95,6 +95,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
         {toasts.map((toast) => (
           <div 
             key={toast.id}
+            role={toast.type === 'error' || toast.type === 'warning' ? 'alert' : 'status'}
             className="toast-item pointer-events-auto relative overflow-hidden flex items-start gap-3 rounded-2xl border border-white/10 bg-[#0b0f19]/95 backdrop-blur-md p-4 shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-all duration-300 w-full"
           >
             {/* Ambient subtle glow */}
@@ -127,14 +128,15 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
 
             {/* Text details */}
             <div className="flex-1 min-w-0 pr-4">
-              <h4 className="text-[13px] font-bold text-white tracking-wide uppercase">{toast.title}</h4>
-              <p className="text-[11px] text-slate-300 mt-1 leading-normal font-medium whitespace-pre-line">{toast.message}</p>
+              <h4 className="text-[14px] font-bold text-white tracking-wide">{toast.title}</h4>
+              <p className="text-[13px] text-slate-300 mt-1 leading-relaxed font-medium whitespace-pre-line">{toast.message}</p>
             </div>
 
             {/* Close button */}
             <button
               onClick={() => removeToast(toast.id)}
-              className="flex-shrink-0 text-slate-400 hover:text-white transition-colors"
+              className="-mr-2 -mt-2 grid h-11 w-11 flex-shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-white/10 hover:text-white transition-colors"
+              aria-label={`Đóng thông báo: ${toast.title}`}
             >
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

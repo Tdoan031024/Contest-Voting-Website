@@ -216,7 +216,7 @@ export default function IntroductionAdminPage() {
   useEffect(() => {
     async function loadSettings() {
       try {
-        const res = await fetch(apiUrl('/api/settings'));
+        const res = await fetch(apiUrl('/api/admin/settings'));
         if (res.ok) {
           const data = await res.json();
           if (data.aboutTitle) setAboutTitle(data.aboutTitle);

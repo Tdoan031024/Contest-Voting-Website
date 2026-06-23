@@ -53,6 +53,13 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
   );
 }
 
+function milestoneDate(dateText: string) {
+  const values = dateText.match(/\d{1,2}\/\d{1,2}(?:\/\d{4})?/g) || [];
+  const last = values[values.length - 1]?.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{4}))?/);
+  if (!last) return null;
+  return new Date(Number(last[3] || 2026), Number(last[2]) - 1, Number(last[1]), 23, 59, 59);
+}
+
 export default function TimelinePage() {
   const registerUrl =
     'https://docs.google.com/forms/d/e/1FAIpQLSdlRmaBRgPAl_rbLjDOY__ROcyZsCOnoxec2izDhRVJTcHBfA/viewform';
@@ -163,6 +170,14 @@ export default function TimelinePage() {
       ['25/7', 'Bán kết'],
       ['03/10', 'Chung kết'],
     ];
+  const today = new Date();
+  const lastPassedIndex = [...keyMilestones].reverse().findIndex(([date]) => {
+    const parsed = milestoneDate(date);
+    return parsed ? parsed <= today : false;
+  });
+  const currentMilestoneIndex = lastPassedIndex >= 0
+    ? (keyMilestones.length - 1 - lastPassedIndex)
+    : 0;
 
   return (
     <>
@@ -174,7 +189,7 @@ export default function TimelinePage() {
         .timeline-node-anim { animation: pulseNode 2.8s ease-in-out infinite; }
       `}</style>
 
-      <main className="sc-908a50-0 iUzfqH theme-page timeline-theme-page flex-1 min-h-screen mt-[-80px] pt-[128px] sm:pt-[160px] pb-16 sm:pb-24 relative overflow-hidden">
+      <main className="sc-908a50-0 iUzfqH theme-page timeline-theme-page flex-1 min-h-screen mt-[-72px] pt-[120px] sm:pt-[152px] pb-16 sm:pb-24 relative overflow-hidden">
         <div className="absolute top-[8%] left-[-16%] h-[520px] w-[520px] rounded-full bg-[#0A2FFF]/10 blur-[130px] pointer-events-none" />
         <div className="absolute top-[42%] right-[-14%] h-[620px] w-[620px] rounded-full bg-[#79BCC2]/10 blur-[150px] pointer-events-none" />
         <div className="absolute bottom-[4%] left-[15%] h-[360px] w-[360px] rounded-full bg-[#F97316]/8 blur-[120px] pointer-events-none" />
@@ -222,17 +237,18 @@ export default function TimelinePage() {
             <div style={{ textAlign:'center', marginBottom:24 }}>
               <p style={{ fontSize:11, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.2em', color:'var(--site-muted)', marginBottom:6 }}>Lịch trình tổng quan</p>
               <h3 style={{ fontSize:'clamp(16px,2vw,22px)', fontWeight:900, color:'var(--site-text)', margin:0 }}>Mốc quan trọng</h3>
+              <p className="mt-2 text-[13px] text-[var(--site-muted)] sm:hidden">Vuốt ngang để xem toàn bộ lộ trình</p>
             </div>
             <div className="timeline-tracker" style={{ padding:'30px 16px 20px' }}>
               {keyMilestones.map(([date, label], i) => {
-                const isDone = i < 1;
-                const isCurrent = i === 1;
+                const isDone = i < currentMilestoneIndex;
+                const isCurrent = i === currentMilestoneIndex;
                 return (
                   <React.Fragment key={`milestone-${i}`}>
                     <div className="timeline-node-wrap">
                       <div style={{ position:'relative' }}>
                         {isCurrent && <div className="you-are-here">Bạn đang ở đây</div>}
-                        <div className={`timeline-node ${isDone ? 'done' : isCurrent ? 'current' : 'upcoming'} ${isCurrent ? 'timeline-node-anim' : ''}`}>
+                        <div aria-current={isCurrent ? 'step' : undefined} className={`timeline-node ${isDone ? 'done' : isCurrent ? 'current' : 'upcoming'} ${isCurrent ? 'timeline-node-anim' : ''}`}>
                           {isDone ? (
                             <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
                               <polyline points="20 6 9 17 4 12" />

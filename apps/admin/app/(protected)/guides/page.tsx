@@ -89,7 +89,7 @@ export default function GuidesAdminPage() {
   useEffect(() => {
     async function loadSettings() {
       try {
-        const res = await fetch(apiUrl('/api/settings'));
+        const res = await fetch(apiUrl('/api/admin/settings'));
         if (!res.ok) return;
         const data = await res.json();
 

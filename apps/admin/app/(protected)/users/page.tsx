@@ -221,6 +221,15 @@ function DetailModal({
     </div>
   );
 }
+function escapeCSVValue(val: any): string {
+  if (val === null || val === undefined) return '';
+  let str = String(val);
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    str = str.replace(/"/g, '""');
+    return `"${str}"`;
+  }
+  return str;
+}
 
 export default function UsersAdminPage() {
   const [users, setUsers] = useState<WebUser[]>([]);
@@ -231,6 +240,52 @@ export default function UsersAdminPage() {
   const [modalMode, setModalMode] = useState<'add' | 'edit' | 'detail' | null>(null);
   const [selectedUser, setSelectedUser] = useState<WebUser | null>(null);
   const [form, setForm] = useState<Partial<WebUser> & { password?: string }>({});
+
+  const handleExportUsers = () => {
+    const headers = [
+      'ID',
+      'Họ và tên',
+      'Email',
+      'Số điện thoại',
+      'Hình thức đăng ký',
+      'Trạng thái tài khoản',
+      'Bảng quan tâm',
+      'Đơn vị công tác / Trường học',
+      'Điểm đã bình chọn',
+      'Ngày đăng ký',
+      'Đăng nhập cuối'
+    ];
+
+    const csvRows = [headers.join(',')];
+
+    for (const u of users) {
+      const row = [
+        escapeCSVValue(u.id),
+        escapeCSVValue(u.fullName),
+        escapeCSVValue(u.email),
+        escapeCSVValue(u.phone),
+        escapeCSVValue(providerLabel[u.provider] || u.provider),
+        u.status === 'ACTIVE' ? 'Đang hoạt động' : 'Đã khóa',
+        escapeCSVValue(u.contestTable),
+        escapeCSVValue(u.schoolOrCompany),
+        escapeCSVValue(u.votedPoints || 0),
+        escapeCSVValue(u.registeredAt),
+        escapeCSVValue(u.lastLoginAt)
+      ];
+      csvRows.push(row.join(','));
+    }
+
+    const csvContent = '\uFEFF' + csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `web_users_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const loadUsers = async () => {
     try {
@@ -363,13 +418,26 @@ export default function UsersAdminPage() {
           <h2 className="mt-0.5 text-lg font-black text-[#123c34]">Người dùng đã đăng ký ở website chính</h2>
           <p className="text-xs text-[#6b7773] mt-0.5">Theo dõi tài khoản bình chọn, hình thức đăng ký, thông tin liên hệ và lịch sử đăng nhập gần nhất.</p>
         </div>
-        <button 
-          onClick={openAddModal} 
-          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#e45136] px-3.5 py-2 text-xs font-bold text-white shadow transition hover:bg-[#c83f28] active:scale-[0.98] shrink-0"
-        >
-          <span className="text-lg leading-none">+</span>
-          Thêm người dùng mới
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleExportUsers}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow transition hover:border-[#0f766e] hover:text-[#0f766e] active:scale-[0.98] shrink-0"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Xuất CSV
+          </button>
+          <button 
+            onClick={openAddModal} 
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#e45136] px-3.5 py-2 text-xs font-bold text-white shadow transition hover:bg-[#c83f28] active:scale-[0.98] shrink-0"
+          >
+            <span className="text-lg leading-none">+</span>
+            Thêm người dùng mới
+          </button>
+        </div>
       </section>
 
       <section className="grid grid-cols-1 gap-3 md:grid-cols-4">

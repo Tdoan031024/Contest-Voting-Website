@@ -4,6 +4,76 @@ import { PrismaService } from './prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as bcrypt from 'bcryptjs';
+import * as crypto from 'crypto';
+
+export function getEnvVar(key: string, defaultValue?: string): string {
+  if (process.env[key]) return process.env[key];
+
+  const pathsToTry = [
+    path.join(process.cwd(), '.env'),
+    path.join(process.cwd(), 'apps/admin/.env.local'),
+    path.join(process.cwd(), 'apps/api/.env'),
+    path.join(__dirname, '../../.env'),
+    path.join(__dirname, '../../../.env'),
+    path.join(__dirname, '../../admin/.env.local'),
+  ];
+
+  for (const envPath of pathsToTry) {
+    try {
+      if (fs.existsSync(envPath)) {
+        const content = fs.readFileSync(envPath, 'utf8');
+        const regex = new RegExp(`${key}=["']?([^"'\r\n]+)["']?`);
+        const match = content.match(regex);
+        if (match && match[1]) {
+          return match[1].trim();
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+  if (defaultValue !== undefined) return defaultValue;
+  throw new Error(`Environment variable ${key} is not set.`);
+}
+
+export function generateWebToken(userId: string, secret: string): string {
+  const expiresAt = Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 30; // 30 days
+  const payload = `${userId}.${expiresAt}`;
+  const signature = crypto
+    .createHmac('sha256', secret)
+    .update(payload)
+    .digest('base64')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=+$/g, '');
+  return `web-${payload}.${signature}`;
+}
+
+export function extractWebUserFromToken(token: string, secret: string): string | null {
+  if (!token) return null;
+  if (token.startsWith('local-')) {
+    return token.substring(6);
+  }
+  if (token.startsWith('web-')) {
+    const tokenContent = token.slice(4);
+    const parts = tokenContent.split('.');
+    if (parts.length !== 3) return null;
+    const [userId, expiresAtStr, signature] = parts;
+    const expiresAt = Number(expiresAtStr);
+    if (isNaN(expiresAt) || expiresAt < Math.floor(Date.now() / 1000)) return null;
+    const payload = `${userId}.${expiresAtStr}`;
+    const expectedSig = crypto
+      .createHmac('sha256', secret)
+      .update(payload)
+      .digest('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/g, '');
+    if (expectedSig !== signature) return null;
+    return userId;
+  }
+  return null;
+}
 
 export interface SystemSettings {
   isGateOpen: boolean;
@@ -619,12 +689,42 @@ export class AppService implements OnModuleInit {
     return (data.votePackages || this.settings.votePackages || []).filter((item) => item.isActive);
   }
 
-  getFreeVoteQuota(userId: string): { remaining: number; limit: number } {
-    // Return high quota for testing/demo purposes
-    return { remaining: 99999, limit: 99999 };
+  async getFreeVoteQuota(userId: string): Promise<{ remaining: number; limit: number }> {
+    const webUser = await this.prisma.webUser.findUnique({ where: { id: userId } });
+    if (!webUser) return { remaining: 0, limit: 0 };
+    return this.getFreeVoteQuotaSecure(webUser);
   }
 
-  async voteCandidate(sbd: string, body: any = {}): Promise<any> {
+  async getFreeVoteQuotaSecure(user: { phone?: string | null; email?: string | null }): Promise<{ remaining: number; limit: number }> {
+    const limit = this.settings.freeVotesPerAccountPerDay || 1;
+    
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date();
+    endOfDay.setHours(23, 59, 59, 999);
+    
+    const identifiers = [user.phone, user.email].filter(Boolean) as string[];
+    
+    const voteCount = await this.prisma.voteRecord.count({
+      where: {
+        voterPhone: { in: identifiers },
+        voteTime: {
+          gte: startOfDay,
+          lte: endOfDay
+        },
+        transactionId: null, // Free votes do not have transactions
+      }
+    });
+    
+    const remaining = Math.max(0, limit - voteCount);
+    return { remaining, limit };
+  }
+
+  async voteCandidate(sbd: string, body: any = {}, authHeader?: string): Promise<any> {
+    if (!this.settings.isGateOpen) {
+      throw new BadRequestException('Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng.');
+    }
+
     const candidate = await this.prisma.candidate.findUnique({
       where: { sbd },
     });
@@ -638,21 +738,38 @@ export class AppService implements OnModuleInit {
       packages.find((item) => item.id === 'vote-10') ||
       packages[0];
 
-    const points = Number(body.points || selectedPackage?.points || 1);
-    let transactionId: string | undefined = undefined;
+    if (!selectedPackage) {
+      throw new BadRequestException('Gói bình chọn không hợp lệ.');
+    }
 
-    if (selectedPackage?.packageType === 'FREE') {
-      if (!body.userId) {
-        throw new UnauthorizedException('Gói bình chọn miễn phí yêu cầu đăng nhập tài khoản.');
+    const points = selectedPackage.points;
+    let transactionId: string | undefined = undefined;
+    let userId: string | null = null;
+
+    const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
+    if (token) {
+      userId = extractWebUserFromToken(token, this.getAdminSessionSecret());
+    }
+
+    if (selectedPackage.packageType === 'FREE') {
+      if (!userId) {
+        throw new UnauthorizedException('Gói bình chọn miễn phí yêu cầu đăng nhập tài khoản hợp lệ.');
       }
 
-      const quota = this.getFreeVoteQuota(body.userId);
+      const webUser = await this.prisma.webUser.findUnique({
+        where: { id: userId },
+      });
+      if (!webUser || webUser.status === 'LOCKED') {
+        throw new UnauthorizedException('Tài khoản người dùng không tồn tại hoặc đã bị khóa.');
+      }
+
+      const quota = await this.getFreeVoteQuotaSecure(webUser);
       if (quota.remaining <= 0) {
         throw new BadRequestException('Tài khoản đã sử dụng hết lượt bình chọn miễn phí trong ngày.');
       }
-    } else if (selectedPackage?.packageType === 'PAID') {
+    } else if (selectedPackage.packageType === 'PAID') {
       const sepayToken = this.settings.sepayApiKey || '1dcd4e6cd52fde1e4bf0510a9b406476322d811f3bbae785';
-      const expectedMemo = `${this.settings.sepayPrefix || 'HUIT'} ${candidate.sbd} ${body.userId || 'GUEST'}`.toUpperCase();
+      const expectedMemo = `${this.settings.sepayPrefix || 'HUIT'} ${candidate.sbd} ${userId || 'GUEST'}`.toUpperCase();
       
       const isDemoKey = sepayToken === 'sepay_api_key_placeholder' || sepayToken.startsWith('demo') || this.settings.isTestMode !== false;
       if (isDemoKey) {
@@ -709,22 +826,32 @@ export class AppService implements OnModuleInit {
       }
     }
 
-    const updatedCandidate = await this.prisma.candidate.update({
-      where: { sbd },
-      data: { votes: { increment: points } },
-    });
+    const updatedCandidate = await this.prisma.$transaction(async (tx) => {
+      const candidateUpdate = await tx.candidate.update({
+        where: { id: candidate.id },
+        data: { votes: { increment: points } },
+      });
 
-    try {
-      await this.prisma.voteRecord.create({
+      let voterPhoneIdentifier = 'WEB_USER';
+      if (userId) {
+        const webUser = await tx.webUser.findUnique({ where: { id: userId } });
+        if (webUser) {
+          voterPhoneIdentifier = webUser.phone || webUser.email || 'WEB_USER';
+        }
+      } else {
+        voterPhoneIdentifier = body.phone || body.voterPhone || 'WEB_USER';
+      }
+
+      await tx.voteRecord.create({
         data: {
           candidateId: candidate.id,
-          voterPhone: body.phone || body.voterPhone || 'WEB_USER',
+          voterPhone: voterPhoneIdentifier,
           transactionId,
         },
       });
-    } catch (err) {
-      console.error('⚠️ Failed to save VoteRecord:', err);
-    }
+
+      return candidateUpdate;
+    });
 
     const data = this.readLocalData();
     const voteRecord = {
@@ -736,7 +863,7 @@ export class AppService implements OnModuleInit {
       packageType: selectedPackage?.packageType,
       points,
       amount: selectedPackage?.price || 0,
-      userId: body.userId,
+      userId: userId || body.userId,
       voterPhone: body.phone || body.voterPhone,
       transactionId,
       createdAt: new Date().toISOString(),
@@ -919,7 +1046,9 @@ export class AppService implements OnModuleInit {
 
   // --- BANNERS ---
   async getBanners(): Promise<Banner[]> {
-    return this.prisma.banner.findMany() as any;
+    return this.prisma.banner.findMany({
+      orderBy: { createdAt: 'asc' },
+    }) as any;
   }
 
   async addBanner(newBanner: Partial<Banner>): Promise<Banner> {
@@ -951,6 +1080,63 @@ export class AppService implements OnModuleInit {
     });
     return { success: true };
   }
+
+  async bulkImportBanners(payload: Partial<Banner>[]): Promise<{ successCount: number; errors: string[] }> {
+    if (!payload || !Array.isArray(payload)) {
+      throw new BadRequestException('Dữ liệu không hợp lệ.');
+    }
+
+    let successCount = 0;
+    const errors: string[] = [];
+
+    for (let i = 0; i < payload.length; i++) {
+      const item = payload[i];
+      const rowNum = i + 2;
+
+      if (!item.title) {
+        errors.push(`Dòng ${rowNum}: Thiếu tiêu đề banner.`);
+        continue;
+      }
+      if (!item.imageUrl) {
+        errors.push(`Dòng ${rowNum}: Thiếu đường dẫn hình ảnh/video.`);
+        continue;
+      }
+
+      try {
+        if (item.id) {
+          const existing = await this.prisma.banner.findUnique({ where: { id: item.id } });
+          if (existing) {
+            await this.prisma.banner.update({
+              where: { id: item.id },
+              data: {
+                title: item.title,
+                imageUrl: item.imageUrl,
+                link: item.link || '#',
+                isActive: item.isActive ?? true,
+              },
+            });
+            successCount++;
+            continue;
+          }
+        }
+
+        await this.prisma.banner.create({
+          data: {
+            title: item.title,
+            imageUrl: item.imageUrl,
+            link: item.link || '#',
+            isActive: item.isActive ?? true,
+          },
+        });
+        successCount++;
+      } catch (err: any) {
+        errors.push(`Dòng ${rowNum}: Lỗi ghi DB - ${err.message || err}`);
+      }
+    }
+
+    return { successCount, errors };
+  }
+
 
   // --- WEB USERS & AUTH ---
   async getWebUsers(): Promise<WebUser[]> {
@@ -1057,7 +1243,7 @@ export class AppService implements OnModuleInit {
       },
     });
 
-    return { ok: true, user: this.publicWebUser(user), token: `local-${user.id}` };
+    return { ok: true, user: this.publicWebUser(user), token: generateWebToken(user.id, this.getAdminSessionSecret()) };
   }
 
   async quickRegisterWebUser(payload: Partial<WebUser>): Promise<{ ok: boolean; user: WebUser; token: string }> {
@@ -1076,7 +1262,7 @@ export class AppService implements OnModuleInit {
         where: { id: existing.id },
         data: { lastLoginAt: new Date() },
       });
-      return { ok: true, user: this.publicWebUser(updated), token: `local-${updated.id}` };
+      return { ok: true, user: this.publicWebUser(updated), token: generateWebToken(updated.id, this.getAdminSessionSecret()) };
     }
 
     const user = await this.prisma.webUser.create({
@@ -1094,7 +1280,7 @@ export class AppService implements OnModuleInit {
       },
     });
 
-    return { ok: true, user: this.publicWebUser(user), token: `local-${user.id}` };
+    return { ok: true, user: this.publicWebUser(user), token: generateWebToken(user.id, this.getAdminSessionSecret()) };
   }
 
   async loginWebUser(email: string, password: string): Promise<{ ok: boolean; user: WebUser; token: string }> {
@@ -1116,7 +1302,7 @@ export class AppService implements OnModuleInit {
       data: { lastLoginAt: new Date() },
     });
 
-    return { ok: true, user: this.publicWebUser(updated), token: `local-${updated.id}` };
+    return { ok: true, user: this.publicWebUser(updated), token: generateWebToken(updated.id, this.getAdminSessionSecret()) };
   }
 
   async googleLogin(payload: Partial<WebUser> & { googleId?: string; accessToken?: string }): Promise<{ ok: boolean; user: WebUser; token: string }> {
@@ -1170,12 +1356,68 @@ export class AppService implements OnModuleInit {
       });
     }
 
-    return { ok: true, user: this.publicWebUser(user), token: `local-${user.id}` };
+    return { ok: true, user: this.publicWebUser(user), token: generateWebToken(user.id, this.getAdminSessionSecret()) };
   }
 
   // --- SYSTEM SETTINGS ---
   getSettings(): SystemSettings {
     return this.settings;
+  }
+
+  getPublicSettings(): Partial<SystemSettings> {
+    const publicFields: Array<keyof SystemSettings> = [
+      'isGateOpen',
+      'startDate',
+      'endDate',
+      'maxVotesPerPhone',
+      'eventTitle',
+      'organizer',
+      'contactEmail',
+      'isMaintenanceMode',
+      'sponsorBannerUrl',
+      'aboutTitle',
+      'aboutDescription',
+      'aboutImageUrl',
+      'statsCandidates',
+      'statsVotes',
+      'statsViews',
+      'statsYear',
+      'statsParticipants',
+      'statsMedia',
+      'statsSchools',
+      'aboutSubtitle',
+      'aboutTheme',
+      'aboutOrganizerDetail',
+      'aboutSectors',
+      'aboutBenefits',
+      'aboutParticipants',
+      'aboutPrize',
+      'aboutContactName',
+      'aboutContactRole',
+      'aboutContactPhone',
+      'aboutContactWebsite',
+      'aboutContactQrUrl',
+      'isRegistrationOpen',
+      'registrationDeadline',
+      'registrationUrl',
+      'detailUrl',
+      'supportZaloUrl',
+      'freeVotesPerAccountPerDay',
+      'guideSections',
+      'exchangeRates',
+      'votePackages',
+      'sepayBankName',
+      'sepayAccountNo',
+      'sepayAccountName',
+      'sepayPrefix',
+    ];
+    const publicSettings: any = {};
+    for (const field of publicFields) {
+      if (this.settings[field] !== undefined) {
+        publicSettings[field] = this.settings[field];
+      }
+    }
+    return publicSettings;
   }
 
   updateSettings(updatedFields: Partial<SystemSettings>): SystemSettings {
@@ -1248,5 +1490,203 @@ export class AppService implements OnModuleInit {
       username: adminUser.username,
       role: adminUser.role,
     };
+  }
+
+  getAdminSessionSecret(): string {
+    const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+    try {
+      return getEnvVar('ADMIN_SESSION_SECRET');
+    } catch (e) {
+      if (isDev) {
+        console.warn('⚠️ Environment variable ADMIN_SESSION_SECRET is not set. Falling back to default secret HuitMedia2026 for development.');
+        return 'HuitMedia2026';
+      }
+      throw new Error('FATAL: Environment variable ADMIN_SESSION_SECRET is required on production!');
+    }
+  }
+
+  async bulkImportCandidates(payload: Partial<Candidate>[]): Promise<{ successCount: number; errors: string[] }> {
+    if (!payload || !Array.isArray(payload)) {
+      throw new BadRequestException('Dữ liệu tải lên không hợp lệ.');
+    }
+
+    let successCount = 0;
+    const errors: string[] = [];
+
+    for (let i = 0; i < payload.length; i++) {
+      const item = payload[i];
+      const rowNum = i + 2; // Row number in CSV, skipping header
+
+      const sbd = item.sbd?.trim();
+      const name = item.name?.trim();
+
+      if (!sbd) {
+        errors.push(`Dòng ${rowNum}: Thiếu Số báo danh (SBD).`);
+        continue;
+      }
+      if (!name) {
+        errors.push(`Dòng ${rowNum} (SBD ${sbd}): Thiếu Tên dự án.`);
+        continue;
+      }
+
+      try {
+        this.ensureCandidateDir(sbd);
+        
+        const cleanData = {
+          name,
+          votes: item.votes !== undefined ? Number(item.votes) : 0,
+          imageUrl: item.imageUrl || '/duan/anhmauduan.png',
+          description: item.description || 'Hồ sơ dự án dự thi HUIT Startup.',
+          biography: item.biography || 'Thông tin dự án đang được cập nhật.',
+          teamName: item.teamName || null,
+          representativeSchool: item.representativeSchool || null,
+          leaderName: item.leaderName || null,
+          leaderPhone: item.leaderPhone || null,
+          leaderEmail: item.leaderEmail || null,
+          advisorName: item.advisorName || null,
+          members: item.members || null,
+          implementationLocation: item.implementationLocation || null,
+          intellectualPropertyCommitment: item.intellectualPropertyCommitment ?? false,
+          supportNeeds: item.supportNeeds || null,
+          expectations: item.expectations || null,
+          contestTable: item.contestTable || 'STUDENT',
+          contestTableLabel: item.contestTableLabel || null,
+          currentRound: item.currentRound || 'Vòng loại',
+          status: item.status || 'Đủ hồ sơ',
+          sector: item.sector || null,
+          showcaseImages: item.showcaseImages || null,
+        };
+
+        const prepared = this.prepareCandidateData(cleanData as any);
+
+        await this.prisma.candidate.upsert({
+          where: { sbd },
+          update: prepared,
+          create: {
+            sbd,
+            ...prepared,
+          },
+        });
+
+        successCount++;
+      } catch (err: any) {
+        errors.push(`Dòng ${rowNum} (SBD ${sbd}): Lỗi ghi DB - ${err.message || err}`);
+      }
+    }
+
+    return { successCount, errors };
+  }
+
+  // --- NEWS & ANNOUNCEMENTS (POSTS) ---
+  async getPublicPosts(category?: string, search?: string) {
+    const where: any = { isActive: true };
+    if (category && category !== 'Tất cả') {
+      where.category = category;
+    }
+    if (search) {
+      where.OR = [
+        { title: { contains: search } },
+        { summary: { contains: search } },
+      ];
+    }
+    return this.prisma.post.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  async getPostBySlugOrId(slugOrId: string) {
+    let post = await this.prisma.post.findUnique({
+      where: { slug: slugOrId },
+    });
+    
+    if (!post) {
+      post = await this.prisma.post.findUnique({
+        where: { id: slugOrId },
+      });
+    }
+
+    if (post && post.isActive) {
+      post = await this.prisma.post.update({
+        where: { id: post.id },
+        data: { views: { increment: 1 } },
+      });
+    }
+
+    return post;
+  }
+
+  async getAdminPosts() {
+    return this.prisma.post.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
+  private slugify(text: string): string {
+    let str = text.toLowerCase();
+    str = str.replace(/á|à|ả|ã|ạ|ă|ắ|ằ|ẳ|ẵ|ặ|â|ấ|ầ|ẩ|ẫ|ậ/g, 'a');
+    str = str.replace(/é|è|ẻ|ẽ|ẹ|ê|ế|ề|ể|ễ|ệ/g, 'e');
+    str = str.replace(/i|í|ì|ỉ|ĩ|ị/g, 'i');
+    str = str.replace(/ó|ò|ỏ|õ|ọ|ô|ố|ồ|ổ|ỗ|ộ|ơ|ớ|ờ|ở|ỡ|ợ/g, 'o');
+    str = str.replace(/ú|ù|ủ|ũ|ụ|ư|ứ|ừ|ử|ữ|ự/g, 'u');
+    str = str.replace(/ý|ỳ|ỷ|ỹ|ỵ/g, 'y');
+    str = str.replace(/đ/g, 'd');
+    str = str.replace(/[^a-z0-9\s-]/g, '');
+    str = str.replace(/\s+/g, '-');
+    str = str.replace(/-+/g, '-');
+    str = str.trim().replace(/^-+|-+$/g, '');
+    return str || `post-${Date.now()}`;
+  }
+
+  async createPost(input: any) {
+    const title = input.title || 'Bài viết mới';
+    let slug = input.slug ? this.slugify(input.slug) : this.slugify(title);
+
+    let slugExists = await this.prisma.post.findUnique({ where: { slug } });
+    let counter = 1;
+    const baseSlug = slug;
+    while (slugExists) {
+      slug = `${baseSlug}-${counter}`;
+      slugExists = await this.prisma.post.findUnique({ where: { slug } });
+      counter++;
+    }
+
+    return this.prisma.post.create({
+      data: {
+        title,
+        slug,
+        summary: input.summary || '',
+        content: input.content || '',
+        thumbnailUrl: input.thumbnailUrl || '',
+        isActive: input.isActive !== false,
+        category: input.category || 'Tin tức',
+        views: 0,
+      },
+    });
+  }
+
+  async updatePost(id: string, input: any) {
+    const data: any = {};
+    if (input.title !== undefined) data.title = input.title;
+    if (input.slug !== undefined) {
+      data.slug = this.slugify(input.slug);
+    }
+    if (input.summary !== undefined) data.summary = input.summary;
+    if (input.content !== undefined) data.content = input.content;
+    if (input.thumbnailUrl !== undefined) data.thumbnailUrl = input.thumbnailUrl;
+    if (input.isActive !== undefined) data.isActive = Boolean(input.isActive);
+    if (input.category !== undefined) data.category = input.category;
+    if (input.views !== undefined) data.views = parseInt(input.views, 10);
+
+    return this.prisma.post.update({
+      where: { id },
+      data,
+    });
+  }
+
+  async deletePost(id: string) {
+    return this.prisma.post.delete({
+      where: { id },
+    });
   }
 }

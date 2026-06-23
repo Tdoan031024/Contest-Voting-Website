@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseInterceptors, UploadedFile, UnauthorizedException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseInterceptors, UploadedFile, UnauthorizedException, UseGuards, Headers, Query } from '@nestjs/common';
 import { AppService, SystemSettings } from './app.service';
 import { Candidate, Sponsor, TimelineEvent, Banner, VotePackage, WebUser } from '@huitfest/shared';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -6,6 +6,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as crypto from 'crypto';
+import { AdminSessionGuard } from './admin-session.guard';
 
 function getProjectRootDir() {
   let currentDir = __dirname;
@@ -56,6 +58,7 @@ export class AppController {
 
   // --- FILE UPLOAD ---
   @Post('admin/upload')
+  @UseGuards(AdminSessionGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -68,9 +71,22 @@ export class AppController {
           cb(null, uploadDirWeb);
         },
         filename: (req: any, file: any, cb: any) => {
-          cb(null, normalizeUploadFilename(file.originalname));
+          const ext = path.extname(file.originalname).toLowerCase();
+          const filename = `${crypto.randomUUID()}${ext}`;
+          cb(null, filename);
         },
       }),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+      },
+      fileFilter: (req: any, file: any, cb: any) => {
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4'];
+        if (allowedMimeTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new Error('Chỉ cho phép tải lên file ảnh (jpeg, png, webp, gif) hoặc video mp4!'), false);
+        }
+      },
     }),
   )
   async uploadFile(@UploadedFile() file: any): Promise<{ url: string }> {
@@ -95,6 +111,7 @@ export class AppController {
   }
 
   @Post('admin/candidates/:sbd/upload')
+  @UseGuards(AdminSessionGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
@@ -110,11 +127,22 @@ export class AppController {
           cb(null, uploadDirWeb);
         },
         filename: (req: any, file: any, cb: any) => {
-          const ext = path.extname(file.originalname);
-          const filename = `${Date.now()}${ext}`;
+          const ext = path.extname(file.originalname).toLowerCase();
+          const filename = `${crypto.randomUUID()}${ext}`;
           cb(null, filename);
         },
       }),
+      limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB limit
+      },
+      fileFilter: (req: any, file: any, cb: any) => {
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4'];
+        if (allowedMimeTypes.includes(file.mimetype)) {
+          cb(null, true);
+        } else {
+          cb(new Error('Chỉ cho phép tải lên file ảnh (jpeg, png, webp, gif) hoặc video mp4!'), false);
+        }
+      },
     }),
   )
   async uploadCandidateFile(
@@ -155,9 +183,10 @@ export class AppController {
   @Post('candidates/:sbd/vote')
   async voteCandidate(
     @Param('sbd') sbd: string,
-    @Body() body: any
+    @Body() body: any,
+    @Headers('authorization') authHeader?: string,
   ): Promise<Candidate> {
-    const result = await this.appService.voteCandidate(sbd, body || {});
+    const result = await this.appService.voteCandidate(sbd, body || {}, authHeader);
     return result.candidate;
   }
 
@@ -172,21 +201,33 @@ export class AppController {
   }
 
   @Get('voting/free-quota/:userId')
-  getFreeVoteQuota(@Param('userId') userId: string): { remaining: number; limit: number } {
+  async getFreeVoteQuota(@Param('userId') userId: string): Promise<{ remaining: number; limit: number }> {
     return this.appService.getFreeVoteQuota(userId);
   }
 
   @Post('voting/candidates/:sbd')
-  async createVote(@Param('sbd') sbd: string, @Body() body: any): Promise<any> {
-    return this.appService.voteCandidate(sbd, body || {});
+  async createVote(
+    @Param('sbd') sbd: string,
+    @Body() body: any,
+    @Headers('authorization') authHeader?: string,
+  ): Promise<any> {
+    return this.appService.voteCandidate(sbd, body || {}, authHeader);
   }
 
   @Post('admin/candidates')
+  @UseGuards(AdminSessionGuard)
   async addCandidate(@Body() newCandidate: Partial<Candidate>): Promise<Candidate> {
     return this.appService.addCandidate(newCandidate);
   }
 
+  @Post('admin/candidates/bulk')
+  @UseGuards(AdminSessionGuard)
+  async bulkImportCandidates(@Body() payload: Partial<Candidate>[]): Promise<{ successCount: number; errors: string[] }> {
+    return this.appService.bulkImportCandidates(payload);
+  }
+
   @Put('admin/candidates/:id')
+  @UseGuards(AdminSessionGuard)
   async updateCandidate(
     @Param('id') id: string,
     @Body() updatedFields: Partial<Candidate>
@@ -195,6 +236,7 @@ export class AppController {
   }
 
   @Delete('admin/candidates/:id')
+  @UseGuards(AdminSessionGuard)
   async deleteCandidate(@Param('id') id: string): Promise<{ success: boolean }> {
     return this.appService.deleteCandidate(id);
   }
@@ -221,16 +263,19 @@ export class AppController {
   }
 
   @Get('admin/web-users')
+  @UseGuards(AdminSessionGuard)
   async getWebUsers(): Promise<WebUser[]> {
     return this.appService.getWebUsers();
   }
 
   @Post('admin/web-users')
+  @UseGuards(AdminSessionGuard)
   async addWebUser(@Body() payload: any): Promise<WebUser> {
     return this.appService.addWebUser(payload);
   }
 
   @Put('admin/web-users/:id')
+  @UseGuards(AdminSessionGuard)
   async updateWebUser(
     @Param('id') id: string,
     @Body() payload: any
@@ -239,6 +284,7 @@ export class AppController {
   }
 
   @Delete('admin/web-users/:id')
+  @UseGuards(AdminSessionGuard)
   async deleteWebUser(@Param('id') id: string): Promise<{ success: boolean }> {
     return this.appService.deleteWebUser(id);
   }
@@ -250,11 +296,13 @@ export class AppController {
   }
 
   @Post('admin/sponsors')
+  @UseGuards(AdminSessionGuard)
   async addSponsor(@Body() newSponsor: Partial<Sponsor>): Promise<Sponsor> {
     return this.appService.addSponsor(newSponsor);
   }
 
   @Put('admin/sponsors/:id')
+  @UseGuards(AdminSessionGuard)
   async updateSponsor(
     @Param('id') id: string,
     @Body() updatedFields: Partial<Sponsor>
@@ -263,6 +311,7 @@ export class AppController {
   }
 
   @Delete('admin/sponsors/:id')
+  @UseGuards(AdminSessionGuard)
   async deleteSponsor(@Param('id') id: string): Promise<{ success: boolean }> {
     return this.appService.deleteSponsor(id);
   }
@@ -274,11 +323,13 @@ export class AppController {
   }
 
   @Post('admin/timeline')
+  @UseGuards(AdminSessionGuard)
   async addTimelineEvent(@Body() newEvent: Partial<TimelineEvent>): Promise<TimelineEvent> {
     return this.appService.addTimelineEvent(newEvent);
   }
 
   @Put('admin/timeline/:id')
+  @UseGuards(AdminSessionGuard)
   async updateTimelineEvent(
     @Param('id') id: string,
     @Body() updatedFields: Partial<TimelineEvent>
@@ -287,6 +338,7 @@ export class AppController {
   }
 
   @Delete('admin/timeline/:id')
+  @UseGuards(AdminSessionGuard)
   async deleteTimelineEvent(@Param('id') id: string): Promise<{ success: boolean }> {
     return this.appService.deleteTimelineEvent(id);
   }
@@ -298,11 +350,20 @@ export class AppController {
   }
 
   @Post('admin/banners')
+  @UseGuards(AdminSessionGuard)
   async addBanner(@Body() newBanner: Partial<Banner>): Promise<Banner> {
     return this.appService.addBanner(newBanner);
   }
 
+  @Post('admin/banners/bulk')
+  @UseGuards(AdminSessionGuard)
+  async bulkImportBanners(@Body() payload: Partial<Banner>[]): Promise<{ successCount: number; errors: string[] }> {
+    return this.appService.bulkImportBanners(payload);
+  }
+
+
   @Put('admin/banners/:id')
+  @UseGuards(AdminSessionGuard)
   async updateBanner(
     @Param('id') id: string,
     @Body() updatedFields: Partial<Banner>
@@ -311,23 +372,77 @@ export class AppController {
   }
 
   @Delete('admin/banners/:id')
+  @UseGuards(AdminSessionGuard)
   async deleteBanner(@Param('id') id: string): Promise<{ success: boolean }> {
     return this.appService.deleteBanner(id);
   }
 
   // --- SYSTEM SETTINGS ---
   @Get('settings')
-  getSettings(): SystemSettings {
+  getSettings(): Partial<SystemSettings> {
+    return this.appService.getPublicSettings();
+  }
+
+  @Get('admin/settings')
+  @UseGuards(AdminSessionGuard)
+  getAdminSettings(): SystemSettings {
     return this.appService.getSettings();
   }
 
   @Put('admin/settings')
+  @UseGuards(AdminSessionGuard)
   updateSettings(@Body() updatedFields: Partial<SystemSettings>): SystemSettings {
     return this.appService.updateSettings(updatedFields);
   }
 
   @Post('admin/settings/reset-votes')
+  @UseGuards(AdminSessionGuard)
   async resetVotes(): Promise<{ success: boolean }> {
     return this.appService.resetVotes();
   }
+
+  // --- NEWS & ANNOUNCEMENTS (POSTS) ---
+  @Get('posts')
+  async getPublicPosts(
+    @Query('category') category?: string,
+    @Query('search') search?: string
+  ) {
+    return this.appService.getPublicPosts(category, search);
+  }
+
+  @Get('posts/:slugOrId')
+  async getPublicPost(@Param('slugOrId') slugOrId: string) {
+    const post = await this.appService.getPostBySlugOrId(slugOrId);
+    if (!post) {
+      throw new UnauthorizedException('Không tìm thấy bài viết hoặc bài viết đã bị ẩn.');
+    }
+    return post;
+  }
+
+  @Get('admin/posts')
+  @UseGuards(AdminSessionGuard)
+  async getAdminPosts() {
+    return this.appService.getAdminPosts();
+  }
+
+  @Post('admin/posts')
+  @UseGuards(AdminSessionGuard)
+  async createPost(@Body() data: any) {
+    return this.appService.createPost(data);
+  }
+
+  @Put('admin/posts/:id')
+  @UseGuards(AdminSessionGuard)
+  async updatePost(@Param('id') id: string, @Body() data: any) {
+    return this.appService.updatePost(id, data);
+  }
+
+  @Delete('admin/posts/:id')
+  @UseGuards(AdminSessionGuard)
+  async deletePost(@Param('id') id: string) {
+    await this.appService.deletePost(id);
+    return { success: true };
+  }
 }
+// Trigger settings reload
+

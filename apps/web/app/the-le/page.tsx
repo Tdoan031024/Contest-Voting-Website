@@ -18,41 +18,23 @@ const defaultSections: SectionConfig[] = [
       { number: '04', description: 'Chọn gói 5 điểm miễn phí và bấm "Bình chọn". Hệ thống xác nhận ngay lập tức!', image: '/original_assets/image20da.png' },
     ],
   },
-  {
-    title: 'Thanh toán qua Sepay (Tích điểm)',
-    steps: [
-      { number: '01', description: 'Truy cập danh sách dự án hoặc trang chi tiết, nhấn nút "Bình chọn".', image: '/original_assets/image17ae.png' },
-      { number: '02', description: 'Chọn gói điểm phù hợp (từ 10 điểm đến 7.000 điểm) và xác nhận.', image: '/original_assets/imageefc9.png' },
-      { number: '03', description: 'Quét mã QR Sepay hiển thị trên màn hình hoặc chuyển khoản đúng nội dung, số tiền.', image: '/original_assets/image837f.png' },
-      { number: '04', description: 'Hệ thống Sepay tự động xác nhận giao dịch và cộng điểm bình chọn sau vài giây!', image: '/original_assets/image20da.png' },
-    ],
-  },
 ];
 
 const defaultExchangeRates: ExchangeRate[] = [
   { points: '5 Điểm', price: 'Miễn phí (01 lượt / ngày)' },
-  { points: '10 Điểm', price: '10,000 VND' },
-  { points: '20 Điểm', price: '20,000 VND' },
-  { points: '50 Điểm', price: '50,000 VND' },
-  { points: '220 Điểm', price: '100,000 VND' },
-  { points: '1,050 Điểm', price: '500,000 VND' },
-  { points: '2,300 Điểm', price: '1,000,000 VND' },
-  { points: '7,000 Điểm', price: '3,000,000 VND' },
 ];
 
 const faqItems = [
   { q: 'Bình chọn miễn phí có giới hạn không?', a: 'Mỗi tài khoản được cấp 5 điểm miễn phí mỗi ngày (mỗi ngày/01 lượt). Điểm miễn phí không cộng dồn sang ngày hôm sau.' },
-  { q: 'Giao dịch Sepay mất bao lâu để xác nhận?', a: 'Thông thường chỉ từ 3-10 giây sau khi hệ thống Sepay nhận được giao dịch hợp lệ. Nếu quá 5 phút chưa cộng điểm, vui lòng liên hệ hỗ trợ.' },
-  { q: 'Một số điện thoại được bình chọn bao nhiêu lần?', a: 'Mỗi số điện thoại (SĐT) khi đăng ký tài khoản được liên kết với 1 tài khoản duy nhất. Bạn có thể bình chọn không giới hạn số lần nếu có đủ điểm.' },
   { q: 'Tôi có thể bình chọn cho nhiều dự án không?', a: 'Hoàn toàn có thể! Bạn có thể phân bổ điểm bình chọn cho bất kỳ số lượng dự án nào trong cùng một phiên hoặc nhiều phiên khác nhau.' },
-  { q: 'Điểm bình chọn có hết hạn không?', a: 'Điểm mua qua Sepay không hết hạn trong suốt thời gian diễn ra cuộc thi. Tuy nhiên điểm miễn phí hằng ngày sẽ reset lúc 00:00 mỗi đêm.' },
   { q: 'Tôi quên mật khẩu thì phải làm gì?', a: 'Bạn có thể đăng nhập bằng Google (không cần mật khẩu), hoặc liên hệ ban tổ chức qua email iec@huit.edu.vn để được hỗ trợ reset tài khoản.' },
 ];
 
 function normalizeSections(rawSections: any[]): SectionConfig[] {
   const stepSections = rawSections.filter((s) => Array.isArray(s.steps) && s.steps.length > 0);
-  if (stepSections.length === 0) return defaultSections;
-  return stepSections.map((s, i) => ({ title: s.title || `Mục ${i + 1}`, steps: s.steps }));
+  const filtered = stepSections.filter((s: any) => !s.title.toLowerCase().includes('thanh toán') && !s.title.toLowerCase().includes('sepay'));
+  if (filtered.length === 0) return defaultSections;
+  return filtered.map((s, i) => ({ title: s.title || `Mục ${i + 1}`, steps: s.steps }));
 }
 
 function extractDigits(str: any): string {
@@ -71,7 +53,8 @@ function normalizeRates(rawRates: any[]): ExchangeRate[] {
     const priceStr = prn !== '' ? (Number(prn) > 0 ? `${Number(prn).toLocaleString('vi-VN')} VND` : 'Miễn phí (01 lượt / ngày)') : '';
     return { points: pointsStr, price: priceStr };
   }).filter((r) => r.points && r.price);
-  return rates.length > 0 ? rates : defaultExchangeRates;
+  const freeRates = rates.filter((r) => r.price.toLowerCase().includes('miễn phí') || r.price === '0 VND');
+  return freeRates.length > 0 ? freeRates : defaultExchangeRates;
 }
 
 function useInView(threshold = 0.15) {
@@ -87,7 +70,6 @@ function useInView(threshold = 0.15) {
 
 const sectionColors = [
   { gradient: 'linear-gradient(135deg, #0A2FFF, #79BCC2)', icon: '❤️', tag: 'Miễn phí' },
-  { gradient: 'linear-gradient(135deg, #f97316, #eab308)', icon: '💳', tag: 'Thanh toán' },
 ];
 
 export default function TheLePage() {
@@ -153,8 +135,8 @@ export default function TheLePage() {
 
             {/* Quick links */}
             <div className={`flex flex-wrap gap-3 justify-center mt-6 ${heroSection.visible ? 'fade-up fade-up-d3' : 'opacity-0'}`}>
-              {['Bình chọn miễn phí ↓', 'Thanh toán Sepay ↓', 'Bảng điểm ↓', 'FAQ ↓'].map((label, i) => (
-                <a key={i} href={['#free-vote', '#sepay-vote', '#bang-diem', '#faq'][i]}
+              {['Bình chọn miễn phí ↓', 'Bảng điểm ↓', 'FAQ ↓'].map((label, i) => (
+                <a key={i} href={['#free-vote', '#bang-diem', '#faq'][i]}
                   className="px-4 py-2 rounded-full text-sm font-semibold transition hover:opacity-80"
                   style={{ border: '1px solid var(--site-line)', background: 'var(--site-card)', color: 'var(--site-text)' }}>
                   {label}
@@ -169,31 +151,52 @@ export default function TheLePage() {
         <div className="max-w-[1140px] mx-auto px-4 sm:px-6 py-12">
 
           {/* === TAB NAVIGATION === */}
-          <div className="flex flex-wrap gap-3 justify-center mb-10" ref={stepsSection.ref}>
-            {sections.map((s, i) => (
-              <button
-                key={i}
-                onClick={() => setActiveTab(i)}
-                className="tab-btn flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold"
-                style={activeTab === i ? {
-                  background: sectionColors[i % sectionColors.length].gradient,
-                  color: '#fff',
-                  boxShadow: '0 8px 24px rgba(10,47,255,0.25)',
-                } : {
-                  background: 'var(--site-card)',
-                  color: 'var(--site-text)',
-                  border: '1px solid var(--site-line)',
-                }}
-              >
-                <span>{sectionColors[i % sectionColors.length].icon}</span>
-                {s.title}
-              </button>
-            ))}
-          </div>
+          {sections.length > 1 && (
+            <div className="flex flex-wrap gap-3 justify-center mb-10" ref={stepsSection.ref} role="tablist" aria-label="Hình thức bình chọn">
+              {sections.map((s, i) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveTab(i)}
+                  onKeyDown={(event) => {
+                    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+                    event.preventDefault();
+                    const tabs = Array.from(event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="tab"]') || []);
+                    const nextIndex = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : event.key === 'ArrowRight' ? (i + 1) % tabs.length : (i - 1 + tabs.length) % tabs.length;
+                    setActiveTab(nextIndex);
+                    tabs[nextIndex]?.focus();
+                  }}
+                  id={`vote-guide-tab-${i}`}
+                  role="tab"
+                  aria-selected={activeTab === i}
+                  aria-controls={i === 0 ? 'free-vote' : 'sepay-vote'}
+                  tabIndex={activeTab === i ? 0 : -1}
+                  className="tab-btn flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold"
+                  style={activeTab === i ? {
+                    background: sectionColors[i % sectionColors.length].gradient,
+                    color: '#fff',
+                    boxShadow: '0 8px 24px rgba(10,47,255,0.25)',
+                  } : {
+                    background: 'var(--site-card)',
+                    color: 'var(--site-text)',
+                    border: '1px solid var(--site-line)',
+                  }}
+                >
+                  <span>{sectionColors[i % sectionColors.length].icon}</span>
+                  {s.title}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* === STEPS for active tab === */}
           {sections.map((section, sIdx) => (
-            <div key={`sec-${sIdx}`} id={sIdx === 0 ? 'free-vote' : 'sepay-vote'} style={{ display: activeTab === sIdx ? 'block' : 'none' }}>
+            <div
+              key={`sec-${sIdx}`}
+              id={sIdx === 0 ? 'free-vote' : 'sepay-vote'}
+              role="tabpanel"
+              aria-labelledby={`vote-guide-tab-${sIdx}`}
+              hidden={sections.length > 1 && activeTab !== sIdx}
+            >
               <div className="mb-8 flex items-center gap-3">
                 <div className="step-num-circle" style={{ background: sectionColors[sIdx % sectionColors.length].gradient, width: 48, height: 48, fontSize: 20 }}>
                   {sectionColors[sIdx % sectionColors.length].icon}
@@ -244,29 +247,23 @@ export default function TheLePage() {
             </div>
 
             <p className={`text-sm mb-6 ${tableSection.visible ? 'fade-up' : 'opacity-0'}`} style={{ color: 'var(--site-muted)' }}>
-              Điểm được cộng tự động sau khi xác nhận giao dịch. Giá hiển thị đã bao gồm VAT 10%.
+              Điểm bình chọn miễn phí hàng ngày cấp cho mỗi tài khoản đã đăng nhập hệ thống.
             </p>
 
             <div className={`exchange-table-wrap ${tableSection.visible ? 'fade-up fade-up-d1' : 'opacity-0'}`}>
               <div className="exchange-table-head">
                 <span>Gói bình chọn</span>
                 <span>Giá trị</span>
-                <span>Ghi chú</span>
               </div>
               {exchangeRates.map((rate, index) => {
                 const isFree = rate.price.toLowerCase().includes('miễn phí') || rate.price === '0';
-                const isPopular = rate.points === '220 Điểm' || rate.points === '50 Điểm';
                 return (
-                  <div key={index} className={`exchange-row ${isFree ? 'free-row' : isPopular ? 'popular-row' : ''}`}>
+                  <div key={index} className={`exchange-row ${isFree ? 'free-row' : ''}`}>
                     <span className="exchange-points">
                       {isFree && <span style={{ marginRight: 6 }}>🆓</span>}
                       {rate.points}
                     </span>
                     <span className="exchange-price">{rate.price}</span>
-                    <span>
-                      {isFree && <span className="exchange-badge free">Miễn phí</span>}
-                      {isPopular && <span className="exchange-badge popular">⭐ Phổ biến</span>}
-                    </span>
                   </div>
                 );
               })}
@@ -294,15 +291,16 @@ export default function TheLePage() {
                     className="faq-question"
                     onClick={() => setOpenFaq(openFaq === i ? null : i)}
                     aria-expanded={openFaq === i}
+                    aria-controls={`faq-answer-${i}`}
                   >
                     <span>{item.q}</span>
-                    <div className="faq-icon">
+                    <span className="faq-icon" aria-hidden="true">
                       <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
                       </svg>
-                    </div>
+                    </span>
                   </button>
-                  <div className="faq-answer">{item.a}</div>
+                  <div id={`faq-answer-${i}`} className="faq-answer" aria-hidden={openFaq !== i}>{item.a}</div>
                 </div>
               ))}
             </div>
@@ -321,7 +319,7 @@ export default function TheLePage() {
               <Link href="/bang-xep-hang" className="hero-btn-primary">
                 🏆 Xem Bảng Xếp Hạng
               </Link>
-              <Link href="/dang-nhap" className="hero-btn-secondary" style={{ border: '1px solid rgba(255,255,255,0.4)' }}>
+              <Link href="/dang-nhap" className="rules-login-cta">
                 Đăng nhập bình chọn →
               </Link>
             </div>

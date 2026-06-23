@@ -22,7 +22,7 @@
 
 @layer base {
   html {
-    font-size: 120%; /* Globally scales all rem-based spacing, text, and padding to mimic 120-125% zoom level */
+    /* Standard font size. Rem scaling will function normally */
   }
 
   body {
@@ -275,18 +275,12 @@
   }
 }
 
-@keyframes admin-typewriter-cycle {
-  0% {
+@keyframes admin-typewriter {
+  from {
     width: 0;
   }
-  40% {
+  to {
     width: 100%;
-  }
-  60% {
-    width: 100%;
-  }
-  100% {
-    width: 0;
   }
 }
 
@@ -305,13 +299,13 @@
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
-  width: 0;
+  width: 100%;
   background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 45%, #06b6d4 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  border-right: 2px solid rgba(14, 116, 144, 0.9);
-  animation: admin-typewriter-cycle 6s steps(30, end) 0.2s infinite, admin-caret 0.8s step-end infinite;
+  border-right: 2px solid transparent;
+  animation: admin-typewriter 3s steps(30, end) 0.2s 1 forwards, admin-caret 0.8s step-end 4;
 }
 
 @media (prefers-reduced-motion: reduce) {

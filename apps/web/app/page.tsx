@@ -63,15 +63,24 @@ function RichContent({ value, fallback, className }: { value?: string | null; fa
   return <div className={`${className} whitespace-pre-line`}>{content}</div>;
 }
 
-function formatSponsorBannerUrl(url: string | undefined | null): string {
+function formatSponsorBannerUrl(url: string | undefined | null, currentTheme?: 'light' | 'dark'): string {
   if (!url) return '/original_assets/image4b12.png';
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
-    return url;
+  
+  let resolvedUrl = url;
+  if (currentTheme === 'light') {
+    if (resolvedUrl.includes('nhataitro.png')) {
+      resolvedUrl = resolvedUrl.replace('nhataitro.png', 'nhataitro1.png');
+    }
+  } else {
+    if (resolvedUrl.includes('nhataitro1.png')) {
+      resolvedUrl = resolvedUrl.replace('nhataitro1.png', 'nhataitro.png');
+    }
   }
-  const cleanPath = url.startsWith('/') ? url : `/${url}`;
-  if (cleanPath.startsWith('/uploads/')) {
-    return apiUrl(cleanPath);
+
+  if (resolvedUrl.startsWith('http://') || resolvedUrl.startsWith('https://') || resolvedUrl.startsWith('data:')) {
+    return resolvedUrl;
   }
+  const cleanPath = resolvedUrl.startsWith('/') ? resolvedUrl : `/${resolvedUrl}`;
   return cleanPath;
 }
 
@@ -91,7 +100,6 @@ const PROJECT_FALLBACK_IMAGE = '/uploads/poster-khoi-nghiep.jpg';
 function getCandidateImageUrl(url?: string | null) {
   if (!url) return PROJECT_FALLBACK_IMAGE;
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
-  if (url.startsWith('/uploads/')) return apiUrl(url);
   return url;
 }
 
@@ -105,6 +113,35 @@ function getProjectRankTone(rank: number) {
 export default function HomePage() {
   const { showAlert } = useAlert();
   const ABOUT_FALLBACK_TITLE = 'HUIT STARTUP LẦN THỨ VII 2026';
+  
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    // Set initial theme
+    const initialTheme = (document.documentElement.dataset.theme as 'light' | 'dark') || 'light';
+    setTheme(initialTheme);
+
+    // Watch for attribute changes on documentElement
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'data-theme') {
+          const newTheme = document.documentElement.dataset.theme as 'light' | 'dark';
+          setTheme(newTheme || 'light');
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme'],
+    });
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
   const ABOUT_FALLBACK_DESCRIPTION = `Cuộc thi HUIT Startup lần 07 năm 2026 với chủ đề “Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững" cấp thành phố (HUIT STARTUP LẦN THỨ VII) là hoạt động thường niên do Trường Đại học Công Thương TP. Hồ Chí Minh tổ chức, nhằm tìm kiếm và ươm tạo các ý tưởng, dự án sáng tạo của học sinh, sinh viên, học viên và doanh nghiệp góp phần giải quyết các vấn đề xã hội và thúc đẩy phát triển bền vững. Đây không chỉ là sân chơi học thuật mà còn là bệ phóng cho những ý tưởng sáng tạo, những giải pháp thiết thực được hình thành, phát triển và hiện thực hóa, mang lại giá trị thiết thực cho bản thân, gia đình, cộng đồng và toàn xã hội. Năm 2026, cuộc thi trở lại với quy mô mở rộng và chủ đề đầy cảm hứng: "Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững". Cuộc thi chào đón sự tham gia của Học sinh, sinh viên, học viên ở các trường đại học, cao đắng, trung cấp, THPT, GDTX và Các cá nhân, tổ chức, doanh nghiệp (HTX, hộ kinh doanh, doanh nghiệp vừa và nhỏ trên địa bàn Thành phố Hồ Chí Minh và các tỉnh lân cận yêu thích hoạt động khởi nghiệp, có ý tưởng, dự án khởi nghiệp sáng. Mục tiêu là tìm kiếm và ươm mầm những ý tưởng, giải pháp đổi mới sáng tạo, góp phần giải quyết các vấn đề cấp thiết của cộng đồng, xã hội và thúc đẩy phát triển kinh tế – xã hội một cách bền vững. Thông qua cuộc thi, ban tổ chức mong muốn lan tỏa mạnh mẽ tinh thần khởi nghiệp, đổi mới sáng tạo trong giới trẻ; đồng thời kết nối và mở rộng hệ sinh thái khởi nghiệp đổi mới sáng tạo trong khối các cơ sở giáo dục, các startup tạo tiền đề cho sự phát triển nguồn nhân lực sáng tạo, thích ứng và bản lĩnh trong thời đại mới.`;
   const ABOUT_REGISTER_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdlRmaBRgPAl_rbLjDOY__ROcyZsCOnoxec2izDhRVJTcHBfA/viewform';
   const [candidates, setCandidates] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
@@ -743,14 +780,14 @@ export default function HomePage() {
                               <button
                                 onClick={() => handleVote(c.sbd, c.name)}
                                 className={`project-vote-button sc-7f525aa4-0 eyRkL flex items-center justify-center gap-2 rounded-xl py-2.5 w-full border-0 cursor-pointer transition-all hover-shine-effect ${isGateCurrentlyOpen()
-                                    ? 'active bg-primary dark:bg-neutral-white hover:opacity-90 active:scale-[0.98]'
-                                    : 'disabled bg-slate-700/50 cursor-not-allowed opacity-50'
+                                    ? 'active bg-gradient-to-r from-primary to-secondary dark:bg-neutral-white dark:from-transparent dark:to-transparent hover:opacity-90 active:scale-[0.98]'
+                                    : 'disabled bg-slate-200 dark:bg-slate-800/50 cursor-not-allowed'
                                   }`}
                               >
                                 <span className="project-vote-button-glow" aria-hidden="true" />
                                 <p className={`project-vote-button-label text-[11px] leading-[16px] font-bold uppercase tracking-wider ${isGateCurrentlyOpen()
                                     ? 'text-neutral-white dark:text-primary'
-                                    : 'text-slate-400'
+                                    : 'text-slate-500 dark:text-slate-400'
                                   }`}>
                                   {isGateCurrentlyOpen() ? 'Bình chọn' : 'Đã đóng'}
                                 </p>
@@ -805,12 +842,17 @@ export default function HomePage() {
               <p>Đó là hành trình nhìn thấy vấn đề, dám bắt đầu và kiên trì xây dựng một giải pháp tốt hơn cho cộng đồng.</p>
               <Link href="/gioi-thieu" className="news-link">Khám phá câu chuyện HUIT Startup →</Link>
             </div>
-            <div className="video-shell">
-              <video controls preload="metadata" poster="/uploads/baner.jpg">
-                <source src="/video/video-bg.mp4" type="video/mp4" />
-                Trình duyệt của bạn không hỗ trợ video.
-              </video>
-              <span className="video-play" aria-hidden="true">▶</span>
+            <div className="video-shell" style={{ aspectRatio: '267/476', maxWidth: '340px', margin: '0 auto' }}>
+              <iframe 
+                src="https://www.facebook.com/plugins/video.php?height=476&href=https%3A%2F%2Fwww.facebook.com%2Freel%2F846436581869565%2F&show_text=false&width=267&t=0" 
+                width="267" 
+                height="476" 
+                style={{ border: 'none', overflow: 'hidden', width: '100%', height: '100%' }} 
+                scrolling="no" 
+                frameBorder="0" 
+                allowFullScreen={true} 
+                allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"
+              ></iframe>
             </div>
           </div>
         </section>
@@ -823,9 +865,9 @@ export default function HomePage() {
               <p>Theo dõi các cột mốc, hoạt động huấn luyện và thông báo quan trọng trong suốt hành trình cuộc thi.</p>
             </div>
             <div className="news-grid-modern">
-              <article className="news-card-modern featured"><img src="/uploads/poster-khoi-nghiep.jpg" loading="lazy" alt="Poster HUIT Startup 2026" /><div className="news-card-body"><div className="news-meta"><strong>Thông báo</strong><time>18.06.2026</time></div><h3>Chính thức mở cổng đăng ký HUIT Startup lần VII năm 2026</h3><p>Cơ hội biến ý tưởng thành dự án thực tế với sự đồng hành của mentor, chuyên gia và doanh nghiệp.</p><a className="news-link" href={settings?.registrationUrl || ABOUT_REGISTER_URL} target="_blank" rel="noopener noreferrer">Xem chi tiết →</a></div></article>
-              <article className="news-card-modern"><img src="/original_assets/image6981.jpg" loading="lazy" alt="Hoạt động kết nối startup" /><div className="news-card-body"><div className="news-meta"><strong>Hoạt động</strong><time>15.06.2026</time></div><h3>Startup Tour: Kết nối hệ sinh thái đổi mới sáng tạo</h3><p>Trải nghiệm môi trường doanh nghiệp và học hỏi từ các startup thực chiến.</p><Link className="news-link" href="/thoi-gian">Xem chi tiết →</Link></div></article>
-              <article className="news-card-modern"><img src="/original_assets/image5999.jpg" loading="lazy" alt="Workshop khởi nghiệp" /><div className="news-card-body"><div className="news-meta"><strong>Kiến thức</strong><time>10.06.2026</time></div><h3>5 bước xây dựng mô hình kinh doanh thuyết phục</h3><p>Khung tư duy giúp đội thi kiểm chứng và phát triển ý tưởng hiệu quả.</p><Link className="news-link" href="/the-le">Xem chi tiết →</Link></div></article>
+              <article className="news-card-modern featured"><img src="/uploads/baner.jpg" loading="lazy" alt="Poster HUIT Startup 2026" /><div className="news-card-body"><div className="news-meta"><strong>Thông báo</strong><time>18.06.2026</time></div><h3>Chính thức mở cổng đăng ký HUIT Startup lần VII năm 2026</h3><p>Cơ hội biến ý tưởng thành dự án thực tế với sự đồng hành của mentor, chuyên gia và doanh nghiệp.</p><a className="news-link" href={settings?.registrationUrl || ABOUT_REGISTER_URL} target="_blank" rel="noopener noreferrer">Xem chi tiết →</a></div></article>
+              <article className="news-card-modern"><img src="/uploads/baner.jpg" loading="lazy" alt="Hoạt động kết nối startup" /><div className="news-card-body"><div className="news-meta"><strong>Hoạt động</strong><time>15.06.2026</time></div><h3>Startup Tour: Kết nối hệ sinh thái đổi mới sáng tạo</h3><p>Trải nghiệm môi trường doanh nghiệp và học hỏi từ các startup thực chiến.</p><Link className="news-link" href="/thoi-gian">Xem chi tiết →</Link></div></article>
+              <article className="news-card-modern"><img src="/uploads/baner.jpg" loading="lazy" alt="Workshop khởi nghiệp" /><div className="news-card-body"><div className="news-meta"><strong>Kiến thức</strong><time>10.06.2026</time></div><h3>5 bước xây dựng mô hình kinh doanh thuyết phục</h3><p>Khung tư duy giúp đội thi kiểm chứng và phát triển ý tưởng hiệu quả.</p><Link className="news-link" href="/the-le">Xem chi tiết →</Link></div></article>
             </div>
           </div>
         </section>
@@ -859,9 +901,9 @@ export default function HomePage() {
               className={`w-full max-w-[1080px] px-4 transform transition-all duration-700 ${sponsorsVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
                 }`}
             >
-              <div className="relative group hover-shine-effect rounded-2xl overflow-hidden shadow-2xl border border-white/5 bg-white/[0.01]">
+              <div className="relative group hover-shine-effect rounded-2xl overflow-hidden">
                 <div className="absolute -inset-1 bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] rounded-2xl opacity-10 blur-sm pointer-events-none group-hover:opacity-20 transition-opacity duration-500" />
-                <img alt="Sponsors Logo" className="w-full h-auto object-contain rounded-xl relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]" src={formatSponsorBannerUrl(settings?.sponsorBannerUrl)} />
+                <img alt="Sponsors Logo" className="w-full h-auto object-contain rounded-xl relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]" src={formatSponsorBannerUrl(settings?.sponsorBannerUrl, theme)} />
               </div>
             </div>
           </div>
