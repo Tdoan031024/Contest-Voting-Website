@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useAlert } from './AlertProvider';
 import { apiUrl } from './api';
 import VoteModal from './VoteModal';
+import { SAMPLE_NEWS_POSTS } from './tin-tuc/samplePosts';
 
 const LOCAL_MOCK_CANDIDATES: Candidate[] = [
   { id: '1', sbd: '085', name: 'Nguyễn Thanh Tân', votes: 106100, imageUrl: '/original_assets/image389b.png', description: 'Thí sinh tài năng của HUIT\'s Iconic 2024.' },
@@ -155,6 +156,7 @@ export default function HomePage() {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [settings, setSettings] = useState<any>(null);
   const aboutTitleText = (settings?.aboutTitle || ABOUT_FALLBACK_TITLE).replace(/\s+NĂM\s+/i, ' ');
+  const homepageNewsPosts = SAMPLE_NEWS_POSTS.slice(0, 3);
 
   // Default banner when DB has no active banner
   const defaultSlides = [
@@ -575,7 +577,7 @@ export default function HomePage() {
                       }`}
                   >
                     <p className="text-[17px] sm:text-[22px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
-                    <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Thí sinh</p>
+                    <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Dự án</p>
                   </div>
 
                   <div
@@ -587,7 +589,7 @@ export default function HomePage() {
                       }`}
                   >
                     <p className="text-[17px] sm:text-[22px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
-                    <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Bình chọn</p>
+                    <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Số vote</p>
                   </div>
 
                   <div
@@ -865,9 +867,25 @@ export default function HomePage() {
               <p>Theo dõi các cột mốc, hoạt động huấn luyện và thông báo quan trọng trong suốt hành trình cuộc thi.</p>
             </div>
             <div className="news-grid-modern">
-              <article className="news-card-modern featured"><img src="/uploads/baner.jpg" loading="lazy" alt="Poster HUIT Startup 2026" /><div className="news-card-body"><div className="news-meta"><strong>Thông báo</strong><time>18.06.2026</time></div><h3>Chính thức mở cổng đăng ký HUIT Startup lần VII năm 2026</h3><p>Cơ hội biến ý tưởng thành dự án thực tế với sự đồng hành của mentor, chuyên gia và doanh nghiệp.</p><a className="news-link" href={settings?.registrationUrl || ABOUT_REGISTER_URL} target="_blank" rel="noopener noreferrer">Xem chi tiết →</a></div></article>
-              <article className="news-card-modern"><img src="/uploads/baner.jpg" loading="lazy" alt="Hoạt động kết nối startup" /><div className="news-card-body"><div className="news-meta"><strong>Hoạt động</strong><time>15.06.2026</time></div><h3>Startup Tour: Kết nối hệ sinh thái đổi mới sáng tạo</h3><p>Trải nghiệm môi trường doanh nghiệp và học hỏi từ các startup thực chiến.</p><Link className="news-link" href="/thoi-gian">Xem chi tiết →</Link></div></article>
-              <article className="news-card-modern"><img src="/uploads/baner.jpg" loading="lazy" alt="Workshop khởi nghiệp" /><div className="news-card-body"><div className="news-meta"><strong>Kiến thức</strong><time>10.06.2026</time></div><h3>5 bước xây dựng mô hình kinh doanh thuyết phục</h3><p>Khung tư duy giúp đội thi kiểm chứng và phát triển ý tưởng hiệu quả.</p><Link className="news-link" href="/the-le">Xem chi tiết →</Link></div></article>
+              {homepageNewsPosts.map((post, index) => (
+                <article key={post.id} className={`news-card-modern ${index === 0 ? 'featured' : ''}`}>
+                  <img src={post.thumbnailUrl || '/uploads/baner.jpg'} loading="lazy" alt={post.title} />
+                  <div className="news-card-body">
+                    <div className="news-meta">
+                      <strong>{post.category}</strong>
+                      <time>{new Date(post.createdAt).toLocaleDateString('vi-VN')}</time>
+                    </div>
+                    <h3>{post.title}</h3>
+                    <p>{post.summary}</p>
+                    <Link className="news-link" href={`/tin-tuc/${post.slug}`}>Xem chi tiết →</Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <div className="mt-8 flex justify-center">
+              <Link href="/tin-tuc" className="project-list-action active inline-flex items-center justify-center rounded-full px-6 py-3 text-[11px] sm:text-[13px] font-extrabold uppercase tracking-wider transition-all duration-200 hover:-translate-y-0.5 active:scale-95">
+                Xem thêm tin tức
+              </Link>
             </div>
           </div>
         </section>

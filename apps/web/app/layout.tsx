@@ -267,15 +267,51 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 <div className="absolute h-[80px] top-0 left-0 right-0 w-full flex justify-center header-glass">
                   <div className="header-accent-line" />
 
-                  <div className="sc-1a037b37-0 RKByV flex w-full items-center h-full px-4 sm:px-0">
+                  <div className="sc-1a037b37-0 RKByV relative flex w-full items-center h-full px-4 sm:px-0">
+
+                    <div className="mobile-header-actions sm-desktop:hidden">
+                      <button
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        className="site-theme-toggle mobile-header-icon"
+                        style={{ color: 'var(--site-text)' }}
+                        aria-label="Mở menu"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                          <line x1="3" y1="6" x2="21" y2="6"/>
+                          <line x1="3" y1="12" x2="21" y2="12"/>
+                          <line x1="3" y1="18" x2="21" y2="18"/>
+                        </svg>
+                      </button>
+                      <button
+                        onClick={toggleTheme}
+                        className="site-theme-toggle mobile-header-icon"
+                        aria-label={theme === 'dark' ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
+                        title="Đổi giao diện sáng/tối"
+                      >
+                        {theme === 'dark' ? (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                          </svg>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                          </svg>
+                        )}
+                      </button>
+                    </div>
 
                     {/* Logo */}
-                    <div className="flex shrink-0 items-center h-full">
-                      <div className="h-full flex items-center gap-2 md:gap-5">
+                    <div className="flex shrink-0 items-center h-full mobile-logo-wrap">
+                      <div className="h-full flex items-center gap-2 md:gap-5 mobile-logo-row header-brand-shell">
                         <Link className="focus:outline-none flex items-center" href="/">
-                          <img alt="IEC" width="120" height="26" className="object-contain max-w-[90px] sm:max-w-[120px]" src="/images/ieclogo.png" />
+                          <img alt="IEC" width="120" height="26" className="header-logo header-logo-iec object-contain" src="/images/ieclogo.png" />
                         </Link>
-                        <img alt="HUIT STARTUP" width="110" height="34" className="object-contain max-h-[56px] max-w-[68px] sm:max-w-[110px]" src="/images/startuplogo.png" />
+                        <span className="header-logo-divider" aria-hidden="true" />
+                        <img alt="HUIT STARTUP" width="140" height="44" className="header-logo header-logo-startup object-contain" src="/images/startuplogo.png" />
                       </div>
                     </div>
 
@@ -342,7 +378,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       {/* Theme toggle (Far right) */}
                       <button
                         onClick={toggleTheme}
-                        className="site-theme-toggle"
+                        className="site-theme-toggle hidden sm-desktop:grid"
                         aria-label={theme === 'dark' ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
                         title="Đổi giao diện sáng/tối"
                       >
@@ -362,18 +398,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       </button>
 
                       {/* Mobile hamburger */}
-                      <button
-                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                        className="flex sm-desktop:hidden items-center justify-center w-[38px] h-[38px] rounded-xl transition-all"
-                        style={{ color: 'var(--site-text)' }}
-                        aria-label="Mở menu"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                          <line x1="3" y1="6" x2="21" y2="6"/>
-                          <line x1="3" y1="12" x2="21" y2="12"/>
-                          <line x1="3" y1="18" x2="21" y2="18"/>
-                        </svg>
-                      </button>
                     </div>
                   </div>
                 </div>
@@ -454,13 +478,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* ── FLOATING ACTION BUTTONS ── */}
             {/* ── FLOATING ACTION BUTTONS ── */}
             <aside className="site-floating-actions" aria-label="Liên hệ nhanh">
-              <a href="https://zalo.me/0975702463" target="_blank" rel="noopener noreferrer" className="float-action zalo" data-label="Zalo" aria-label="Liên hệ qua Zalo">
+              <a href="https://zalo.me/4418938306145458374" target="_blank" rel="noopener noreferrer" className="float-action zalo" data-label="Zalo" aria-label="Liên hệ qua Zalo">
                 <img src="/images/zalo.png" alt="Zalo" className="w-full h-full object-contain" />
               </a>
-              <a href="tel:0975702463" className="float-action phone" data-label="Gọi điện" aria-label="Gọi điện hỗ trợ">
+              <a href="tel:0963621124" className="float-action phone" data-label="Gọi điện" aria-label="Gọi điện hỗ trợ">
                 <img src="/images/telephone.png" alt="Điện thoại" className="w-full h-full object-contain" />
               </a>
-              <a href="mailto:iec@huit.edu.vn" className="float-action chat" data-label="Liên hệ" aria-label="Gửi email liên hệ">
+              <a href="mailto:hotrosinhvien@hufi.edu.vn" className="float-action chat" data-label="Liên hệ" aria-label="Gửi email liên hệ">
                 <img src="/images/mail.png" alt="Email" className="w-full h-full object-contain" />
               </a>
               <button
@@ -483,7 +507,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <img alt="HUIT Startup" src="/images/startuplogo.png" />
                     <img alt="IEC" src="/images/ieclogo.png" />
                   </div>
-                  <p>Cuộc thi khởi nghiệp đổi mới sáng tạo cấp Thành phố, nơi kết nối ý tưởng, tri thức và nguồn lực để kiến tạo những giải pháp phát triển bền vững.</p>
+                  <p className="footer-justify">Cuộc thi khởi nghiệp đổi mới sáng tạo cấp Thành phố, nơi kết nối ý tưởng, tri thức và nguồn lực để kiến tạo những giải pháp phát triển bền vững.</p>
                   <p style={{ fontSize: '12px', marginTop: '6px', fontStyle: 'italic', opacity: 0.7 }}>Đổi mới sáng tạo · Phát triển bền vững</p>
                 </div>
 
@@ -499,24 +523,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   <h3>Hỗ trợ</h3>
                   <Link href="/the-le">Hướng dẫn bình chọn</Link>
                   <Link href="/the-le#faq">Câu hỏi thường gặp</Link>
-                  <a href="mailto:iec@huit.edu.vn">Liên hệ hỗ trợ</a>
+                  <a href="mailto:hotrosinhvien@hufi.edu.vn">Liên hệ hỗ trợ</a>
                   <a href="https://docs.google.com/forms/d/e/1FAIpQLSdlRmaBRgPAl_rbLjDOY__ROcyZsCOnoxec2izDhRVJTcHBfA/viewform" target="_blank" rel="noopener noreferrer">Đăng ký tham dự</a>
                 </div>
 
                 <div className="footer-contact-column">
                   <h3>Thông tin liên hệ</h3>
-                  <a href="mailto:iec@huit.edu.vn" className="flex items-center gap-2 text-[13px] hover:text-[var(--site-primary)] transition">
+                  <a href="mailto:media@huit.edu.vn" className="flex items-center gap-2 text-[13px] hover:text-[var(--site-primary)] transition">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="text-[var(--site-primary)] shrink-0">
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                       <polyline points="22,6 12,13 2,6" />
                     </svg>
-                    iec@huit.edu.vn
+                    media@huit.edu.vn
                   </a>
-                  <a href="tel:0975702463" className="flex items-center gap-2 text-[13px] hover:text-[var(--site-primary)] transition">
+                  <a href="tel:0963621124" className="flex items-center gap-2 text-[13px] hover:text-[var(--site-primary)] transition">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="text-[var(--site-primary)] shrink-0">
                       <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.3 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z" />
                     </svg>
-                    0975 702 463
+                    096 362 11 24
                   </a>
                   <p className="flex items-start gap-2 text-[13px] text-left">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="text-[var(--site-primary)] mt-0.5 shrink-0">
@@ -529,19 +553,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                     <a href="https://www.facebook.com/huit.startup" aria-label="Facebook" title="Facebook HUIT Startup">
                       <img src="/images/facebook.png" alt="Facebook" className="w-full h-full object-contain" />
                     </a>
+                    <a href="https://zalo.me/4418938306145458374" aria-label="Zalo" title="Zalo HUIT Media">
+                      <img src="/images/zalo.png" alt="Zalo" className="w-full h-full object-contain" />
+                    </a>
                     <a href="https://www.tiktok.com/@huit_media" aria-label="TikTok" title="TikTok HUIT Media">
                       <img src="/images/tiktok.png" alt="TikTok" className="w-full h-full object-contain" />
                     </a>
                     <a href="https://www.instagram.com/dh_congthuong/" aria-label="Instagram" title="Instagram Đại học Công Thương">
                       <img src="/images/instagram.png" alt="Instagram" className="w-full h-full object-contain" />
                     </a>
+                    <a href="https://www.youtube.com/@DHCongthuong" aria-label="Youtube" title="Youtube Đại học Công Thương" className="footer-social-icon footer-social-youtube">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M23 12.1c0 2.1-.2 4.1-.6 6.1-.3 1.2-1.2 2.1-2.4 2.4-2 .4-4 .6-8 .6s-6-.2-8-.6a3.05 3.05 0 0 1-2.4-2.4C1.2 16.2 1 14.2 1 12.1s.2-4.1.6-6.1C1.9 4.8 2.8 3.9 4 3.6 6 3.2 8 3 12 3s6 .2 8 .6c1.2.3 2.1 1.2 2.4 2.4.4 2 .6 4 .6 6.1ZM10 8.5v7l6-3.5-6-3.5Z" fill="currentColor"/>
+                      </svg>
+                    </a>
                   </div>
                 </div>
               </div>
               <div className="site-footer-bottom">
-                <span>© 2026 HUIT Startup · Trường Đại học Công Thương TP.HCM</span>
+                <span>© 2026 HUIT Media· Trường Đại học Công Thương TP.HCM</span>
                 <span style={{ fontSize: '11px' }}>
-                  Thiết kế bởi IEC · <a href="mailto:iec@huit.edu.vn" style={{ color: 'inherit' }}>iec@huit.edu.vn</a>
+                  Thiết kế bởi HUIT Media· <a href="mailto:media@huit.edu.vn" style={{ color: 'inherit' }}>media@huit.edu.vn</a>
                 </span>
               </div>
             </footer>

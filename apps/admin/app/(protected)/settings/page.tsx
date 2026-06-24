@@ -13,12 +13,12 @@ export default function SettingsAdminPage() {
   // General settings state
   const [eventTitle, setEventTitle] = useState("HUIT's Iconic 2024");
   const [organizer, setOrganizer] = useState("Trường Đại học Công Thương TP.HCM (HUIT)");
-  const [contactEmail, setContactEmail] = useState("support@voting.vn");
+  const [contactEmail, setContactEmail] = useState("media@huit.edu.vn");
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
   const [registrationDeadline, setRegistrationDeadline] = useState('2026-06-20T23:59');
   const [registrationUrl, setRegistrationUrl] = useState('https://khoinghiep.huit.edu.vn');
   const [detailUrl, setDetailUrl] = useState('https://khoinghiep.huit.edu.vn');
-  const [supportZaloUrl, setSupportZaloUrl] = useState('https://zalo.me/0975702463');
+  const [supportZaloUrl, setSupportZaloUrl] = useState('https://zalo.me/4418938306145458374');
   const [freeVotesPerAccountPerDay, setFreeVotesPerAccountPerDay] = useState(1);
   const [sepayBankName, setSepayBankName] = useState('VietinBank');
   const [sepayAccountNo, setSepayAccountNo] = useState('110632156888');
@@ -49,7 +49,7 @@ export default function SettingsAdminPage() {
           setRegistrationDeadline(data.registrationDeadline || '2026-06-20T23:59');
           setRegistrationUrl(data.registrationUrl || 'https://khoinghiep.huit.edu.vn');
           setDetailUrl(data.detailUrl || 'https://khoinghiep.huit.edu.vn');
-          setSupportZaloUrl(data.supportZaloUrl || 'https://zalo.me/0975702463');
+          setSupportZaloUrl(data.supportZaloUrl || 'https://zalo.me/4418938306145458374');
           setFreeVotesPerAccountPerDay(data.freeVotesPerAccountPerDay || 1);
           setSepayBankName(data.sepayBankName || 'VietinBank');
           setSepayAccountNo(data.sepayAccountNo || '110632156888');
@@ -129,7 +129,7 @@ export default function SettingsAdminPage() {
   };
 
   return (
-    <div className="flex flex-col space-y-4 max-w-4xl">
+    <div className="mx-auto flex max-w-4xl flex-col space-y-4">
       
       {/* Title Header */}
       <div className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">

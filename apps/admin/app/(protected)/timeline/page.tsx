@@ -1,32 +1,33 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { TimelineEvent } from '@huitfest/shared';
 import { apiUrl } from '../../api';
+
+function emptyForm() {
+  return {
+    date: '',
+    title: '',
+    description: '',
+    isActive: false,
+    round: 'Vòng loại',
+    isImportant: false,
+  };
+}
 
 export default function TimelineAdminPage() {
   const [events, setEvents] = useState<TimelineEvent[]>([]);
   const [search, setSearch] = useState('');
-  
-  // Modals state
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
-
-  // Form states
-  const [formDate, setFormDate] = useState('');
-  const [formTitle, setFormTitle] = useState('');
-  const [formDesc, setFormDesc] = useState('');
-  const [formActive, setFormActive] = useState(false);
-  const [formRound, setFormRound] = useState('Vòng loại');
-  const [formImportant, setFormImportant] = useState(false);
+  const [form, setForm] = useState(emptyForm());
 
   async function loadTimeline() {
     try {
       const res = await fetch(apiUrl('/api/timeline'));
       if (res.ok) {
-        const data = await res.json();
-        setEvents(data);
+        setEvents(await res.json());
       }
     } catch (err) {
       console.error('Failed to load timeline from backend API.', err);
@@ -38,318 +39,237 @@ export default function TimelineAdminPage() {
   }, []);
 
   const openAddModal = () => {
-    setFormDate('');
-    setFormTitle('');
-    setFormDesc('');
-    setFormActive(false);
-    setFormRound('Vòng loại');
-    setFormImportant(false);
+    setForm(emptyForm());
     setIsAddModalOpen(true);
   };
 
-  const openEditModal = (ev: TimelineEvent) => {
-    setSelectedEvent(ev);
-    setFormDate(ev.date);
-    setFormTitle(ev.title);
-    setFormDesc(ev.description);
-    setFormActive(ev.isActive);
-    setFormRound(ev.round || 'Vòng loại');
-    setFormImportant(ev.isImportant || false);
+  const openEditModal = (event: TimelineEvent) => {
+    setSelectedEvent(event);
+    setForm({
+      date: event.date,
+      title: event.title,
+      description: event.description,
+      isActive: event.isActive,
+      round: event.round || 'Vòng loại',
+      isImportant: event.isImportant || false,
+    });
     setIsEditModalOpen(true);
   };
 
+  async function submitEvent(method: 'POST' | 'PUT') {
+    const url = method === 'POST'
+      ? apiUrl('/api/admin/timeline')
+      : apiUrl(`/api/admin/timeline/${selectedEvent?.id}`);
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    });
+
+    if (!res.ok) {
+      throw new Error('Request failed');
+    }
+  }
+
   const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newEvent: Partial<TimelineEvent> = {
-      date: formDate,
-      title: formTitle,
-      description: formDesc,
-      isActive: formActive,
-      round: formRound,
-      isImportant: formImportant
-    };
-
     try {
-      const res = await fetch(apiUrl('/api/admin/timeline'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newEvent)
-      });
-      if (res.ok) {
-        alert('Thêm mốc thời gian thành công!');
-        setIsAddModalOpen(false);
-        loadTimeline();
-        return;
-      }
+      await submitEvent('POST');
+      alert('Thêm mốc thời gian thành công!');
+      setIsAddModalOpen(false);
+      loadTimeline();
     } catch (err) {
       console.error(err);
+      alert('Thao tác thất bại, kiểm tra kết nối API.');
     }
-    alert('Thao tác thất bại, kiểm tra kết nối API.');
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedEvent) return;
-
-    const fieldsToUpdate: Partial<TimelineEvent> = {
-      date: formDate,
-      title: formTitle,
-      description: formDesc,
-      isActive: formActive,
-      round: formRound,
-      isImportant: formImportant
-    };
-
     try {
-      const res = await fetch(apiUrl(`/api/admin/timeline/${selectedEvent.id}`), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fieldsToUpdate)
-      });
-      if (res.ok) {
-        alert('Cập nhật mốc thời gian thành công!');
-        setIsEditModalOpen(false);
-        loadTimeline();
-        return;
-      }
+      await submitEvent('PUT');
+      alert('Cập nhật mốc thời gian thành công!');
+      setIsEditModalOpen(false);
+      loadTimeline();
     } catch (err) {
       console.error(err);
+      alert('Thao tác thất bại, kiểm tra kết nối API.');
     }
-    alert('Thao tác thất bại, kiểm tra kết nối API.');
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('Bạn có chắc chắn muốn xóa mốc thời gian này không?')) return;
-
     try {
-      const res = await fetch(apiUrl(`/api/admin/timeline/${id}`), {
-        method: 'DELETE'
-      });
-      if (res.ok) {
-        alert('Xóa mốc thời gian thành công!');
-        loadTimeline();
-        return;
-      }
+      const res = await fetch(apiUrl(`/api/admin/timeline/${id}`), { method: 'DELETE' });
+      if (!res.ok) throw new Error('Delete failed');
+      alert('Xóa mốc thời gian thành công!');
+      loadTimeline();
     } catch (err) {
       console.error(err);
+      alert('Thao tác thất bại, kiểm tra kết nối API.');
     }
-    alert('Thao tác thất bại, kiểm tra kết nối API.');
   };
 
-  const filteredEvents = events.filter(e =>
-    e.title.toLowerCase().includes(search.toLowerCase()) || e.description.toLowerCase().includes(search.toLowerCase())
+  const filteredEvents = events.filter((event) =>
+    `${event.title} ${event.description} ${event.date} ${event.round || ''}`.toLowerCase().includes(search.toLowerCase())
   );
 
+  const activeCount = filteredEvents.filter((event) => event.isActive).length;
+  const importantCount = filteredEvents.filter((event) => event.isImportant).length;
+
+  const Modal = ({
+    isOpen,
+    title,
+    onClose,
+    onSubmit,
+  }: {
+    isOpen: boolean;
+    title: string;
+    onClose: () => void;
+    onSubmit: (e: React.FormEvent) => void;
+  }) => {
+    if (!isOpen) return null;
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+        <form onSubmit={onSubmit} className="w-full max-w-[560px] rounded-[24px] border border-[rgba(0,106,209,0.14)] bg-white p-6 shadow-[0_30px_80px_rgba(15,23,42,0.18)]">
+          <div className="mb-5 flex items-center justify-between border-b border-slate-100 pb-4">
+            <h3 className="text-lg font-black text-slate-900">{title}</h3>
+            <button type="button" onClick={onClose} className="admin-btn admin-btn-secondary !h-10 !px-4">Đóng</button>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="md:col-span-2">
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Tên mốc thời gian</label>
+              <input className="admin-input w-full" value={form.title} onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))} required />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Phân loại vòng thi</label>
+              <select className="admin-input w-full" value={form.round} onChange={(e) => setForm((prev) => ({ ...prev, round: e.target.value }))}>
+                <option value="Vòng loại">Vòng loại</option>
+                <option value="Vòng bán kết">Vòng bán kết</option>
+                <option value="Vòng chung kết">Vòng chung kết</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Thời gian diễn ra</label>
+              <input className="admin-input w-full" value={form.date} onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))} required />
+            </div>
+            <div className="md:col-span-2">
+              <label className="mb-1.5 block text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Mô tả chi tiết</label>
+              <textarea className="admin-textarea h-28 w-full resize-none" value={form.description} onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))} required />
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-3 md:grid-cols-2">
+            <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div>
+                <p className="text-sm font-bold text-slate-900">Đang hoạt động</p>
+                <p className="text-xs text-slate-500">Hiển thị nổi bật trên giao diện người dùng.</p>
+              </div>
+              <input type="checkbox" className="h-5 w-5 accent-[#006AD1]" checked={form.isActive} onChange={(e) => setForm((prev) => ({ ...prev, isActive: e.target.checked }))} />
+            </label>
+            <label className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <div>
+                <p className="text-sm font-bold text-slate-900">Mốc quan trọng</p>
+                <p className="text-xs text-slate-500">Ưu tiên hiển thị trong phần tổng hợp lộ trình.</p>
+              </div>
+              <input type="checkbox" className="h-5 w-5 accent-[#006AD1]" checked={form.isImportant} onChange={(e) => setForm((prev) => ({ ...prev, isImportant: e.target.checked }))} />
+            </label>
+          </div>
+
+          <div className="mt-6 flex justify-end gap-3 border-t border-slate-100 pt-4">
+            <button type="button" onClick={onClose} className="admin-btn admin-btn-secondary">Hủy</button>
+            <button type="submit" className="admin-btn admin-btn-primary">Lưu thay đổi</button>
+          </div>
+        </form>
+      </div>
+    );
+  };
+
   return (
-    <div className="flex flex-col space-y-4">
-      
-      {/* Title Header */}
-      <div className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Quản lý lộ trình</p>
-          <h1 className="text-lg font-black text-[#123c34]">Thời gian & Lộ trình cuộc thi</h1>
-          <p className="text-xs text-[#6b7773] mt-0.5">Danh sách các giai đoạn, vòng thi và thời gian diễn ra của HUIT Startup 2026.</p>
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+      <section className="overflow-hidden rounded-[28px] border border-[rgba(0,106,209,0.14)] bg-[linear-gradient(135deg,#f8fbff_0%,#eef6ff_55%,#ffffff_100%)] p-6 shadow-[0_20px_60px_rgba(16,42,67,0.08)]">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#006AD1]">Quản lý lộ trình</p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Thời gian & Lộ trình cuộc thi</h1>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              Toàn bộ mốc thời gian được gom vào một màn hình gọn, dễ thao tác trên laptop mà không cần kéo ngang.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Tổng mốc</p>
+              <p className="mt-1 text-2xl font-black text-slate-950">{events.length}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Đang hoạt động</p>
+              <p className="mt-1 text-2xl font-black text-emerald-600">{activeCount}</p>
+            </div>
+            <div className="rounded-2xl border border-white/70 bg-white/75 px-4 py-3 shadow-sm">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">Mốc quan trọng</p>
+              <p className="mt-1 text-2xl font-black text-amber-600">{importantCount}</p>
+            </div>
+            <button onClick={openAddModal} className="admin-btn admin-btn-primary !h-12 !rounded-2xl !px-5">+ Thêm mốc mới</button>
+          </div>
         </div>
-        <button 
-          onClick={openAddModal}
-          className="px-3.5 py-2 bg-[#e45136] hover:bg-[#c83f28] rounded-lg text-white font-bold text-[11px] shadow transition active:scale-[0.98]"
-        >
-          + Thêm mốc thời gian mới
-        </button>
-      </div>
+      </section>
 
-      {/* Filter / Search input */}
-      <div className="w-full max-w-md">
-        <input 
-          type="text" 
-          placeholder="Tìm kiếm mốc thời gian theo tiêu đề, mô tả..." 
-          className="w-full h-9 px-4 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] placeholder-[#9aa9a4] text-xs focus:outline-none focus:border-[#0f766e] transition-colors shadow-sm"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      </div>
+      <section className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
+        <div className="admin-card !rounded-[24px]">
+          <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Tìm kiếm mốc thời gian</label>
+          <input
+            type="text"
+            className="admin-input w-full"
+            placeholder="Tìm theo tiêu đề, mô tả, thời gian..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+        <div className="admin-card !rounded-[24px]">
+          <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Kết quả hiển thị</p>
+          <p className="mt-2 text-3xl font-black text-slate-950">{filteredEvents.length}</p>
+          <p className="mt-2 text-xs text-slate-500">Mỗi mốc hiển thị dưới dạng thẻ, không cần bảng kéo ngang.</p>
+        </div>
+      </section>
 
-      {/* Timeline Table */}
-      <div className="w-full bg-white border border-[#dce5e1] rounded-xl overflow-hidden shadow-sm overflow-x-auto">
-        <table className="w-full min-w-[1100px] border-collapse text-left text-[#18211f]">
-          <thead className="bg-[#fbfdfc] text-[10px] font-black uppercase tracking-wider text-[#7a8b85] border-b border-[#edf2f0]">
-            <tr>
-              <th className="px-5 py-3 whitespace-nowrap min-w-[280px]">Vòng thi / Tiêu đề</th>
-              <th className="px-5 py-3 whitespace-nowrap">Phân loại vòng</th>
-              <th className="px-5 py-3 whitespace-nowrap">Thời gian diễn ra</th>
-              <th className="px-5 py-3 whitespace-nowrap min-w-[300px]">Mô tả chi tiết</th>
-              <th className="px-5 py-3 whitespace-nowrap">Mốc quan trọng</th>
-              <th className="px-5 py-3 whitespace-nowrap">Trạng thái hoạt động</th>
-              <th className="px-5 py-3 text-right whitespace-nowrap">Thao tác</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#edf2f0] text-xs">
-            {filteredEvents.map(ev => (
-              <tr key={ev.id} className="hover:bg-[#edf4f1]/20 transition-colors">
-                <td className="px-5 py-2.5 font-bold text-[#123c34] min-w-[280px]">{ev.title}</td>
-                <td className="px-5 py-2.5">
-                  <span className="rounded bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700 whitespace-nowrap">
-                    {ev.round || 'Vòng loại'}
+      <section className="grid gap-4">
+        {filteredEvents.map((event) => (
+          <article key={event.id} className="admin-card !rounded-[24px] !p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-600">
+                    {event.round || 'Vòng loại'}
                   </span>
-                </td>
-                <td className="px-5 py-2.5 text-[#0f766e] font-semibold whitespace-nowrap">{ev.date}</td>
-                <td className="px-5 py-2.5 min-w-[300px] max-w-[450px] whitespace-normal break-words text-[#6b7773] font-medium">{ev.description}</td>
-                <td className="px-5 py-2.5">
-                  {ev.isImportant ? (
-                    <span className="rounded bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide whitespace-nowrap">
+                  {event.isImportant && (
+                    <span className="rounded-full bg-amber-50 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-700">
                       Mốc quan trọng
                     </span>
-                  ) : (
-                    <span className="text-slate-400 font-semibold text-[10px] whitespace-nowrap">Lộ trình thường</span>
                   )}
-                </td>
-                <td className="px-5 py-2.5">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border whitespace-nowrap ${
-                    ev.isActive 
-                      ? 'bg-green-50 text-green-700 border-green-200' 
-                      : 'bg-slate-50 text-slate-400 border-slate-200'
-                  }`}>
-                    {ev.isActive ? 'ĐANG HOẠT ĐỘNG' : 'CHƯA KÍCH HOẠT'}
+                  <span className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] ${event.isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                    {event.isActive ? 'Đang hoạt động' : 'Chưa kích hoạt'}
                   </span>
-                </td>
-                <td className="px-5 py-2.5 text-right">
-                  <div className="flex justify-end gap-1.5">
-                    <button 
-                      onClick={() => openEditModal(ev)}
-                      className="rounded-lg border border-[#dce5e1] bg-white px-2.5 py-1 text-[11px] font-bold text-[#0f766e] transition hover:bg-[#edf4f1] hover:border-[#0f766e]"
-                    >
-                      Sửa
-                    </button>
-                    <button 
-                      onClick={() => handleDelete(ev.id)}
-                      className="rounded-lg border border-[#f0c9bd] bg-[#fff5f2] px-2.5 py-1 text-[11px] font-bold text-[#c83f28] transition hover:bg-[#e45136]/10 hover:border-[#e45136]"
-                    >
-                      Xóa
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* ADD TIMELINE MODAL */}
-      {isAddModalOpen && (
-        <div className="fixed inset-0 bg-[#10211d]/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <form onSubmit={handleAddSubmit} className="bg-white border border-[#dce5e1] p-5 rounded-xl w-full max-w-[420px] flex flex-col space-y-3.5 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-base font-black text-[#123c34] border-b border-[#edf2f0] pb-2.5">Thêm mốc thời gian mới</h3>
-            
-            <div className="flex flex-col space-y-1.5">
-              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Tên vòng thi / Tiêu đề</label>
-              <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formTitle} onChange={e => setFormTitle(e.target.value)} required />
-            </div>
-
-            <div className="flex flex-col space-y-1.5">
-              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Phân loại vòng thi</label>
-              <select 
-                className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
-                value={formRound}
-                onChange={e => setFormRound(e.target.value)}
-              >
-                <option value="Vòng loại">Vòng loại</option>
-                <option value="Vòng bán kết">Vòng bán kết</option>
-                <option value="Vòng chung kết">Vòng chung kết</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col space-y-1.5">
-              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Thời gian diễn ra (Ví dụ: 03/11/2024 - 15/11/2024)</label>
-              <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formDate} onChange={e => setFormDate(e.target.value)} required />
-            </div>
-
-            <div className="flex flex-col space-y-1.5">
-              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Mô tả chi tiết</label>
-              <textarea className="h-20 p-3 rounded-xl bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold resize-none" value={formDesc} onChange={e => setFormDesc(e.target.value)} required />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-[#fbfdfc] border border-[#dce5e1] rounded-xl shadow-sm">
-              <div>
-                <p className="font-bold text-xs text-[#123c34]">Đặt làm vòng thi hiện tại</p>
-                <p className="text-[10px] text-[#6b7773]">Hiển thị huy hiệu Đang hoạt động trên trang chủ.</p>
+                </div>
+                <h2 className="mt-3 text-xl font-black tracking-tight text-slate-950">{event.title}</h2>
+                <p className="mt-2 inline-flex rounded-2xl bg-[#F0F7FF] px-4 py-2 text-sm font-bold text-[#006AD1]">
+                  {event.date}
+                </p>
+                <p className="mt-4 text-sm leading-7 text-slate-600">{event.description}</p>
               </div>
-              <input type="checkbox" className="w-5 h-5 rounded accent-[#0f766e] cursor-pointer" checked={formActive} onChange={e => setFormActive(e.target.checked)} />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-[#fbfdfc] border border-[#dce5e1] rounded-xl shadow-sm">
-              <div>
-                <p className="font-bold text-xs text-[#123c34]">Mốc thời gian quan trọng</p>
-                <p className="text-[10px] text-[#6b7773]">Đưa vào bảng tóm tắt thời gian ở đầu trang lộ trình.</p>
+              <div className="flex gap-3 lg:flex-col">
+                <button onClick={() => openEditModal(event)} className="admin-btn admin-btn-secondary">Sửa</button>
+                <button onClick={() => handleDelete(event.id)} className="admin-btn admin-btn-danger">Xóa</button>
               </div>
-              <input type="checkbox" className="w-5 h-5 rounded accent-[#0f766e] cursor-pointer" checked={formImportant} onChange={e => setFormImportant(e.target.checked)} />
             </div>
+          </article>
+        ))}
+      </section>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-[#edf2f0]">
-              <button type="button" onClick={() => setIsAddModalOpen(false)} className="px-3.5 py-1.5 border border-[#dce5e1] hover:bg-[#edf4f1] rounded-lg text-[#52605b] text-[10px] font-bold transition-colors">Hủy bỏ</button>
-              <button type="submit" className="px-3.5 py-1.5 bg-[#123c34] hover:bg-[#0f766e] rounded-lg text-white text-[10px] font-bold shadow transition-colors">Thêm mới</button>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {/* EDIT TIMELINE MODAL */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 bg-[#10211d]/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <form onSubmit={handleEditSubmit} className="bg-white border border-[#dce5e1] p-5 rounded-xl w-full max-w-[420px] flex flex-col space-y-3.5 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-base font-black text-[#123c34] border-b border-[#edf2f0] pb-2.5">Chỉnh sửa mốc thời gian</h3>
-            
-            <div className="flex flex-col space-y-1.5">
-              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Tên vòng thi / Tiêu đề</label>
-              <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formTitle} onChange={e => setFormTitle(e.target.value)} required />
-            </div>
-
-            <div className="flex flex-col space-y-1.5">
-              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Phân loại vòng thi</label>
-              <select 
-                className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
-                value={formRound}
-                onChange={e => setFormRound(e.target.value)}
-              >
-                <option value="Vòng loại">Vòng loại</option>
-                <option value="Vòng bán kết">Vòng bán kết</option>
-                <option value="Vòng chung kết">Vòng chung kết</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col space-y-1.5">
-              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Thời gian diễn ra</label>
-              <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formDate} onChange={e => setFormDate(e.target.value)} required />
-            </div>
-
-            <div className="flex flex-col space-y-1.5">
-              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Mô tả chi tiết</label>
-              <textarea className="h-20 p-3 rounded-xl bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold resize-none" value={formDesc} onChange={e => setFormDesc(e.target.value)} required />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-[#fbfdfc] border border-[#dce5e1] rounded-xl shadow-sm">
-              <div>
-                <p className="font-bold text-xs text-[#123c34]">Đặt làm vòng thi hiện tại</p>
-                <p className="text-[10px] text-[#6b7773]">Hiển thị huy hiệu Đang hoạt động trên trang chủ.</p>
-              </div>
-              <input type="checkbox" className="w-5 h-5 rounded accent-[#0f766e] cursor-pointer" checked={formActive} onChange={e => setFormActive(e.target.checked)} />
-            </div>
-
-            <div className="flex items-center justify-between p-3 bg-[#fbfdfc] border border-[#dce5e1] rounded-xl shadow-sm">
-              <div>
-                <p className="font-bold text-xs text-[#123c34]">Mốc thời gian quan trọng</p>
-                <p className="text-[10px] text-[#6b7773]">Đưa vào bảng tóm tắt thời gian ở đầu trang lộ trình.</p>
-              </div>
-              <input type="checkbox" className="w-5 h-5 rounded accent-[#0f766e] cursor-pointer" checked={formImportant} onChange={e => setFormImportant(e.target.checked)} />
-            </div>
-
-            <div className="flex justify-end gap-2 pt-3 border-t border-[#edf2f0]">
-              <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-3.5 py-1.5 border border-[#dce5e1] hover:bg-[#edf4f1] rounded-lg text-[#52605b] text-[10px] font-bold transition-colors">Hủy bỏ</button>
-              <button type="submit" className="px-3.5 py-1.5 bg-[#123c34] hover:bg-[#0f766e] rounded-xl text-white text-[10px] font-bold shadow transition-colors">Lưu thay đổi</button>
-            </div>
-          </form>
-        </div>
-      )}
-
+      <Modal isOpen={isAddModalOpen} title="Thêm mốc thời gian mới" onClose={() => setIsAddModalOpen(false)} onSubmit={handleAddSubmit} />
+      <Modal isOpen={isEditModalOpen} title="Chỉnh sửa mốc thời gian" onClose={() => setIsEditModalOpen(false)} onSubmit={handleEditSubmit} />
     </div>
   );
 }

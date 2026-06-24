@@ -4,18 +4,24 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Candidate, Sponsor } from '@huitfest/shared';
 import { apiUrl } from '../api';
 
-function StatIcon({ type }: { type: 'votes' | 'users' | 'leader' | 'gate' }) {
-  const paths = {
-    votes: <path d="M4 19V9m5 10V5m5 14v-7m5 7V3" />,
-    users: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 0 0-3-3.87" /></>,
-    leader: <><path d="M8 21h8" /><path d="M12 17v4" /><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" /><path d="M5 4H3v2a3 3 0 0 0 3 3" /><path d="M19 4h2v2a3 3 0 0 1-3 3" /></>,
-    gate: <><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M8 10V7a4 4 0 0 1 8 0v3" /></>,
-  };
-
+function MetricCard({
+  label,
+  value,
+  note,
+  accent,
+}: {
+  label: string;
+  value: string;
+  note: string;
+  accent: string;
+}) {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      {paths[type]}
-    </svg>
+    <article className="relative overflow-hidden rounded-[24px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
+      <div className="absolute inset-x-0 top-0 h-1" style={{ background: accent }} />
+      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</p>
+      <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">{value}</p>
+      <p className="mt-2 text-sm leading-6 text-slate-500">{note}</p>
+    </article>
   );
 }
 
@@ -23,7 +29,7 @@ export default function OverviewPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [gateOpen, setGateOpen] = useState(true);
-  const [eventTitle, setEventTitle] = useState("HUIT's Iconic 2024");
+  const [eventTitle, setEventTitle] = useState('HUIT Startup 2026');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -55,130 +61,118 @@ export default function OverviewPage() {
   const totalVotes = candidates.reduce((sum, candidate) => sum + candidate.votes, 0);
   const rankedCandidates = useMemo(() => [...candidates].sort((a, b) => b.votes - a.votes), [candidates]);
   const leadingCandidate = rankedCandidates[0] || null;
-  const maxVotes = Math.max(...rankedCandidates.slice(0, 6).map((candidate) => candidate.votes), 1);
-
-  const stats = [
-    {
-      name: 'Tổng phiếu bầu',
-      value: totalVotes.toLocaleString(),
-      detail: 'Cập nhật từ API thời gian thực',
-      type: 'votes' as const,
-    },
-    {
-      name: 'Thí sinh',
-      value: candidates.length.toString(),
-      detail: 'Hồ sơ đang hiển thị công khai',
-      type: 'users' as const,
-    },
-    {
-      name: 'Thí sinh dẫn đầu',
-      value: leadingCandidate ? leadingCandidate.name : 'Chưa có dữ liệu',
-      detail: leadingCandidate ? `${leadingCandidate.votes.toLocaleString()} phiếu` : '0 phiếu',
-      type: 'leader' as const,
-    },
-    {
-      name: 'Cổng bình chọn',
-      value: gateOpen ? 'Đang mở' : 'Đang đóng',
-      detail: eventTitle,
-      type: 'gate' as const,
-    },
-  ];
+  const topFive = rankedCandidates.slice(0, 5);
+  const maxVotes = Math.max(...topFive.map((candidate) => candidate.votes), 1);
 
   return (
-    <div className="space-y-6">
-      <section className="overflow-hidden rounded-xl border border-teal-500/10 bg-gradient-to-r from-[#123c34] to-[#0f766e] text-white shadow-md relative">
-        <div className="absolute top-0 right-0 w-[200px] h-[200px] rounded-full bg-white/5 blur-2xl pointer-events-none -mr-12 -mt-12"></div>
-        <div className="flex flex-col gap-5 p-5 md:flex-row md:items-center md:justify-between relative z-10">
-          <div className="max-w-xl">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#9bd8cf]">Bảng điều khiển</p>
-            <h2 className="mt-1.5 text-2xl font-extrabold tracking-tight">{eventTitle}</h2>
-            <p className="mt-2 text-xs leading-relaxed text-white/75">
-              Theo dõi lượt bình chọn, trạng thái cổng bình chọn và các hồ sơ ứng viên nổi bật trong màn hình làm việc tập trung.
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+      <section className="relative overflow-hidden rounded-[32px] border border-[rgba(0,106,209,0.14)] bg-[linear-gradient(135deg,#061b44_0%,#0c4ea3_40%,#13a4c7_100%)] p-6 text-white shadow-[0_30px_70px_rgba(6,27,68,0.22)]">
+        <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute bottom-0 left-1/3 h-32 w-32 rounded-full bg-cyan-200/15 blur-3xl" />
+        <div className="relative grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
+          <div>
+            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-100/80">Tổng quan hệ thống</p>
+            <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight">{eventTitle}</h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80">
+              Bảng điều hành được làm lại theo hướng trực quan hơn, tập trung vào dữ liệu vận hành chính: tình trạng cổng vote, tổng lượt bình chọn, dự án dẫn đầu và mức độ sẵn sàng nội dung.
             </p>
-          </div>
-          <div className="grid min-w-[240px] grid-cols-2 gap-2 rounded-lg bg-white/5 p-2 backdrop-blur-sm border border-white/10">
-            <div className="rounded bg-white/10 p-2.5 border border-white/5 text-center">
-              <p className="text-[10px] text-white/70 font-medium">Nhà tài trợ</p>
-              <p className="mt-0.5 text-lg font-black font-heading">{sponsors.length}</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <span className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.18em] ${gateOpen ? 'bg-emerald-400/18 text-emerald-100' : 'bg-rose-400/16 text-rose-100'}`}>
+                {gateOpen ? 'Cổng bình chọn đang mở' : 'Cổng bình chọn đang đóng'}
+              </span>
+              <span className="rounded-full bg-white/14 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-white/90">
+                {isLoading ? 'Đang tải dữ liệu' : `${candidates.length} dự án đang hiển thị`}
+              </span>
             </div>
-            <div className="rounded bg-white/10 p-2.5 border border-white/5 text-center">
-              <p className="text-[10px] text-white/70 font-medium">Cổng bình chọn</p>
-              <p className="mt-0.5 text-xs font-bold uppercase text-[#9bd8cf] tracking-wider font-heading">{gateOpen ? 'Mở' : 'Đóng'}</p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-[24px] border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/65">Tổng vote</p>
+              <p className="mt-3 text-3xl font-black">{totalVotes.toLocaleString()}</p>
+              <p className="mt-2 text-sm text-white/75">Cập nhật từ dữ liệu thời gian thực.</p>
+            </div>
+            <div className="rounded-[24px] border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/65">Nhà tài trợ</p>
+              <p className="mt-3 text-3xl font-black">{sponsors.length}</p>
+              <p className="mt-2 text-sm text-white/75">Đang đồng bộ trên hệ thống công khai.</p>
+            </div>
+            <div className="rounded-[24px] border border-white/10 bg-white/10 p-5 backdrop-blur-sm sm:col-span-2">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/65">Dự án dẫn đầu</p>
+              <p className="mt-3 text-xl font-black">{leadingCandidate ? leadingCandidate.name : 'Chưa có dữ liệu'}</p>
+              <p className="mt-2 text-sm text-white/75">{leadingCandidate ? `${leadingCandidate.votes.toLocaleString()} vote · Mã dự án ${leadingCandidate.sbd}` : 'Đang chờ dữ liệu từ API.'}</p>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <article key={stat.name} className="rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm hover:shadow transition-all duration-300">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7a8b85] font-heading">{stat.name}</p>
-                <p className="mt-2 truncate text-xl font-black text-[#123c34] font-heading">{isLoading ? '...' : stat.value}</p>
-              </div>
-              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-[#edf4f1] text-[#0f766e] shadow-sm">
-                <StatIcon type={stat.type} />
-              </span>
-            </div>
-            <p className="mt-3 truncate text-[10px] font-semibold text-[#6b7773]">{stat.detail}</p>
-          </article>
-        ))}
+      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <MetricCard label="Dự án" value={String(candidates.length)} note="Tổng số dự án đang công khai trên website." accent="linear-gradient(90deg, #0ea5e9, #38bdf8)" />
+        <MetricCard label="Tổng vote" value={totalVotes.toLocaleString()} note="Bao gồm cả vote miễn phí và gói trả phí." accent="linear-gradient(90deg, #2563eb, #22d3ee)" />
+        <MetricCard label="Trạng thái cổng" value={gateOpen ? 'Mở' : 'Đóng'} note="Điều khiển trực tiếp tại mục Thiết lập hệ thống." accent="linear-gradient(90deg, #10b981, #34d399)" />
+        <MetricCard label="Sponsor" value={String(sponsors.length)} note="Đơn vị tài trợ và đối tác đồng hành hiện có." accent="linear-gradient(90deg, #f59e0b, #fbbf24)" />
       </section>
 
-      <section className="grid grid-cols-1 gap-5 xl:grid-cols-[1.55fr_1fr]">
-        <article className="rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-[#edf2f0] pb-3">
+      <section className="grid gap-5 xl:grid-cols-[1.4fr_0.95fr]">
+        <article className="admin-card !rounded-[28px] !p-6">
+          <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
-              <h3 className="text-sm font-bold text-[#123c34]">Top bình chọn</h3>
-              <p className="text-[10px] font-semibold text-[#7a8b85]">So sánh nhanh các thí sinh có lượt bình chọn cao nhất.</p>
+              <h2 className="text-xl font-black tracking-tight text-slate-950">Top dự án nổi bật</h2>
+              <p className="mt-1 text-sm text-slate-500">Danh sách này giúp admin theo dõi nhanh mức độ tăng trưởng bình chọn.</p>
             </div>
-            <span className="rounded-full bg-[#fff2e8] px-2 py-0.5 text-[10px] font-bold text-[#b4492f] font-heading">Top {Math.min(rankedCandidates.length, 6)}</span>
+            <span className="rounded-full bg-[#F0F7FF] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#006AD1]">Top 5</span>
           </div>
 
-          <div className="mt-4 space-y-3">
-            {rankedCandidates.slice(0, 6).map((candidate, index) => (
-              <div key={candidate.id} className="grid grid-cols-[32px_1fr_auto] items-center gap-3">
-                <span className="grid h-7 w-7 place-items-center rounded-md bg-[#edf4f1] text-xs font-bold text-[#123c34] font-heading">
-                  {index + 1}
-                </span>
-                <div className="min-w-0">
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="truncate text-xs font-bold text-[#18211f]">{candidate.name}</p>
-                    <p className="shrink-0 text-xs font-black text-[#0f766e] font-heading">{candidate.votes.toLocaleString()} vote</p>
+          <div className="mt-5 space-y-4">
+            {topFive.map((candidate, index) => (
+              <div key={candidate.id} className="rounded-[22px] border border-slate-100 bg-slate-50/70 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-sm font-black text-[#006AD1] shadow-sm">
+                        {index + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-base font-black text-slate-950">{candidate.name}</p>
+                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Mã dự án {candidate.sbd}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-[#edf4f1]">
-                    <div className="h-full rounded-full bg-gradient-to-r from-[#0f766e] to-[#79bcc2]" style={{ width: `${Math.max((candidate.votes / maxVotes) * 100, 4)}%` }} />
+                  <div className="shrink-0 text-right">
+                    <p className="text-lg font-black text-emerald-600">{candidate.votes.toLocaleString()}</p>
+                    <p className="text-xs font-semibold text-slate-500">lượt bình chọn</p>
                   </div>
                 </div>
-                <span className="rounded-full bg-[#edf4f1] px-2 py-0.5 text-[10px] font-bold text-[#52605b] border border-[#dce5e1] font-heading">SBD {candidate.sbd}</span>
               </div>
             ))}
           </div>
         </article>
 
-        <article className="rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-[#123c34] border-b border-[#edf2f0] pb-3">Vận hành hôm nay</h3>
-            <div className="mt-4 space-y-2">
-              {[
-                ['Dữ liệu ứng viên', candidates.length > 0 ? 'Đã tải thành công' : 'Đang chờ API...'],
-                ['Đồng bộ nhà tài trợ', sponsors.length > 0 ? 'Sẵn sàng' : 'Chưa có dữ liệu'],
-                ['Trạng thái cổng', gateOpen ? 'Cho phép bình chọn' : 'Tạm dừng bình chọn'],
-                ['Mức ưu tiên hàng đầu', leadingCandidate ? `Giám sát SBD ${leadingCandidate.sbd}` : 'Kiểm tra kết nối'],
-              ].map(([label, value]) => (
-                <div key={label} className="flex items-center justify-between rounded-lg border border-[#edf2f0] bg-[#fbfdfc] px-3.5 py-2.5 hover:bg-[#edf4f1]/30 transition-colors duration-200">
-                  <span className="text-[11px] font-bold text-[#52605b]">{label}</span>
-                  <span className="text-right text-[11px] font-bold text-[#123c34]">{value}</span>
-                </div>
-              ))}
-            </div>
+        <article className="admin-card !rounded-[28px] !p-6">
+          <div className="border-b border-slate-100 pb-4">
+            <h2 className="text-xl font-black tracking-tight text-slate-950">Vận hành hôm nay</h2>
+            <p className="mt-1 text-sm text-slate-500">Tóm tắt nhanh để kiểm tra trạng thái hệ thống trước khi thao tác.</p>
           </div>
-          <div className="mt-4 pt-3 border-t border-[#edf2f0] text-center">
-            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#7a8b85]">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Máy chủ API đang hoạt động bình thường
-            </span>
+
+          <div className="mt-5 space-y-3">
+            {[
+              ['Nguồn dữ liệu dự án', candidates.length > 0 ? 'Đã tải thành công' : 'Đang chờ API'],
+              ['Dự án dẫn đầu', leadingCandidate ? `SBD ${leadingCandidate.sbd}` : 'Chưa xác định'],
+              ['Đồng bộ sponsor', sponsors.length > 0 ? 'Sẵn sàng hiển thị' : 'Chưa có dữ liệu'],
+              ['Cổng bình chọn', gateOpen ? 'Cho phép người dùng vote' : 'Tạm dừng vote'],
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
+                <span className="text-sm font-bold text-slate-600">{label}</span>
+                <span className="text-sm font-black text-slate-950">{value}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-6 rounded-[24px] border border-[#D7ECFF] bg-[#F8FBFF] p-4">
+            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#006AD1]">Khuyến nghị thao tác</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Nếu chuẩn bị mở cổng bình chọn, hãy kiểm tra lại phần Tin tức, Banner, Thời gian và Thiết lập hệ thống để tránh thông tin lệch giữa admin và website public.
+            </p>
           </div>
         </article>
       </section>

@@ -1,5 +1,6 @@
 import React from 'react';
 import ClientPostDetail from './ClientPostDetail';
+import { SAMPLE_NEWS_POSTS } from '../samplePosts';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -8,11 +9,14 @@ async function getPost(slug: string) {
     const res = await fetch(`${API_BASE_URL}/api/posts/${slug}`, { 
       next: { revalidate: 10 } 
     });
-    if (!res.ok) return null;
-    return res.json();
+    if (!res.ok) {
+      return SAMPLE_NEWS_POSTS.find((post) => post.slug === slug) || null;
+    }
+    const data = await res.json();
+    return data || SAMPLE_NEWS_POSTS.find((post) => post.slug === slug) || null;
   } catch (err) {
     console.error(`Error fetching post details for slug: ${slug}`, err);
-    return null;
+    return SAMPLE_NEWS_POSTS.find((post) => post.slug === slug) || null;
   }
 }
 
@@ -21,14 +25,21 @@ async function getRelatedPosts(category: string, currentPostId: string) {
     const res = await fetch(`${API_BASE_URL}/api/posts`, { 
       next: { revalidate: 10 } 
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      return SAMPLE_NEWS_POSTS
+        .filter((p) => p.id !== currentPostId && p.category === category)
+        .slice(0, 3);
+    }
     const allPosts = await res.json();
-    return allPosts
+    const source = Array.isArray(allPosts) && allPosts.length > 0 ? allPosts : SAMPLE_NEWS_POSTS;
+    return source
       .filter((p: any) => p.id !== currentPostId && p.category === category)
       .slice(0, 3);
   } catch (err) {
     console.error('Error fetching related posts:', err);
-    return [];
+    return SAMPLE_NEWS_POSTS
+      .filter((p) => p.id !== currentPostId && p.category === category)
+      .slice(0, 3);
   }
 }
 
