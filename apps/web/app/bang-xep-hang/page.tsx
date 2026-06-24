@@ -382,8 +382,8 @@ export default function RankingPage() {
       ? b.votes - a.votes
       : a.sbd.localeCompare(b.sbd, 'vi', { numeric: true }));
   const top3 = sortedCandidates.slice(0, 3);
-  // Olympic order: Silver (2nd), Gold (1st), Bronze (3rd)
-  const podiumOrder = [1, 0, 2].map(i => top3[i]).filter(Boolean);
+  const desktopPodiumOrder = [1, 0, 2].map(i => top3[i]).filter(Boolean);
+  const mobilePodiumOrder = top3.filter(Boolean);
   const maxVotes = sortedCandidates[0]?.votes || 1;
   const showPodium = !search.trim() && category === 'ALL' && sortBy === 'votes';
   const listCandidates = showPodium
@@ -615,7 +615,7 @@ export default function RankingPage() {
               ) : (
                 <>
                   {/* OLYMPIC PODIUM — Only show when not searching */}
-                  {showPodium && podiumOrder.length > 0 && (
+                  {showPodium && desktopPodiumOrder.length > 0 && (
                     <div ref={podiumSection.ref} className="w-full max-w-[1360px] mx-auto px-4 mb-10 mt-8">
                       <div className="mb-6 flex flex-col gap-2 text-center">
                         <p className={`text-[12px] font-bold uppercase tracking-[0.28em] text-[#79BCC2] ${podiumSection.visible ? 'anim-up' : ''}`}>
@@ -627,20 +627,30 @@ export default function RankingPage() {
                       </div>
 
                       {/* Olympic Podium */}
-                      <div className="podium-3">
-                        {/* Rank 2 (Silver — left) */}
-                        {podiumOrder[0] && (
-                          <PodiumItem candidate={podiumOrder[0]} rank={2} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
-                        )}
-                        {/* Rank 1 (Gold — center, tallest) */}
-                        {podiumOrder[1] && (
-                          <PodiumItem candidate={podiumOrder[1]} rank={1} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
-                        )}
-                        {/* Rank 3 (Bronze — right) */}
-                        {podiumOrder[2] && (
-                          <PodiumItem candidate={podiumOrder[2]} rank={3} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
-                        )}
-                      </div>
+                      <>
+                        <div className="podium-3 hidden md:flex">
+                          {desktopPodiumOrder[0] && (
+                            <PodiumItem candidate={desktopPodiumOrder[0]} rank={2} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                          )}
+                          {desktopPodiumOrder[1] && (
+                            <PodiumItem candidate={desktopPodiumOrder[1]} rank={1} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                          )}
+                          {desktopPodiumOrder[2] && (
+                            <PodiumItem candidate={desktopPodiumOrder[2]} rank={3} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                          )}
+                        </div>
+                        <div className="podium-3 flex md:hidden">
+                          {mobilePodiumOrder[0] && (
+                            <PodiumItem candidate={mobilePodiumOrder[0]} rank={1} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                          )}
+                          {mobilePodiumOrder[1] && (
+                            <PodiumItem candidate={mobilePodiumOrder[1]} rank={2} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                          )}
+                          {mobilePodiumOrder[2] && (
+                            <PodiumItem candidate={mobilePodiumOrder[2]} rank={3} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                          )}
+                        </div>
+                      </>
                     </div>
                   )}
 

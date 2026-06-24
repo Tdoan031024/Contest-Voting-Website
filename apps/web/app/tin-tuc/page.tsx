@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { apiUrl } from '../api';
+import { SAMPLE_NEWS_POSTS } from './samplePosts';
 
 interface Post {
   id: string;
@@ -53,10 +54,13 @@ export default function TinTucPage() {
         const res = await fetch(apiUrl('/api/posts'));
         if (res.ok) {
           const data = await res.json();
-          setPosts(data);
+          setPosts(Array.isArray(data) && data.length > 0 ? data : SAMPLE_NEWS_POSTS);
+        } else {
+          setPosts(SAMPLE_NEWS_POSTS);
         }
       } catch (err) {
         console.error('Failed to fetch posts:', err);
+        setPosts(SAMPLE_NEWS_POSTS);
       } finally {
         setLoading(false);
       }
@@ -316,6 +320,16 @@ export default function TinTucPage() {
                     </div>
                   </article>
                 ))}
+              </div>
+
+              <div className={`flex justify-center ${contentSection.visible ? 'fade-up fade-up-d3' : 'opacity-0'}`}>
+                <Link
+                  href="/tin-tuc"
+                  className="inline-flex items-center justify-center rounded-full px-6 py-3 text-xs font-black uppercase tracking-[0.18em] text-white transition hover:-translate-y-0.5"
+                  style={{ background: 'linear-gradient(135deg, var(--site-primary) 0%, #79BCC2 100%)', boxShadow: '0 10px 28px rgba(10,47,255,0.18)' }}
+                >
+                  Xem thêm tin tức
+                </Link>
               </div>
             </div>
           )}
