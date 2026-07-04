@@ -72,9 +72,24 @@ export interface VoteRecord {
   eventId?: string;
   packageId?: string;
   points?: number;
+  basePoints?: number;
+  multiplierApplied?: number;
+  promotionId?: string;
+  promotionName?: string;
   voteType?: 'FREE' | 'PAID';
   userId?: string;
   amount?: number;
+}
+
+export interface VotingPromotion {
+  id: string;
+  name: string;
+  multiplier: number;
+  startAt: string;
+  endAt: string;
+  isEnabled: boolean;
+  appliesTo: 'FREE' | 'PAID' | 'ALL';
+  note?: string;
 }
 
 export interface WebUser {

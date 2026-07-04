@@ -5,6 +5,7 @@
   font-display: swap;
   src: url('/fonts/inter-v13-vietnamese-300.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Inter';
   font-style: normal;
@@ -12,6 +13,7 @@
   font-display: swap;
   src: url('/fonts/inter-v13-vietnamese-regular.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Inter';
   font-style: normal;
@@ -19,6 +21,7 @@
   font-display: swap;
   src: url('/fonts/inter-v13-vietnamese-500.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Inter';
   font-style: normal;
@@ -26,6 +29,7 @@
   font-display: swap;
   src: url('/fonts/inter-v13-vietnamese-600.woff2') format('woff2');
 }
+
 @font-face {
   font-family: 'Inter';
   font-style: normal;
@@ -3046,11 +3050,15 @@ button, a { -webkit-tap-highlight-color: transparent; }
 }
 .search-enhanced .search-icon {
   position: absolute;
-  left: 16px;
+  left: 18px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 1;
   display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
   pointer-events: none;
   color: var(--site-muted) !important;
 }
@@ -3060,7 +3068,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .search-enhanced input {
   width: 100%;
   height: 56px;
-  padding: 0 48px 0 48px;
+  padding: 0 48px 0 52px;
   border-radius: 16px;
   border: 1.5px solid var(--site-line) !important;
   background: var(--site-card) !important;

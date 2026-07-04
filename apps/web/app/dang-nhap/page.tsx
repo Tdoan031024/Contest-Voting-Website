@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAlert } from '../AlertProvider';
@@ -51,7 +51,7 @@ function loadGoogleIdentityScript(): Promise<void> {
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error('Không thể tải Google Identity Services.'));
+      script.onerror = () => reject(new Error('Không thể tải Google Identity Services.'));
     document.head.appendChild(script);
   });
 }
@@ -124,7 +124,7 @@ export default function LoginPage() {
       setLoading(false);
     }
     return;
-    await showAlert(`Đăng nhập thành công với tài khoản: ${email}\nChuyển hướng về trang chủ.`, 'success', 'Đăng nhập thành công');
+      await showAlert(`Đăng nhập thành công với tài khoản: ${email}\nChuyển hướng về trang chủ.`, 'success', 'Đăng nhập thành công');
     window.location.href = '/';
   };
 
@@ -132,7 +132,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (!GOOGLE_CLIENT_ID) {
-        throw new Error('Chưa cấu hình NEXT_PUBLIC_GOOGLE_CLIENT_ID cho đăng nhập Google.');
+      throw new Error('Chưa cấu hình NEXT_PUBLIC_GOOGLE_CLIENT_ID cho đăng nhập Google.');
       }
 
       await loadGoogleIdentityScript();
@@ -174,7 +174,7 @@ export default function LoginPage() {
       setLoading(false);
     }
     return;
-    await showAlert('Kết nối dịch vụ Google thành công! Đăng nhập offline thành công.\nChuyển hướng về trang chủ.', 'success', 'Đăng nhập thành công');
+      await showAlert('Kết nối dịch vụ Google thành công! Đăng nhập offline thành công.\nChuyển hướng về trang chủ.', 'success', 'Đăng nhập thành công');
     window.location.href = '/';
   };
 
@@ -269,25 +269,10 @@ export default function LoginPage() {
           transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1),
                       box-shadow 0.3s ease,
                       background-color 0.3s ease;
-          position: relative;
-          overflow: hidden;
-        }
-        .btn-login::after {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.12) 50%, transparent 100%);
-          background-size: 200% 100%;
-          opacity: 0;
-          transition: opacity 0.3s ease;
         }
         .btn-login:hover {
           transform: translateY(-2px) scale(1.02);
           box-shadow: 0 8px 28px rgba(10,47,255,0.28), 0 0 20px rgba(121,188,194,0.18);
-        }
-        .btn-login:hover::after {
-          opacity: 1;
-          animation: shimmer 1.4s ease-in-out infinite;
         }
         .btn-login:active { transform: translateY(0) scale(0.99); }
 
@@ -300,9 +285,13 @@ export default function LoginPage() {
         }
         .btn-google:hover {
           transform: translateY(-3px) scale(1.02);
-          box-shadow: 0 10px 32px rgba(10,47,255,0.2), 0 0 20px rgba(121,188,194,0.16);
-          border-color: rgba(121,188,194,0.6) !important;
-          background-color: rgba(10,47,255,0.22) !important;
+          box-shadow: 0 10px 32px rgba(10,47,255,0.14), 0 0 20px rgba(53,184,196,0.12);
+          border-color: color-mix(in srgb, var(--site-accent) 38%, var(--site-line)) !important;
+          background: linear-gradient(
+            135deg,
+            color-mix(in srgb, var(--site-card) 82%, var(--site-primary) 18%),
+            color-mix(in srgb, var(--site-card-soft) 74%, var(--site-accent) 26%)
+          ) !important;
         }
         .btn-google:active { transform: scale(0.99); }
 
@@ -438,7 +427,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Support link — avoids presenting an unavailable password-reset flow */}
+              {/* Support link â€” avoids presenting an unavailable password-reset flow */}
               <div className="text-right -mt-1">
                 <a
                   href="mailto:iec@huit.edu.vn?subject=Hỗ trợ tài khoản HUIT Startup"
@@ -476,9 +465,14 @@ export default function LoginPage() {
               {/* Google Sign-in Button */}
               <button
                 onClick={handleGoogleLogin}
-                className="btn-google w-full max-w-[320px] flex items-center gap-4 p-4 rounded-[16px] bg-[rgba(10,47,255,0.12)] border border-[#79BCC2]/30 text-left"
+                className="btn-google w-full max-w-[320px] flex items-center gap-4 p-4 rounded-[16px] border text-left shadow-[0_16px_36px_rgba(7,20,61,0.14)]"
+                style={{
+                  background:
+                    'linear-gradient(135deg, color-mix(in srgb, var(--site-card) 90%, var(--site-primary) 10%), color-mix(in srgb, var(--site-card-soft) 82%, var(--site-accent) 18%))',
+                  borderColor: 'color-mix(in srgb, var(--site-line) 74%, var(--site-accent) 26%)',
+                }}
               >
-                <div className="w-10 h-10 flex items-center justify-center bg-white rounded-[10px] flex-shrink-0 shadow-md">
+                <div className="w-10 h-10 flex items-center justify-center rounded-[10px] flex-shrink-0 shadow-md bg-white dark:bg-[var(--site-soft)]">
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -487,10 +481,9 @@ export default function LoginPage() {
                   </svg>
                 </div>
                 <div className="flex-1 flex flex-col justify-center">
-                  <span className="text-[10px] text-white/40 font-normal tracking-wide leading-none">Xác thực an toàn qua tài khoản Google</span>
-                  <span className="text-[14px] text-white font-bold tracking-wide leading-none mt-1">Đăng nhập với Google</span>
+                  <span className="text-[14px] font-bold tracking-wide leading-none text-[var(--site-text)]">Đăng nhập với Google</span>
                 </div>
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="#79BCC2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 opacity-60">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 text-[var(--site-accent)] opacity-80">
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                   <polyline points="12 5 19 12 12 19"></polyline>
                 </svg>
@@ -541,7 +534,7 @@ export default function LoginPage() {
                       type="button"
                       onClick={() => setRegisterOpen(false)}
                       className="grid h-11 w-11 place-items-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition hover:border-[#79BCC2]/50 hover:text-white"
-                      aria-label="Đóng"
+                        aria-label="Đóng"
                     >
                       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M18 6 6 18" />
@@ -556,7 +549,7 @@ export default function LoginPage() {
                   <div className="grid gap-4 sm:grid-cols-2">
                 <label className="space-y-2 sm:col-span-2">
                   <span className="text-[12px] font-semibold text-white/75 flex items-center gap-1">
-                    Họ và tên <span className="text-red-500 font-bold">*</span>
+                          Họ và tên <span className="text-red-500 font-bold">*</span>
                   </span>
                   <input
                     name="fullName"
@@ -564,14 +557,14 @@ export default function LoginPage() {
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.fullName}
                     onChange={(event) => updateRegisterForm('fullName', event.target.value)}
-                    placeholder="Nhập họ và tên đầy đủ"
+                          placeholder="Nhập họ và tên đầy đủ"
                     required
                   />
                 </label>
 
                 <label className="space-y-2">
                   <span className="text-[12px] font-semibold text-white/75 flex items-center gap-1">
-                    Số điện thoại <span className="text-red-500 font-bold">*</span>
+                          Số điện thoại <span className="text-red-500 font-bold">*</span>
                   </span>
                   <input
                     name="phone"
@@ -581,7 +574,7 @@ export default function LoginPage() {
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.phone}
                     onChange={(event) => updateRegisterForm('phone', event.target.value)}
-                    placeholder="Nhập số điện thoại"
+                          placeholder="Nhập số điện thoại"
                     required
                   />
                 </label>
@@ -598,14 +591,14 @@ export default function LoginPage() {
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.email}
                     onChange={(event) => updateRegisterForm('email', event.target.value)}
-                    placeholder="Nhập địa chỉ email"
+                          placeholder="Nhập địa chỉ email"
                     required
                   />
                 </label>
 
                   <label className="space-y-2 sm:col-span-2">
                     <span className="text-[12px] font-semibold text-white/75 flex items-center gap-1">
-                      Mật khẩu <span className="text-red-500 font-bold">*</span>
+                          Mật khẩu <span className="text-red-500 font-bold">*</span>
                     </span>
                     <input
                       name="password"
@@ -615,34 +608,34 @@ export default function LoginPage() {
                       className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                       value={registerForm.password}
                       onChange={(event) => updateRegisterForm('password', event.target.value)}
-                      placeholder="Tạo mật khẩu (tối thiểu 6 ký tự)"
+                          placeholder="Tạo mật khẩu (tối thiểu 6 ký tự)"
                       required
                     />
                   </label>
 
                 <label className="space-y-2">
-                  <span className="text-[12px] font-semibold text-white/75">Trường học / Đơn vị</span>
+                          <span className="text-[12px] font-semibold text-white/75">Trường học / Đơn vị</span>
                   <input
                     name="organization"
                     autoComplete="organization"
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.schoolOrCompany}
                     onChange={(event) => updateRegisterForm('schoolOrCompany', event.target.value)}
-                    placeholder="Nhập tên trường/đơn vị"
+                          placeholder="Nhập tên trường/đơn vị"
                   />
                 </label>
 
                 <label className="space-y-2">
-                  <span className="text-[12px] font-semibold text-white/75">Bảng dự án quan tâm</span>
+                          <span className="text-[12px] font-semibold text-white/75">Bảng dự án quan tâm</span>
                   <select
                     name="contestTable"
                     className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
                     value={registerForm.contestTable}
                     onChange={(event) => updateRegisterForm('contestTable', event.target.value)}
                   >
-                    <option>Bảng học sinh</option>
-                    <option>Bảng sinh viên, học viên</option>
-                    <option>Bảng cá nhân, tổ chức, doanh nghiệp</option>
+                            <option>Bảng học sinh</option>
+                            <option>Bảng sinh viên, học viên</option>
+                            <option>Bảng cá nhân, tổ chức, doanh nghiệp</option>
                   </select>
                 </label>
                   </div>
@@ -653,14 +646,14 @@ export default function LoginPage() {
                       onClick={() => setRegisterOpen(false)}
                       className="h-[46px] rounded-[14px] border border-white/10 px-5 text-[13px] font-bold text-white/65 transition hover:border-white/25 hover:text-white"
                     >
-                      Hủy
+                      Há»§y
                     </button>
                     <button
                       type="submit"
                       disabled={loading}
                       className="btn-login h-[46px] rounded-[14px] bg-gradient-to-r from-[#0A2FFF] to-[#1a5aff] px-5 text-[13px] font-bold uppercase tracking-widest text-white disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {loading ? 'Đang xử lý...' : 'Tạo tài khoản'}
+                        {loading ? 'Đang xử lý...' : 'Tạo tài khoản'}
                     </button>
                   </div>
                 </div>

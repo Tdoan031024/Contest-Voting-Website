@@ -3,6 +3,39 @@
 import React, { useState, useEffect } from 'react';
 import { apiUrl, formatAssetUrl } from '../../api';
 
+type VotingPromotion = {
+  id: string;
+  name: string;
+  multiplier: number;
+  startAt: string;
+  endAt: string;
+  isEnabled: boolean;
+  appliesTo: 'FREE' | 'PAID' | 'ALL';
+  note?: string;
+};
+
+function createPromotionDraft(): VotingPromotion {
+  const now = new Date();
+  const start = new Date(now.getTime() + 10 * 60 * 1000);
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  const toLocalInput = (value: Date) => {
+    const offset = value.getTimezoneOffset();
+    const local = new Date(value.getTime() - offset * 60 * 1000);
+    return local.toISOString().slice(0, 16);
+  };
+
+  return {
+    id: `promo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: 'Khung giờ nhân điểm',
+    multiplier: 2,
+    startAt: toLocalInput(start),
+    endAt: toLocalInput(end),
+    isEnabled: true,
+    appliesTo: 'FREE',
+    note: '',
+  };
+}
+
 export default function SettingsAdminPage() {
   // Gate settings state
   const [isGateOpen, setIsGateOpen] = useState(true);
@@ -19,7 +52,7 @@ export default function SettingsAdminPage() {
   const [registrationUrl, setRegistrationUrl] = useState('https://khoinghiep.huit.edu.vn');
   const [detailUrl, setDetailUrl] = useState('https://khoinghiep.huit.edu.vn');
   const [supportZaloUrl, setSupportZaloUrl] = useState('https://zalo.me/4418938306145458374');
-  const [freeVotesPerAccountPerDay, setFreeVotesPerAccountPerDay] = useState(1);
+  const [freeVotesPerAccountPerDay, setFreeVotesPerAccountPerDay] = useState(2);
   const [sepayBankName, setSepayBankName] = useState('VietinBank');
   const [sepayAccountNo, setSepayAccountNo] = useState('110632156888');
   const [sepayAccountName, setSepayAccountName] = useState('TRUONG DAI HOC CONG THUONG TP.HCM');
@@ -27,6 +60,7 @@ export default function SettingsAdminPage() {
   const [sepayApiKey, setSepayApiKey] = useState('sepay_api_key_placeholder');
   const [sponsorBannerUrl, setSponsorBannerUrl] = useState('/original_assets/image4b12.png');
   const [isTestMode, setIsTestMode] = useState(true);
+  const [votingPromotions, setVotingPromotions] = useState<VotingPromotion[]>([]);
 
   // Maintenance state
   const [isMaintenanceMode, setIsMaintenanceMode] = useState(false);
@@ -50,7 +84,7 @@ export default function SettingsAdminPage() {
           setRegistrationUrl(data.registrationUrl || 'https://khoinghiep.huit.edu.vn');
           setDetailUrl(data.detailUrl || 'https://khoinghiep.huit.edu.vn');
           setSupportZaloUrl(data.supportZaloUrl || 'https://zalo.me/4418938306145458374');
-          setFreeVotesPerAccountPerDay(data.freeVotesPerAccountPerDay || 1);
+          setFreeVotesPerAccountPerDay(data.freeVotesPerAccountPerDay || 2);
           setSepayBankName(data.sepayBankName || 'VietinBank');
           setSepayAccountNo(data.sepayAccountNo || '110632156888');
           setSepayAccountName(data.sepayAccountName || 'TRUONG DAI HOC CONG THUONG TP.HCM');
@@ -58,6 +92,7 @@ export default function SettingsAdminPage() {
           setSepayApiKey(data.sepayApiKey || 'sepay_api_key_placeholder');
           setSponsorBannerUrl(data.sponsorBannerUrl || '/original_assets/image4b12.png');
           setIsTestMode(data.isTestMode !== false);
+          setVotingPromotions(Array.isArray(data.votingPromotions) ? data.votingPromotions : []);
         }
       } catch (err) {
         console.error('Failed to load system settings from backend, using defaults.', err);
@@ -65,6 +100,20 @@ export default function SettingsAdminPage() {
     }
     loadSettings();
   }, []);
+
+  const updatePromotion = (id: string, field: keyof VotingPromotion, value: string | number | boolean) => {
+    setVotingPromotions((prev) => prev.map((promotion) => (
+      promotion.id === id ? { ...promotion, [field]: value } : promotion
+    )));
+  };
+
+  const addPromotion = () => {
+    setVotingPromotions((prev) => [...prev, createPromotionDraft()]);
+  };
+
+  const removePromotion = (id: string) => {
+    setVotingPromotions((prev) => prev.filter((promotion) => promotion.id !== id));
+  };
 
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +138,8 @@ export default function SettingsAdminPage() {
       sepayPrefix,
       sepayApiKey,
       isTestMode,
-      sponsorBannerUrl
+      sponsorBannerUrl,
+      votingPromotions,
     };
 
     try {
@@ -346,6 +396,104 @@ export default function SettingsAdminPage() {
               <input className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={supportZaloUrl} onChange={e => setSupportZaloUrl(e.target.value)} />
             </div>
           </div>
+        </div>
+
+        <div className="bg-white border border-[#dce5e1] rounded-xl p-5 shadow-sm space-y-4">
+          <div className="flex flex-col gap-3 border-b border-[#edf2f0] pb-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-[#123c34]">Promotion nhân điểm bình chọn</h3>
+              <p className="mt-1 text-[11px] text-[#6b7773]">Tạo các khung giờ nhân `x2`, `x3` hoặc hệ số khác. Mỗi lượt vote vẫn chỉ tốn 1 quota miễn phí.</p>
+            </div>
+            <button
+              type="button"
+              onClick={addPromotion}
+              className="px-3 py-2 rounded-lg bg-[#123c34] text-white text-[11px] font-bold shadow hover:bg-[#0f766e] active:scale-[0.98]"
+            >
+              Thêm promotion
+            </button>
+          </div>
+
+          {votingPromotions.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-[#dce5e1] bg-[#fbfdfc] px-4 py-5 text-[11px] text-[#6b7773]">
+              Chưa có khung promotion nào. Bạn có thể thêm các đợt nhân điểm theo thời gian tại đây.
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {votingPromotions.map((promotion, index) => (
+                <div key={promotion.id} className="rounded-xl border border-[#dce5e1] bg-[#fbfdfc] p-4 shadow-sm space-y-4">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Promotion {index + 1}</p>
+                      <p className="text-xs font-bold text-[#123c34]">{promotion.name || 'Khung giờ nhân điểm'}</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => updatePromotion(promotion.id, 'isEnabled', !promotion.isEnabled)}
+                        className={`w-12 h-6 rounded-full transition-colors duration-200 relative flex items-center ${promotion.isEnabled ? 'bg-emerald-600' : 'bg-slate-200'}`}
+                      >
+                        <span className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 absolute ${promotion.isEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removePromotion(promotion.id)}
+                        className="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-[10px] font-bold border border-red-200 hover:bg-red-100"
+                      >
+                        Xóa
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Tên promotion</label>
+                      <input
+                        className="h-9 px-3 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                        value={promotion.name}
+                        onChange={(e) => updatePromotion(promotion.id, 'name', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Hệ số nhân điểm</label>
+                      <input
+                        type="number"
+                        min={1}
+                        className="h-9 px-3 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                        value={promotion.multiplier}
+                        onChange={(e) => updatePromotion(promotion.id, 'multiplier', Math.max(1, Number(e.target.value) || 1))}
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Bắt đầu</label>
+                      <input
+                        type="datetime-local"
+                        className="h-9 px-3 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                        value={promotion.startAt}
+                        onChange={(e) => updatePromotion(promotion.id, 'startAt', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Kết thúc</label>
+                      <input
+                        type="datetime-local"
+                        className="h-9 px-3 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                        value={promotion.endAt}
+                        onChange={(e) => updatePromotion(promotion.id, 'endAt', e.target.value)}
+                      />
+                    </div>
+                    <div className="flex flex-col space-y-1.5 md:col-span-2">
+                      <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Ghi chú nội bộ</label>
+                      <input
+                        className="h-9 px-3 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                        value={promotion.note || ''}
+                        onChange={(e) => updatePromotion(promotion.id, 'note', e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Sepay Integration Settings Block */}

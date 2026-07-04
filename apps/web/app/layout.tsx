@@ -378,7 +378,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                       {/* Theme toggle (Far right) */}
                       <button
                         onClick={toggleTheme}
-                        className="site-theme-toggle hidden sm-desktop:grid"
+                        className="site-theme-toggle hidden md:grid"
                         aria-label={theme === 'dark' ? 'Bật giao diện sáng' : 'Bật giao diện tối'}
                         title="Đổi giao diện sáng/tối"
                       >
