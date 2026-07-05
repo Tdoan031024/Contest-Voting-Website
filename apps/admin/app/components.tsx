@@ -129,11 +129,11 @@ interface PageHeaderProps {
 
 export function PageHeader({ category, title, description, action }: PageHeaderProps) {
   return (
-    <div className="admin-card flex flex-col gap-4 px-6 py-6 md:flex-row md:items-end md:justify-between select-none">
+    <div className="admin-card flex flex-col gap-3 px-5 py-4 md:flex-row md:items-end md:justify-between select-none">
       <div>
         <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--primary-strong)]">{category}</p>
-        <h2 className="mt-2 text-[28px] font-extrabold tracking-[-0.03em] text-slate-950">{title}</h2>
-        <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-500">{description}</p>
+        <h2 className="mt-1.5 text-[24px] font-extrabold tracking-[-0.03em] text-slate-950">{title}</h2>
+        <p className="mt-1.5 max-w-2xl text-[13px] font-medium leading-5 text-slate-500">{description}</p>
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}
     </div>
@@ -143,10 +143,10 @@ export function PageHeader({ category, title, description, action }: PageHeaderP
 // SectionHeader component
 export function SectionHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: React.ReactNode }) {
   return (
-    <div className="mb-5 flex items-end justify-between border-b border-slate-100 pb-4 select-none">
+    <div className="mb-4 flex items-end justify-between border-b border-slate-100 pb-3 select-none">
       <div>
-        <h3 className="text-[15px] font-extrabold tracking-[-0.02em] text-slate-900">{title}</h3>
-        {subtitle && <p className="mt-1 text-xs font-medium text-slate-500">{subtitle}</p>}
+        <h3 className="text-[14px] font-extrabold tracking-[-0.02em] text-slate-900">{title}</h3>
+        {subtitle && <p className="mt-1 text-[12px] font-medium text-slate-500">{subtitle}</p>}
       </div>
       {action && <div>{action}</div>}
     </div>

@@ -14,6 +14,15 @@ function isMd5Hash(value?: string | null): boolean {
   return !!value && /^[a-f0-9]{32}$/i.test(value);
 }
 
+export function normalizeEmail(email: string): string {
+  const trimmed = String(email || '').trim().toLowerCase();
+  const parts = trimmed.split('@');
+  if (parts.length !== 2) return trimmed;
+  const [localPart, domain] = parts;
+  const baseLocal = localPart.split('+')[0];
+  return `${baseLocal}@${domain}`;
+}
+
 export function getEnvVar(key: string, defaultValue?: string): string {
   if (process.env[key]) return process.env[key];
 
@@ -1193,8 +1202,10 @@ export class AppService implements OnModuleInit {
     }
     const password = payload.password || '123456';
     const passwordHash = hashPasswordMd5(password);
+    const id = await this.generateUniqueWebUserId(email);
     const user = await this.prisma.webUser.create({
       data: {
+        id,
         fullName: payload.fullName,
         email,
         phone: payload.phone || null,
@@ -1236,10 +1247,26 @@ export class AppService implements OnModuleInit {
   }
 
   async registerWebUser(payload: Partial<WebUser> & { password?: string }): Promise<{ ok: boolean; user: WebUser; token: string }> {
-    const email = String(payload.email || '').trim().toLowerCase();
-
-    if (!email || !payload.fullName || !payload.password) {
+    const emailInput = String(payload.email || '').trim().toLowerCase();
+    if (!emailInput || !payload.fullName || !payload.password) {
       throw new UnauthorizedException('Thiếu họ tên, email hoặc mật khẩu.');
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(emailInput)) {
+      throw new BadRequestException('Định dạng email không hợp lệ.');
+    }
+
+    const email = normalizeEmail(emailInput);
+
+    const domain = email.split('@')[1];
+    const disposableDomains = [
+      'mailinator.com', 'yopmail.com', 'tempmail.com', 'temp-mail.org', 
+      'guerrillamail.com', 'sharklasers.com', 'dispostable.com', 'getairmail.com',
+      'maildrop.cc', 'mintemail.com', 'trashmail.com', '10minutemail.com', 'generator.email'
+    ];
+    if (disposableDomains.some(d => domain && domain.endsWith(d))) {
+      throw new BadRequestException('Hệ thống không chấp nhận đăng ký bằng email ảo/tạm thời.');
     }
 
     const existing = await this.prisma.webUser.findUnique({
@@ -1249,8 +1276,10 @@ export class AppService implements OnModuleInit {
       throw new UnauthorizedException('Email đã được đăng ký.');
     }
 
+    const id = await this.generateUniqueWebUserId(email);
     const user = await this.prisma.webUser.create({
       data: {
+        id,
         fullName: payload.fullName,
         email,
         phone: payload.phone,
@@ -1287,8 +1316,10 @@ export class AppService implements OnModuleInit {
       return { ok: true, user: this.publicWebUser(updated), token: generateWebToken(updated.id, this.getAdminSessionSecret()) };
     }
 
+    const id = await this.generateUniqueWebUserId(email);
     const user = await this.prisma.webUser.create({
       data: {
+        id,
         fullName: payload.fullName || 'Người dùng bình chọn',
         email,
         phone: payload.phone,
@@ -1307,7 +1338,7 @@ export class AppService implements OnModuleInit {
 
   async loginWebUser(email: string, password: string): Promise<{ ok: boolean; user: WebUser; token: string }> {
     const user = await this.prisma.webUser.findUnique({
-      where: { email: String(email || '').trim().toLowerCase() },
+      where: { email: normalizeEmail(email) },
     });
 
     if (!user || user.status === 'LOCKED' || !user.passwordHash) {
@@ -1350,7 +1381,7 @@ export class AppService implements OnModuleInit {
       }
     }
 
-    const email = String(googleProfile?.email || payload.email || '').trim().toLowerCase();
+    const email = normalizeEmail(googleProfile?.email || payload.email || '');
     if (!email) {
       throw new UnauthorizedException('Thiếu email Google.');
     }
@@ -1360,8 +1391,10 @@ export class AppService implements OnModuleInit {
     });
 
     if (!user) {
+      const id = await this.generateUniqueWebUserId(email);
       user = await this.prisma.webUser.create({
         data: {
+          id,
           fullName: googleProfile?.name || payload.fullName || email.split('@')[0],
           email,
           phone: payload.phone,
@@ -1712,5 +1745,161 @@ export class AppService implements OnModuleInit {
     return this.prisma.post.delete({
       where: { id },
     });
+  }
+
+  async getDashboardStats() {
+    const totalCandidates = await this.prisma.candidate.count();
+    const totalUsers = await this.prisma.webUser.count();
+    const totalSponsors = await this.prisma.sponsor.count();
+
+    const votesAgg = await this.prisma.candidate.aggregate({
+      _sum: { votes: true }
+    });
+    const totalVotes = votesAgg._sum.votes || 0;
+
+    // Group vote history of the last 7 days
+    const chartData: { label: string; value: number }[] = [];
+    const now = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+      const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+
+      const count = await this.prisma.voteRecord.count({
+        where: {
+          voteTime: {
+            gte: startOfDay,
+            lte: endOfDay
+          }
+        }
+      });
+
+      const label = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+      chartData.push({ label, value: count });
+    }
+
+    // Recent activities (last 4 votes)
+    const recentVotes = await this.prisma.voteRecord.findMany({
+      take: 4,
+      orderBy: { voteTime: 'desc' },
+    });
+
+    const candidateIds = recentVotes.map(v => v.candidateId);
+    const relatedCandidates = await this.prisma.candidate.findMany({
+      where: { id: { in: candidateIds } }
+    });
+
+    const candidatesMap = new Map(relatedCandidates.map(c => [c.id, c]));
+
+    const activities = recentVotes.map((v) => {
+      const cand = candidatesMap.get(v.candidateId);
+      const date = new Date(v.voteTime);
+      const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      return {
+        id: v.id,
+        title: cand ? `Bình chọn dự án: ${cand.name}` : `Bình chọn dự án ẩn`,
+        author: v.voterPhone || 'Người dùng ẩn',
+        time: timeStr,
+      };
+    });
+
+    const postsViews = await this.prisma.post.aggregate({
+      _sum: { views: true }
+    });
+    const totalPostViews = postsViews._sum.views || 0;
+
+    return {
+      totalCandidates,
+      totalUsers,
+      totalSponsors,
+      totalVotes,
+      chartData,
+      activities,
+      totalPostViews,
+      settings: {
+        isGateOpen: this.settings.isGateOpen,
+        endDate: this.settings.endDate,
+        statsViews: this.settings.statsViews || '1,259',
+      }
+    };
+  }
+
+  private async generateUniqueWebUserId(email: string): Promise<string> {
+    const emailName = email.split('@')[0];
+    let baseId = emailName.replace(/[^a-zA-Z0-9\._-]/g, '');
+    if (!baseId) {
+      baseId = `user-${Date.now()}`;
+    }
+    
+    let id = baseId;
+    let userExists = await this.prisma.webUser.findUnique({ where: { id } });
+    let counter = 1;
+    while (userExists) {
+      id = `${baseId}-${counter}`;
+      userExists = await this.prisma.webUser.findUnique({ where: { id } });
+      counter++;
+    }
+    return id;
+  }
+
+  async getAdminVoteLogs() {
+    const votes = await this.prisma.voteRecord.findMany({
+      orderBy: { voteTime: 'desc' },
+    });
+
+    const candidateIds = [...new Set(votes.map((v: any) => v.candidateId))];
+    const candidates = await this.prisma.candidate.findMany({
+      where: { id: { in: candidateIds } },
+    });
+    const candidatesMap = new Map(candidates.map((c: any) => [c.id, c]));
+
+    const webUsers = await this.prisma.webUser.findMany();
+    const userMap = new Map<string, any>();
+    for (const u of webUsers) {
+      if (u.id) userMap.set(u.id, u);
+      if (u.email) userMap.set(u.email.toLowerCase(), u);
+      if (u.phone) userMap.set(u.phone, u);
+    }
+
+    return votes.map((v: any) => {
+      const cand = candidatesMap.get(v.candidateId);
+      const voterKey = String(v.voterPhone || '').trim().toLowerCase();
+      const user = userMap.get(voterKey) || userMap.get(v.voterPhone);
+      return {
+        id: v.id,
+        voterPhone: v.voterPhone,
+        voterName: user ? user.fullName : 'Người dùng ẩn',
+        voterEmail: user ? user.email : '',
+        candidateSbd: cand ? cand.sbd : '---',
+        candidateName: cand ? cand.name : 'Dự án không tồn tại',
+        voteTime: v.voteTime,
+      };
+    });
+  }
+
+  async deleteVoteLog(id: string) {
+    const vote = await this.prisma.voteRecord.findUnique({
+      where: { id },
+    });
+    if (!vote) {
+      throw new NotFoundException('Không tìm thấy bản ghi bình chọn.');
+    }
+
+    // Decrement candidate votes
+    await this.prisma.$transaction(async (tx: any) => {
+      // Find candidate to see if we can decrement votes (avoid negative votes)
+      const cand = await tx.candidate.findUnique({ where: { id: vote.candidateId } });
+      const currentVotes = cand?.votes || 0;
+      await tx.candidate.update({
+        where: { id: vote.candidateId },
+        data: { votes: { set: Math.max(0, currentVotes - 1) } },
+      });
+      await tx.voteRecord.delete({
+        where: { id },
+      });
+    });
+
+    return { success: true };
   }
 }

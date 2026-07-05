@@ -39,9 +39,9 @@ function createPromotionDraft(): VotingPromotion {
 }
 
 const tableLabels: Record<string, string> = {
-  HIGH_SCHOOL: 'B?ng h?c sinh',
-  STUDENT: 'B?ng sinh vi?n, h?c vi?n',
-  ENTERPRISE: 'B?ng c? nh?n, t? ch?c, doanh nghi?p',
+  HIGH_SCHOOL: 'Bảng học sinh',
+  STUDENT: 'Bảng sinh viên, học viên',
+  ENTERPRISE: 'Bảng cá nhân, tổ chức, doanh nghiệp',
 };
 
 const emptyProject: Partial<Candidate> = {
@@ -110,7 +110,7 @@ function ActionButton({
     edit: 'border-emerald-200/80 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100',
     delete: 'border-rose-200/80 bg-rose-50 text-rose-600 hover:border-rose-300 hover:bg-rose-100',
   };
-  const className = `grid h-10 w-10 place-items-center rounded-xl border shadow-sm transition duration-150 hover:-translate-y-[1px] ${classes[tone]}`;
+  const className = `grid h-9 w-9 place-items-center rounded-lg border shadow-sm transition duration-150 hover:-translate-y-[1px] ${classes[tone]}`;
 
   if (href) {
     return (
@@ -1102,6 +1102,7 @@ export default function CandidatesAdminPage() {
   const [registrationDeadline, setRegistrationDeadline] = useState('2026-06-20T23:59');
   const [votingPromotions, setVotingPromotions] = useState<VotingPromotion[]>([]);
   const [settingsSaving, setSettingsSaving] = useState(false);
+  const [showPromotionManager, setShowPromotionManager] = useState(false);
 
   const loadProjects = async () => {
     try {
@@ -1316,59 +1317,56 @@ export default function CandidatesAdminPage() {
   };
 
   return (
-    <div className="w-full max-w-full space-y-5">
+    <div className="w-full max-w-full space-y-3.5">
       <section className="admin-card overflow-hidden p-0">
-        <div className="flex flex-col gap-6 border-b border-slate-200/70 px-6 py-6 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-2.5 border-b border-slate-200/70 px-4 py-3.5 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--primary-strong)]">Quản lý cuộc thi</p>
-            <h2 className="mt-2 text-[34px] font-extrabold tracking-[-0.04em] text-slate-950">Danh sách dự án tham gia</h2>
-            <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-500">
-              Theo dõi hồ sơ dự án, điều chỉnh promotion bình chọn và quản lý trạng thái mở đăng ký ngay trên cùng một màn hình vận hành.
-            </p>
+            <h2 className="mt-0.5 text-[20px] font-extrabold tracking-[-0.04em] text-slate-950">Danh sách dự án tham gia</h2>
           </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <button onClick={handleExportCandidates} className="admin-btn admin-btn-secondary">
-              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button onClick={handleExportCandidates} className="admin-btn admin-btn-secondary !h-8 !min-h-0 px-2.5 text-xs gap-1.5 rounded-lg">
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
               </svg>
-              Xuất CSV
+              Xuất
             </button>
-            <button onClick={() => setIsImportModalOpen(true)} className="admin-btn admin-btn-secondary">
-              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
+            <button onClick={() => setIsImportModalOpen(true)} className="admin-btn admin-btn-secondary !h-8 !min-h-0 px-2.5 text-xs gap-1.5 rounded-lg">
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="8 10 12 14 16 10" />
+                <line x1="12" y1="14" x2="12" y2="2" />
               </svg>
-              Nhập CSV
+              Nhập
             </button>
-            <button onClick={openAddModal} className="admin-btn admin-btn-primary min-w-[148px]">
+            <button onClick={openAddModal} className="admin-btn admin-btn-primary min-w-[132px]">
               Thêm dự án mới
             </button>
           </div>
         </div>
 
-        <div className="grid gap-4 p-6 xl:grid-cols-4">
+        <div className="grid gap-2 p-3 xl:grid-cols-6">
           {[
-            ['Tổng dự án', projects.length.toLocaleString(), 'Số hồ sơ hiện có trong hệ thống'],
-            ['Thiếu thông tin', missingInfo.toLocaleString(), 'Cần bổ sung nhóm, trưởng nhóm hoặc bảng thi'],
-          ].map(([label, value, note]) => (
-            <div key={label} className="dashboard-stat-card">
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</p>
-              <p className="mt-3 text-[34px] font-extrabold tracking-[-0.04em] text-slate-950">{value}</p>
-              <p className="mt-2 text-sm font-medium leading-6 text-slate-500">{note}</p>
+            ['Tổng dự án', projects.length.toLocaleString()],
+            ['Thiếu thông tin', missingInfo.toLocaleString()],
+          ].map(([label, value]) => (
+            <div key={label} className="dashboard-stat-card flex min-h-[104px] flex-col justify-center xl:col-span-1">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</p>
+                <p className="mt-1.5 text-[20px] font-extrabold tracking-[-0.04em] text-slate-950">{value}</p>
+              </div>
             </div>
           ))}
 
-          <div className="dashboard-stat-card">
+          <div className="dashboard-stat-card flex min-h-[118px] flex-col justify-between xl:col-span-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Đăng ký</p>
-                <p className="mt-3 text-[30px] font-extrabold tracking-[-0.04em] text-slate-950">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Đăng ký</p>
+                <p className="mt-2 text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
                   {isRegistrationOpen ? 'Đang mở' : 'Đang đóng'}
                 </p>
-                <p className="mt-2 text-sm font-medium leading-6 text-slate-500">Điều khiển hiển thị nút đăng ký ở website public.</p>
               </div>
               <button
                 type="button"
@@ -1378,13 +1376,13 @@ export default function CandidatesAdminPage() {
                   setIsRegistrationOpen(nextValue);
                   await saveVotingSettings(votingPromotions, nextValue, registrationDeadline);
                 }}
-                className={`relative mt-1 flex h-8 w-14 items-center rounded-full transition ${isRegistrationOpen ? 'bg-emerald-500' : 'bg-slate-300'} ${settingsSaving ? 'opacity-60' : ''}`}
+                className={`relative mt-1 flex h-7 w-12 items-center rounded-full transition ${isRegistrationOpen ? 'bg-emerald-500' : 'bg-slate-300'} ${settingsSaving ? 'opacity-60' : ''}`}
               >
-                <span className={`absolute h-6 w-6 rounded-full bg-white shadow-md transition ${isRegistrationOpen ? 'translate-x-7' : 'translate-x-1'}`} />
+                <span className={`absolute h-5 w-5 rounded-full bg-white shadow-md transition ${isRegistrationOpen ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
-            <div className="mt-4">
-              <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Hạn đăng ký</label>
+            <div className="space-y-1">
+              <label className="block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Hạn đăng ký</label>
               <input
                 type="datetime-local"
                 value={registrationDeadline}
@@ -1395,40 +1393,59 @@ export default function CandidatesAdminPage() {
             </div>
           </div>
 
-          <div className="dashboard-stat-card">
+          <div className="dashboard-stat-card flex min-h-[118px] flex-col justify-between xl:col-span-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Promotion</p>
-                <p className="mt-3 truncate text-[30px] font-extrabold tracking-[-0.04em] text-slate-950">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Promotion</p>
+                <p className="mt-2 truncate text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
                   {activePromotion ? `x${activePromotion.multiplier}` : 'Chưa chạy'}
                 </p>
-                <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
-                  {activePromotion ? activePromotion.name : 'Chưa có khung giờ nhân điểm đang hoạt động.'}
-                </p>
+                <p className="mt-1 text-[11px] font-semibold text-slate-500">{votingPromotions.length} khung giờ</p>
               </div>
-              <button type="button" onClick={addPromotion} className="admin-btn admin-btn-secondary min-w-[84px]">
-                + Thêm
+              <button type="button" onClick={() => setShowPromotionManager((prev) => !prev)} className="admin-btn admin-btn-secondary min-w-[82px]">
+                {showPromotionManager ? 'Thu gọn' : 'Quản lý'}
               </button>
             </div>
-            <div className="mt-4 space-y-3">
+            <div className="flex items-center gap-1.5">
+              <button type="button" onClick={addPromotion} className="admin-btn admin-btn-secondary flex-1">
+                + Thêm
+              </button>
+              <button type="button" disabled={settingsSaving} onClick={() => saveVotingSettings()} className="admin-btn admin-btn-primary flex-1">
+                {settingsSaving ? 'Đang lưu...' : 'Lưu'}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {showPromotionManager && (
+          <div className="border-t border-slate-200/70 px-3 py-3">
+            <div className="mb-2.5 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Promotion chi tiết</p>
+                <p className="mt-1 text-[13px] font-medium text-slate-500">Quản lý khung giờ nhân điểm mà không làm nặng màn hình chính.</p>
+              </div>
+              <button type="button" onClick={addPromotion} className="admin-btn admin-btn-secondary">
+                + Thêm promotion
+              </button>
+            </div>
+
+            <div className="grid gap-2 xl:grid-cols-2">
               {votingPromotions.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-5 text-sm font-medium text-slate-500">
+                <div className="rounded-[14px] border border-dashed border-slate-200 bg-slate-50/80 px-4 py-5 text-sm font-medium text-slate-500">
                   Chưa có promotion nhân điểm nào.
                 </div>
               ) : (
-                votingPromotions.slice(0, 2).map((promotion) => (
-                  <div key={promotion.id} className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
-                    <div className="grid gap-2.5">
+                votingPromotions.map((promotion) => (
+                  <div key={promotion.id} className="rounded-[14px] border border-slate-200 bg-white/90 p-3 shadow-sm">
+                    <div className="grid gap-2">
                       <input value={promotion.name} onChange={(event) => updatePromotion(promotion.id, 'name', event.target.value)} className="admin-input" />
-                      <div className="grid grid-cols-2 gap-2.5">
-                        <input type="number" min={2} max={10} value={promotion.multiplier} onChange={(event) => updatePromotion(promotion.id, 'multiplier', Number(event.target.value))} className="admin-input" />
-                        <select value={promotion.appliesTo} onChange={(event) => updatePromotion(promotion.id, 'appliesTo', event.target.value)} className="admin-select">
-                          <option value="FREE">FREE</option>
-                          <option value="PAID">PAID</option>
-                          <option value="ALL">ALL</option>
-                        </select>
+                      <div className="grid grid-cols-1 gap-2">
+                        <label className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Hệ số nhân điểm:</span>
+                          <input type="number" min={2} max={10} value={promotion.multiplier} onChange={(event) => updatePromotion(promotion.id, 'multiplier', Number(event.target.value))} className="admin-input" />
+                        </label>
                       </div>
-                      <div className="grid grid-cols-1 gap-2.5 2xl:grid-cols-2">
+                      <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">
                         <input type="datetime-local" value={promotion.startAt} onChange={(event) => updatePromotion(promotion.id, 'startAt', event.target.value)} className="admin-input" />
                         <input type="datetime-local" value={promotion.endAt} onChange={(event) => updatePromotion(promotion.id, 'endAt', event.target.value)} className="admin-input" />
                       </div>
@@ -1437,7 +1454,7 @@ export default function CandidatesAdminPage() {
                           <input type="checkbox" checked={promotion.isEnabled} onChange={(event) => updatePromotion(promotion.id, 'isEnabled', event.target.checked)} />
                           Kích hoạt
                         </label>
-                        <button type="button" onClick={() => removePromotion(promotion.id)} className="admin-btn admin-btn-danger !h-9 px-3">
+                        <button type="button" onClick={() => removePromotion(promotion.id)} className="admin-btn admin-btn-danger !h-8 px-3">
                           Xóa
                         </button>
                       </div>
@@ -1445,21 +1462,13 @@ export default function CandidatesAdminPage() {
                   </div>
                 ))
               )}
-              {votingPromotions.length > 2 && (
-                <p className="text-xs font-medium leading-5 text-slate-500">
-                  Còn {votingPromotions.length - 2} promotion khác. Vào trang cấu hình để quản lý toàn bộ.
-                </p>
-              )}
-              <button type="button" disabled={settingsSaving} onClick={() => saveVotingSettings()} className="admin-btn admin-btn-primary w-full">
-                {settingsSaving ? 'Đang lưu...' : 'Lưu promotion'}
-              </button>
             </div>
           </div>
-        </div>
+        )}
       </section>
 
-      <section className="dashboard-filter-bar p-4">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_200px_132px]">
+      <section className="dashboard-filter-bar p-2.5">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_190px_170px_110px]">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -1478,7 +1487,7 @@ export default function CandidatesAdminPage() {
             <option>Vòng bán kết</option>
             <option>Vòng chung kết</option>
           </select>
-          <div className="flex h-[46px] items-center justify-center rounded-2xl border border-slate-200 bg-white text-xs font-black text-slate-500 shadow-sm">
+          <div className="flex h-[38px] items-center justify-center rounded-[12px] border border-slate-200 bg-white text-[11px] font-black text-slate-500 shadow-sm">
             {filteredProjects.length.toLocaleString()} kết quả
           </div>
         </div>
@@ -1486,14 +1495,14 @@ export default function CandidatesAdminPage() {
 
       <section className="admin-card overflow-hidden p-0">
         <div className="w-full overflow-x-auto">
-          <table className="dashboard-table min-w-[920px] text-left">
+          <table className="dashboard-table min-w-[860px] text-left">
             <thead>
               <tr className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
-                <th className="px-5 py-4">Dự án</th>
-                <th className="px-5 py-4">Đại diện</th>
-                <th className="px-5 py-4">Vòng thi</th>
-                <th className="px-5 py-4 text-right">Điểm bình chọn</th>
-                <th className="px-5 py-4 text-right">Thao tác</th>
+                <th className="px-4 py-3">Dự án</th>
+                <th className="px-4 py-3">Đại diện</th>
+                <th className="px-4 py-3">Vòng thi</th>
+                <th className="px-4 py-3 text-right">Điểm bình chọn</th>
+                <th className="px-4 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="text-sm">
@@ -1502,35 +1511,36 @@ export default function CandidatesAdminPage() {
  
                 return (
                   <tr key={project.id} className="align-middle transition hover:bg-slate-50/80">
-                    <td className="px-5 py-4">
-                      <div className="flex min-w-[240px] items-center gap-3">
-                        <img src={formatAssetUrl(project.imageUrl)} alt={project.name} className="h-14 w-14 shrink-0 rounded-2xl border border-slate-200 object-cover shadow-sm" />
+                    <td className="px-4 py-3">
+                      <div className="flex min-w-[220px] items-center gap-3">
+                        <img src={formatAssetUrl(project.imageUrl)} alt={project.name} className="h-11 w-11 shrink-0 rounded-[14px] border border-slate-200 object-cover shadow-sm" />
                         <div className="min-w-0">
-                          <p className="truncate text-[15px] font-extrabold tracking-[-0.02em] text-slate-950">{project.name}</p>
-                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                            <span className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
+                          <p className="truncate text-[14px] font-extrabold tracking-[-0.02em] text-slate-950">{project.name}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
                               {project.sbd}
                             </span>
-                            <span className="rounded-lg border border-emerald-200/80 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
+                            <span className="rounded-md border border-emerald-200/80 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
                               {projectTableLabel}
                             </span>
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <div className="max-w-[180px]">
-                        <p className="truncate font-bold text-slate-900">{project.leaderName || 'Chưa có đại diện'}</p>
-                        <p className="mt-1 truncate text-xs text-slate-500 font-medium">{project.representativeSchool || 'Chưa cập nhật đơn vị'}</p>
+                        <p className="truncate text-[13px] font-bold text-slate-900">{project.leaderName || 'Chưa có đại diện'}</p>
+                        <p className="mt-0.5 truncate text-[12px] text-slate-500 font-medium">{project.representativeSchool || 'Chưa cập nhật đơn vị'}</p>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <Pill tone={roundTone(project.currentRound)}>{project.currentRound || 'Vòng loại'}</Pill>
                     </td>
-                    <td className="px-5 py-4 text-right">
-                      <p className="text-[28px] font-extrabold tracking-[-0.03em] tabular-nums text-slate-950">{project.votes.toLocaleString()}</p>
+                    <td className="px-4 py-3 text-right">
+                      <p className="text-[20px] font-bold tracking-[-0.02em] tabular-nums text-slate-800">{project.votes.toLocaleString()}</p>
+                      <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">điểm</p>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <div className="flex justify-end gap-1.5">
                         <ActionButton href={`/candidates/${project.sbd}`} title="Xem chi tiết" tone="view">
                           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

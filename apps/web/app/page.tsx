@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Candidate } from '@huitfest/shared';
 import Link from 'next/link';
 import { useAlert } from './AlertProvider';
@@ -155,6 +155,7 @@ export default function HomePage() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [settings, setSettings] = useState<any>(null);
+  const totalVotes = useMemo(() => candidates.reduce((sum, c) => sum + c.votes, 0), [candidates]);
   const aboutTitleText = (settings?.aboutTitle || ABOUT_FALLBACK_TITLE).replace(/\s+NĂM\s+/i, ' ');
   const homepageNewsPosts = SAMPLE_NEWS_POSTS.slice(0, 3);
 
@@ -576,7 +577,7 @@ export default function HomePage() {
                     className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-xl p-2.5 sm:p-3 text-center transform transition-all duration-700 shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                       }`}
                   >
-                    <p className="text-[17px] sm:text-[22px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
+                    <p className="text-[17px] sm:text-[22px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">{candidates.length.toLocaleString()}</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Dự án</p>
                   </div>
 
@@ -588,7 +589,7 @@ export default function HomePage() {
                     className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-xl p-2.5 sm:p-3 text-center transform transition-all duration-700 shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                       }`}
                   >
-                    <p className="text-[17px] sm:text-[22px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
+                    <p className="text-[17px] sm:text-[22px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">{totalVotes.toLocaleString()}</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Số vote</p>
                   </div>
 
@@ -600,7 +601,7 @@ export default function HomePage() {
                     className={`bg-white/[0.04] dark:bg-white/[0.02] border border-black/5 dark:border-white/10 rounded-xl p-2.5 sm:p-3 text-center transform transition-all duration-700 shadow-sm hover:border-[#79BCC2]/30 hover:bg-white/[0.08] dark:hover:bg-white/[0.04] transition-colors duration-300 ${aboutVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
                       }`}
                   >
-                    <p className="text-[17px] sm:text-[22px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">0</p>
+                    <p className="text-[17px] sm:text-[22px] font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]">{settings?.statsViews || '3.7 triệu'}</p>
                     <p className="text-[10px] sm:text-[12px] text-neutral-neutral1/60 dark:text-neutral-white/60 font-bold uppercase tracking-wider">Lượt xem</p>
                   </div>
                 </div>
