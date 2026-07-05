@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseInterceptors, UploadedFile, UnauthorizedException, UseGuards, Headers, Query } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseInterceptors, UploadedFile, UnauthorizedException, UseGuards, Headers, Query, InternalServerErrorException } from '@nestjs/common';
 import { AppService, SystemSettings } from './app.service';
 import { Candidate, Sponsor, TimelineEvent, Banner, VotePackage, WebUser } from '@huitfest/shared';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -404,13 +404,27 @@ export class AppController {
   @Get('admin/settings')
   @UseGuards(AdminSessionGuard)
   getAdminSettings(): SystemSettings {
-    return this.appService.getSettings();
+    try {
+      return this.appService.getSettings();
+    } catch (err: any) {
+      console.error('Error in getAdminSettings:', err);
+      throw new InternalServerErrorException(
+        `Lỗi khi lấy cấu hình: ${err.message || err}. Stack: ${err.stack || ''}`
+      );
+    }
   }
 
   @Put('admin/settings')
   @UseGuards(AdminSessionGuard)
   updateSettings(@Body() updatedFields: Partial<SystemSettings>): SystemSettings {
-    return this.appService.updateSettings(updatedFields);
+    try {
+      return this.appService.updateSettings(updatedFields);
+    } catch (err: any) {
+      console.error('Error in updateSettings:', err);
+      throw new InternalServerErrorException(
+        `Lỗi khi lưu cấu hình: ${err.message || err}. Stack: ${err.stack || ''}`
+      );
+    }
   }
 
   @Post('admin/settings/reset-votes')
