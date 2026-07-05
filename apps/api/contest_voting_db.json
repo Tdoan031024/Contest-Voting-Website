@@ -108,7 +108,7 @@
     }
   ],
   "settings": {
-    "isGateOpen": false,
+    "isGateOpen": true,
     "startDate": "2026-06-01T00:00",
     "endDate": "2026-12-31T23:59",
     "maxVotesPerPhone": 5,
@@ -144,7 +144,7 @@
     "registrationUrl": "https://khoinghiep.huit.edu.vn",
     "detailUrl": "https://khoinghiep.huit.edu.vn",
     "supportZaloUrl": "https://zalo.me/4418938306145458374",
-    "freeVotesPerAccountPerDay": 1,
+    "freeVotesPerAccountPerDay": 2,
     "sepayBankName": "KienLongBank",
     "sepayAccountNo": "101499100004001667",
     "sepayAccountName": "DANG XUAN DUONG",
@@ -153,180 +153,49 @@
     "isTestMode": true,
     "guideSections": [
       {
-        "title": "Hướng dẫn bình chọn miễn phí",
+        "title": "Bình chọn miễn phí mỗi ngày",
         "steps": [
           {
             "number": "01",
-            "description": "Tạo tài khoản mới hoặc đăng nhập nhanh bằng tài khoản Google.",
-            "image": "/original_assets/imagefca6.png"
+            "description": "Đăng ký hoặc đăng nhập tài khoản để bình chọn."
           },
           {
             "number": "02",
-            "description": "Đăng nhập tài khoản để nhận lượt bình chọn miễn phí hằng ngày.",
-            "image": "/original_assets/imagef1be.png"
+            "description": "Mỗi tài khoản có 2 lượt bình chọn miễn phí trong mỗi ngày."
           },
           {
             "number": "03",
-            "description": "Tìm kiếm và lựa chọn dự án bạn muốn bình chọn.",
-            "image": "/original_assets/image81d3.png"
+            "description": "Mỗi lần bình chọn tăng 1 lượt cho dự án bạn chọn."
           },
           {
             "number": "04",
-            "description": "Chọn gói 5 điểm miễn phí, hệ thống ghi nhận điểm sau khi xác nhận thành công.",
-            "image": "/original_assets/image20da.png"
-          }
-        ]
-      },
-      {
-        "title": "Thanh toán chuyển khoản tự động qua Sepay",
-        "steps": [
-          {
-            "number": "01",
-            "description": "Truy cập danh sách dự án, chọn dự án bạn muốn ủng hộ.",
-            "image": "/original_assets/image17ae.png"
-          },
-          {
-            "number": "02",
-            "description": "Lựa chọn gói điểm mong muốn và bấm thanh toán.",
-            "image": "/original_assets/imageefc9.png"
-          },
-          {
-            "number": "03",
-            "description": "Quét mã QR thanh toán hiển thị trên màn hình hoặc chuyển khoản đúng cú pháp, số tiền qua cổng Sepay.",
-            "image": "/original_assets/image837f.png"
-          },
-          {
-            "number": "04",
-            "description": "Giao dịch hoàn tất, hệ thống Sepay tự động xác nhận và cộng điểm bình chọn sau vài giây.",
-            "image": "/original_assets/image20da.png"
+            "description": "Dùng hết 2 lượt trong ngày thì không thể bình chọn cho bất kỳ dự án nào khác cho đến ngày hôm sau."
           }
         ]
       }
     ],
     "exchangeRates": [
       {
-        "points": "5",
-        "price": "0"
-      },
-      {
-        "points": "10",
-        "price": "100"
-      },
-      {
-        "points": "20",
-        "price": "2000"
-      },
-      {
-        "points": "50",
-        "price": "50000"
-      },
-      {
-        "points": "220",
-        "price": "100000"
-      },
-      {
-        "points": "1050",
-        "price": "500000"
-      },
-      {
-        "points": "2300",
-        "price": "1000000"
-      },
-      {
-        "points": "7000",
-        "price": "3000000"
+        "points": 1,
+        "price": 0,
+        "label": "1 lượt bình chọn miễn phí"
       }
     ],
+    "votingPromotions": [],
     "votePackages": [
       {
-        "id": "free-5",
-        "code": "FREE_5",
-        "name": "5 điểm miễn phí",
-        "points": 5,
+        "id": "free-daily-vote",
+        "code": "FREE_DAILY_VOTE",
+        "name": "1 lÆ°á»£t bÃ¬nh chá»n",
+        "points": 1,
         "price": 0,
         "currency": "VND",
-        "vatRate": 10,
+        "vatRate": 0,
         "packageType": "FREE",
         "isActive": true
-      },
-      {
-        "id": "vote-10",
-        "code": "PAID_10",
-        "name": "10 điểm",
-        "points": 10,
-        "price": 10000,
-        "currency": "VND",
-        "vatRate": 10,
-        "packageType": "PAID",
-        "isActive": true
-      },
-      {
-        "id": "vote-20",
-        "code": "PAID_20",
-        "name": "20 điểm",
-        "points": 20,
-        "price": 20000,
-        "currency": "VND",
-        "vatRate": 10,
-        "packageType": "PAID",
-        "isActive": true
-      },
-      {
-        "id": "vote-50",
-        "code": "PAID_50",
-        "name": "50 điểm",
-        "points": 50,
-        "price": 50000,
-        "currency": "VND",
-        "vatRate": 10,
-        "packageType": "PAID",
-        "isActive": true
-      },
-      {
-        "id": "vote-220",
-        "code": "PAID_220",
-        "name": "220 điểm",
-        "points": 220,
-        "price": 100000,
-        "currency": "VND",
-        "vatRate": 10,
-        "packageType": "PAID",
-        "isActive": true
-      },
-      {
-        "id": "vote-1050",
-        "code": "PAID_1050",
-        "name": "1.050 điểm",
-        "points": 1050,
-        "price": 500000,
-        "currency": "VND",
-        "vatRate": 10,
-        "packageType": "PAID",
-        "isActive": true
-      },
-      {
-        "id": "vote-2300",
-        "code": "PAID_2300",
-        "name": "2.300 điểm",
-        "points": 2300,
-        "price": 1000000,
-        "currency": "VND",
-        "vatRate": 10,
-        "packageType": "PAID",
-        "isActive": true
-      },
-      {
-        "id": "vote-7000",
-        "code": "PAID_7000",
-        "name": "7.000 điểm",
-        "points": 7000,
-        "price": 3000000,
-        "currency": "VND",
-        "vatRate": 10,
-        "packageType": "PAID",
-        "isActive": true
       }
-    ]
+    ],
+    "activeVotingPromotion": null
   },
   "webUsers": [
     {

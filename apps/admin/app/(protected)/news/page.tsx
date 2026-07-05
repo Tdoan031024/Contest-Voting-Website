@@ -3,6 +3,42 @@
 import React, { useState, useEffect } from 'react';
 import { apiUrl, formatAssetUrl } from '../../api';
 
+function parseMarkdownToHtml(markdown: string): string {
+  if (!markdown) return '';
+  
+  // If it's already full of HTML block tags, return as is
+  const trimmed = markdown.trim();
+  if (trimmed.startsWith('<p>') || trimmed.startsWith('<h3>') || trimmed.startsWith('<div>') || trimmed.startsWith('<h1') || trimmed.startsWith('<h2')) {
+    return markdown;
+  }
+
+  let html = markdown
+    // Headers:
+    .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+    // Bold:
+    .replace(/\*\*(.*?)\*\*/gim, '<strong>$1</strong>')
+    // Italic:
+    .replace(/\*(.*?)\*/gim, '<em>$1</em>')
+    // Images:
+    .replace(/\!\[(.*?)\]\((.*?)\)/gim, '<img src="$2" alt="$1" class="max-w-full rounded-xl my-4 mx-auto block shadow-md" />')
+    // Links:
+    .replace(/\[(.*?)\]\((.*?)\)/gim, '<a href="$2" class="text-[#0f766e] hover:underline" target="_blank">$1</a>')
+    // Paragraphs:
+    .split('\n\n')
+    .map(para => {
+      const pTrim = para.trim();
+      if (!pTrim) return '';
+      if (pTrim.startsWith('<h') || pTrim.startsWith('<ul') || pTrim.startsWith('<ol') || pTrim.startsWith('<li') || pTrim.startsWith('<img') || pTrim.startsWith('<div') || pTrim.startsWith('<p>')) {
+        return pTrim;
+      }
+      return `<p>${pTrim.replace(/\n/g, '<br />')}</p>`;
+    })
+    .join('\n');
+  return html;
+}
+
 interface Post {
   id: string;
   title: string;
@@ -89,7 +125,7 @@ export default function NewsAdminPage() {
       category: formCategory,
       thumbnailUrl: formThumbnailUrl || undefined,
       summary: formSummary || undefined,
-      content: formContent,
+      content: parseMarkdownToHtml(formContent),
       isActive: formIsActive,
     };
 
@@ -121,7 +157,7 @@ export default function NewsAdminPage() {
       category: formCategory,
       thumbnailUrl: formThumbnailUrl,
       summary: formSummary,
-      content: formContent,
+      content: parseMarkdownToHtml(formContent),
       isActive: formIsActive,
     };
 
@@ -411,63 +447,45 @@ export default function NewsAdminPage() {
                   <textarea rows={2} className="px-3 py-2 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold resize-none" value={formSummary} onChange={e => setFormSummary(e.target.value)} required placeholder="Giới thiệu tóm tắt khoảng 2-3 câu..." />
                 </div>
 
-                <div className="flex flex-col flex-1 min-h-[300px]">
+                <div className="flex flex-col flex-1 min-h-[350px]">
                   <div className="flex justify-between items-center bg-[#fbfdfc] border border-[#dce5e1] border-b-0 rounded-t-lg px-3 py-1.5">
                     {/* Formatting Toolbar */}
                     <div className="flex items-center gap-1 flex-wrap">
-                      <button type="button" onClick={() => insertTag('<strong>', '</strong>')} className="px-2 py-1 rounded hover:bg-slate-200 font-black text-xs border border-slate-200 bg-white" title="In đậm (Bold)">B</button>
-                      <button type="button" onClick={() => insertTag('<em>', '</em>')} className="px-2 py-1 rounded hover:bg-slate-200 italic text-xs border border-slate-200 bg-white" title="In nghiêng (Italic)">I</button>
-                      <button type="button" onClick={() => insertTag('<h3>', '</h3>')} className="px-2 py-1 rounded hover:bg-slate-200 font-bold text-xs border border-slate-200 bg-white" title="Tiêu đề (Heading H3)">H3</button>
-                      <button type="button" onClick={() => insertTag('<p>', '</p>')} className="px-2 py-1 rounded hover:bg-slate-200 text-xs border border-slate-200 bg-white" title="Đoạn văn (Paragraph)">P</button>
+                      <button type="button" onClick={() => insertTag('**', '**')} className="px-2.5 py-1 rounded hover:bg-slate-200 font-black text-xs border border-slate-200 bg-white" title="In đậm (Markdown)">B</button>
+                      <button type="button" onClick={() => insertTag('*', '*')} className="px-2.5 py-1 rounded hover:bg-slate-200 italic text-xs border border-slate-200 bg-white" title="In nghiêng (Markdown)">I</button>
+                      <button type="button" onClick={() => insertTag('### ', '')} className="px-2.5 py-1 rounded hover:bg-slate-200 font-bold text-xs border border-slate-200 bg-white" title="Tiêu đề H3">H3</button>
                       <button type="button" onClick={() => {
                         const url = prompt('Nhập địa chỉ URL liên kết:', 'https://');
-                        if (url) insertTag(`<a href="${url}" class="text-[var(--site-primary)] hover:underline" target="_blank">`, '</a>');
-                      }} className="px-2 py-1 rounded hover:bg-slate-200 text-xs border border-slate-200 bg-white text-blue-600 font-bold" title="Thêm liên kết">Link</button>
+                        if (url) insertTag('[', `](${url})`);
+                      }} className="px-2.5 py-1 rounded hover:bg-slate-200 text-xs border border-slate-200 bg-white text-blue-600 font-bold" title="Thêm liên kết">Link</button>
                       <button type="button" onClick={() => {
                         const url = prompt('Nhập địa chỉ URL của ảnh:', 'https://');
-                        if (url) insertTag(`<img src="${url}" alt="Ảnh" class="max-w-full rounded-xl my-4 mx-auto block shadow-md" />`, '');
-                      }} className="px-2 py-1 rounded hover:bg-slate-200 text-xs border border-slate-200 bg-white text-emerald-600 font-bold" title="Thêm ảnh">Image</button>
-                      <button type="button" onClick={() => insertTag('<ul>\n  <li>', '</li>\n</ul>')} className="px-2 py-1 rounded hover:bg-slate-200 text-xs border border-slate-200 bg-white font-mono" title="Danh sách (List)">List</button>
+                        if (url) insertTag('![Mô tả ảnh](', `)`);
+                      }} className="px-2.5 py-1 rounded hover:bg-slate-200 text-xs border border-slate-200 bg-white text-emerald-600 font-bold" title="Thêm ảnh">Image</button>
                     </div>
 
-                    {/* View Switcher */}
-                    <div className="flex border border-slate-200 rounded overflow-hidden">
-                      <button
-                        type="button"
-                        onClick={() => setActiveEditorTab('edit')}
-                        className={`px-3 py-1 text-[10px] font-bold transition ${activeEditorTab === 'edit' ? 'bg-[#123c34] text-white' : 'bg-white text-slate-600'}`}
-                      >
-                        Soạn thảo
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setActiveEditorTab('preview')}
-                        className={`px-3 py-1 text-[10px] font-bold transition ${activeEditorTab === 'preview' ? 'bg-[#123c34] text-white' : 'bg-white text-slate-600'}`}
-                      >
-                        Xem trước
-                      </button>
-                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded border">Markdown Supported</span>
                   </div>
 
-                  <div className="flex-1 flex flex-col min-h-[260px] border border-[#dce5e1] rounded-b-lg overflow-hidden bg-white">
-                    {activeEditorTab === 'edit' ? (
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200 border border-[#dce5e1] rounded-b-lg overflow-hidden bg-white min-h-[320px]">
+                    <div className="flex flex-col">
                       <textarea
                         id="post-content-textarea"
-                        className="flex-1 w-full p-3 text-xs font-mono focus:outline-none resize-none leading-relaxed"
+                        className="flex-1 w-full p-3 text-xs font-mono focus:outline-none resize-none leading-relaxed min-h-[220px]"
                         value={formContent}
                         onChange={e => setFormContent(e.target.value)}
-                        placeholder="Nhập nội dung chi tiết bài viết (chấp nhận thẻ HTML, dùng thanh công cụ ở trên để định dạng nhanh)..."
+                        placeholder="Nhập nội dung chi tiết bài viết (Chấp nhận Markdown như # Tiêu đề, **In đậm**, [Liên kết](url), ![Ảnh](url) hoặc mã HTML)..."
                         required
                       />
-                    ) : (
-                      <div className="flex-1 p-3 overflow-y-auto max-h-[360px] text-slate-800 text-sm leading-relaxed prose max-w-none">
-                        {formContent ? (
-                          <div dangerouslySetInnerHTML={{ __html: formContent }} />
-                        ) : (
-                          <p className="text-slate-400 text-xs italic">Nội dung xem trước sẽ hiển thị ở đây sau khi bạn viết nội dung.</p>
-                        )}
-                      </div>
-                    )}
+                    </div>
+                    <div className="p-3 overflow-y-auto max-h-[380px] bg-slate-50/50 text-slate-800 text-xs leading-relaxed prose max-w-none min-h-[220px]">
+                      <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2 border-b pb-1">Xem trước nội dung (Live Preview):</p>
+                      {formContent ? (
+                        <div dangerouslySetInnerHTML={{ __html: parseMarkdownToHtml(formContent) }} className="space-y-2 select-text" />
+                      ) : (
+                        <p className="text-slate-400 italic text-xs">Nội dung xem trước sẽ hiển thị ở đây...</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

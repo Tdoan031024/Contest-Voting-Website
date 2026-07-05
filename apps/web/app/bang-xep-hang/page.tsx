@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAlert } from '../AlertProvider';
 import { apiUrl } from '../api';
 import VoteModal from '../VoteModal';
-const PROJECT_FALLBACK_IMAGE = '/uploads/poster-khoi-nghiep.jpg';
+const PROJECT_FALLBACK_IMAGE = '/duan/anhmauduan.png';
 
 function getCandidateImageUrl(url?: string | null) {
   if (!url) return PROJECT_FALLBACK_IMAGE;
@@ -360,7 +360,7 @@ export default function RankingPage() {
   }, []);
 
   const isGateOpen = (() => {
-    if (!settings) return false;
+    if (!settings) return true;
     if (!settings.isGateOpen) return false;
     const now = new Date();
     return now >= new Date(settings.startDate) && now <= new Date(settings.endDate);
@@ -545,8 +545,9 @@ export default function RankingPage() {
               <div className={`ranking-control-panel w-full mt-4 sm:mt-6 px-4 ${titleSection.visible ? 'anim-up anim-d300' : ''}`}>
                 <div className="search-enhanced">
                   <span className="search-icon">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <circle cx="11" cy="11" r="7" />
+                      <line x1="20" y1="20" x2="16.65" y2="16.65" />
                     </svg>
                   </span>
                   <input

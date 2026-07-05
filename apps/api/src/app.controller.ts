@@ -377,6 +377,24 @@ export class AppController {
     return this.appService.deleteBanner(id);
   }
 
+  @Get('admin/stats/dashboard')
+  @UseGuards(AdminSessionGuard)
+  async getDashboardStats() {
+    return this.appService.getDashboardStats();
+  }
+
+  @Get('admin/votes')
+  @UseGuards(AdminSessionGuard)
+  async getVoteLogs() {
+    return this.appService.getAdminVoteLogs();
+  }
+
+  @Delete('admin/votes/:id')
+  @UseGuards(AdminSessionGuard)
+  async deleteVoteLog(@Param('id') id: string) {
+    return this.appService.deleteVoteLog(id);
+  }
+
   // --- SYSTEM SETTINGS ---
   @Get('settings')
   getSettings(): Partial<SystemSettings> {

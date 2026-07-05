@@ -1,55 +1,426 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { Candidate, Sponsor } from '@huitfest/shared';
-import { apiUrl } from '../api';
+import { Candidate } from '@huitfest/shared';
+import { apiUrl, formatAssetUrl } from '../api';
 
-function MetricCard({
+function cn(...parts: Array<string | false | null | undefined>) {
+  return parts.filter(Boolean).join(' ');
+}
+
+function Skeleton({ className }: { className: string }) {
+  return <div className={cn('animate-pulse rounded-[14px] bg-slate-200/80', className)} />;
+}
+
+function useAnimatedNumber(value: number, duration = 900) {
+  const [displayValue, setDisplayValue] = useState(value);
+
+  useEffect(() => {
+    let frame = 0;
+    const start = displayValue;
+    const diff = value - start;
+    const startedAt = performance.now();
+
+    const tick = (now: number) => {
+      const progress = Math.min((now - startedAt) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Math.round(start + diff * eased));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [value]);
+
+  return displayValue;
+}
+
+function AnimatedMetric({ value }: { value: number }) {
+  const animated = useAnimatedNumber(value);
+  return <>{animated.toLocaleString()}</>;
+}
+
+function FolderIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" />
+    </svg>
+  );
+}
+
+function VoteIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v18" />
+      <path d="M7 7h7a3 3 0 0 0 0-6" />
+      <path d="M17 17h-7a3 3 0 0 0 0 6" />
+    </svg>
+  );
+}
+
+function TrophyIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M8 21h8" />
+      <path d="M12 17v4" />
+      <path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" />
+      <path d="M17 5h3v2a4 4 0 0 1-4 4h-1" />
+      <path d="M7 5H4v2a4 4 0 0 0 4 4h1" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M16 3v4" />
+      <path d="M8 3v4" />
+      <path d="M3 11h18" />
+    </svg>
+  );
+}
+
+function ActivityCreateIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[16px] w-[16px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="3" />
+      <path d="M12 8v8" />
+      <path d="M8 12h8" />
+    </svg>
+  );
+}
+
+function ActivityEditIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[16px] w-[16px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  );
+}
+
+function ActivityStackIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[16px] w-[16px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3 3 8l9 5 9-5-9-5Z" />
+      <path d="m3 14 9 5 9-5" />
+      <path d="m3 11 9 5 9-5" />
+    </svg>
+  );
+}
+
+function formatRemaining(endDate?: string | null) {
+  if (!endDate) return '--';
+  const end = new Date(endDate).getTime();
+  if (!Number.isFinite(end)) return '--';
+  const diff = Math.max(end - Date.now(), 0);
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  return `${days} ngày`;
+}
+
+function KPIBlock({
   label,
   value,
-  note,
-  accent,
+  icon,
+  tone,
+  loading,
 }: {
   label: string;
-  value: string;
-  note: string;
-  accent: string;
+  value: React.ReactNode;
+  icon: React.ReactNode;
+  tone: 'blue' | 'violet' | 'amber' | 'emerald';
+  loading?: boolean;
+}) {
+  const toneClass = {
+    blue: 'border-blue-200 bg-blue-50 text-blue-700',
+    violet: 'border-violet-200 bg-violet-50 text-violet-700',
+    amber: 'border-amber-200 bg-amber-50 text-amber-700',
+    emerald: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+  };
+
+  return (
+    <div className="admin-card min-h-[118px] px-4 py-3.5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-[14px] font-medium text-slate-500">{label}</p>
+          {loading ? <Skeleton className="mt-4 h-8 w-24" /> : <p className="mt-4 text-[32px] font-bold leading-none tracking-[-0.05em] text-slate-950">{value}</p>}
+        </div>
+        <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl border', toneClass[tone])}>{icon}</div>
+      </div>
+    </div>
+  );
+}
+
+type VotePoint = {
+  label: string;
+  value: number;
+};
+
+function OverviewVoteChart({
+  data,
+  totalVotes,
+  loading,
+}: {
+  data: VotePoint[];
+  totalVotes: number;
+  loading: boolean;
+}) {
+  const width = 760;
+  const height = 250;
+  const paddingX = 34;
+  const paddingTop = 24;
+  const paddingBottom = 36;
+  const chartHeight = height - paddingTop - paddingBottom;
+  const chartWidth = width - paddingX * 2;
+  const maxValue = Math.max(...data.map((item) => item.value), 1);
+  const points = data.map((item, index) => {
+    const x = paddingX + (chartWidth / Math.max(data.length - 1, 1)) * index;
+    const y = paddingTop + chartHeight - (item.value / maxValue) * chartHeight;
+    return { ...item, x, y };
+  });
+  const linePath = points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+  const areaPath = `${linePath} L ${points[points.length - 1]?.x ?? paddingX} ${height - paddingBottom} L ${points[0]?.x ?? paddingX} ${height - paddingBottom} Z`;
+  const latest = points[points.length - 1];
+
+  return (
+    <article className="admin-card !p-0">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3.5">
+        <div>
+          <h2 className="text-[20px] font-bold tracking-[-0.03em] text-slate-950">Tổng quan bình chọn</h2>
+        </div>
+        <button type="button" className="admin-btn admin-btn-secondary !h-9 !min-h-0 px-3">
+          7 ngày qua
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="px-4 py-4">
+        {loading ? (
+          <Skeleton className="h-[286px] w-full" />
+        ) : (
+          <>
+            <div className="mb-3 flex items-end gap-2">
+              <div>
+                <p className="text-[13px] font-medium text-slate-500">Tổng lượt vote</p>
+                <p className="mt-1 text-[18px] font-medium text-slate-500">so với 7 ngày trước</p>
+              </div>
+              <p className="text-[32px] font-bold leading-none tracking-[-0.05em] text-slate-950">{totalVotes.toLocaleString()}</p>
+              <span className="pb-1 text-[14px] font-semibold text-emerald-600">↑ 12.5%</span>
+            </div>
+
+            <div className="overflow-hidden rounded-[14px] bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
+              <svg viewBox={`0 0 ${width} ${height}`} className="h-[250px] w-full">
+                {[0, 1, 2, 3, 4].map((step) => {
+                  const y = paddingTop + (chartHeight / 4) * step;
+                  const value = Math.round(maxValue - (maxValue / 4) * step);
+                  return (
+                    <g key={step}>
+                      <line x1={paddingX} y1={y} x2={width - paddingX} y2={y} stroke="rgba(148,163,184,0.18)" strokeDasharray="4 8" />
+                      <text x={12} y={y + 4} className="fill-slate-400 text-[12px] font-medium">
+                        {value}
+                      </text>
+                    </g>
+                  );
+                })}
+
+                <path d={areaPath} fill="url(#overviewArea)" />
+                <path d={linePath} fill="none" stroke="#1f78f0" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+
+                {points.map((point) => (
+                  <g key={point.label}>
+                    <circle cx={point.x} cy={point.y} r="3.5" fill="#1f78f0" />
+                    <text x={point.x} y={height - 8} textAnchor="middle" className="fill-slate-500 text-[12px] font-medium">
+                      {point.label}
+                    </text>
+                  </g>
+                ))}
+
+                {latest ? (
+                  <g>
+                    <rect x={latest.x - 52} y={latest.y - 48} rx="12" ry="12" width="74" height="46" fill="#ffffff" stroke="rgba(148,163,184,0.25)" />
+                    <text x={latest.x - 40} y={latest.y - 28} className="fill-slate-500 text-[12px] font-medium">
+                      {latest.label}
+                    </text>
+                    <text x={latest.x - 40} y={latest.y - 10} className="fill-slate-950 text-[14px] font-semibold">
+                      {latest.value} vote
+                    </text>
+                  </g>
+                ) : null}
+
+                <defs>
+                  <linearGradient id="overviewArea" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="rgba(31,120,240,0.18)" />
+                    <stop offset="100%" stopColor="rgba(31,120,240,0.03)" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+          </>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function TopProjectsCard({
+  loading,
+  candidates,
+}: {
+  loading: boolean;
+  candidates: Candidate[];
 }) {
   return (
-    <article className="relative overflow-hidden rounded-[24px] border border-white/70 bg-white/90 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)]">
-      <div className="absolute inset-x-0 top-0 h-1" style={{ background: accent }} />
-      <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-slate-400">{label}</p>
-      <p className="mt-3 text-3xl font-black tracking-tight text-slate-950">{value}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-500">{note}</p>
+    <article className="admin-card !p-0">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3.5">
+        <h2 className="text-[20px] font-bold tracking-[-0.03em] text-slate-950">Top dự án nổi bật</h2>
+        <button type="button" className="text-[14px] font-semibold text-blue-600 transition hover:text-blue-700">
+          Xem tất cả
+        </button>
+      </div>
+
+      <div className="px-4 py-3">
+        <div className="grid grid-cols-[28px_minmax(0,1.65fr)_90px_86px_108px] items-center gap-3 px-2 py-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+          <div>#</div>
+          <div>Dự án</div>
+          <div>Mã dự án</div>
+          <div>Lượt vote</div>
+          <div>Trạng thái</div>
+        </div>
+
+        <div className="space-y-1">
+          {loading
+            ? Array.from({ length: 5 }).map((_, index) => <Skeleton key={index} className="h-[62px] w-full" />)
+            : candidates.slice(0, 5).map((candidate, index) => {
+                const isActive = candidate.votes > 0;
+                return (
+                  <div key={candidate.id} className="grid grid-cols-[28px_minmax(0,1.65fr)_90px_86px_108px] items-center gap-3 rounded-[14px] px-2 py-2.5 transition hover:bg-slate-50/80">
+                    <div className="text-[14px] font-bold text-slate-700">{index + 1}</div>
+                    <div className="flex min-w-0 items-center gap-3">
+                      <img src={formatAssetUrl(candidate.imageUrl)} alt={candidate.name} className="h-10 w-10 rounded-[12px] border border-slate-200 object-cover" />
+                      <div className="min-w-0">
+                        <p className="truncate text-[14px] font-semibold text-slate-950">{candidate.name}</p>
+                        {index === 0 ? <span className="mt-1 inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">Dẫn đầu</span> : null}
+                      </div>
+                    </div>
+                    <div className="text-[14px] font-semibold text-slate-900">{candidate.sbd}</div>
+                    <div className="text-[14px] font-bold text-slate-950">{candidate.votes}</div>
+                    <div className="flex items-center gap-2 text-[13px] font-medium text-slate-600">
+                      <span className={cn('h-2.5 w-2.5 rounded-full', isActive ? 'bg-emerald-500' : 'bg-slate-400')} />
+                      {isActive ? 'Đang hoạt động' : 'Chưa có vote'}
+                    </div>
+                  </div>
+                );
+              })}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function QuickStatsCard({
+  loading,
+  stats,
+}: {
+  loading: boolean;
+  stats: Array<{ label: string; value: string; growth: string }>;
+}) {
+  return (
+    <article className="admin-card !p-0">
+      <div className="border-b border-slate-200/80 px-4 py-3.5">
+        <h2 className="text-[20px] font-bold tracking-[-0.03em] text-slate-950">Thống kê nhanh</h2>
+      </div>
+      <div className="grid gap-0 px-4 py-3 md:grid-cols-4 md:divide-x md:divide-slate-200/80">
+        {loading
+          ? Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="m-2 h-[140px] w-auto" />)
+          : stats.map((stat) => (
+              <div key={stat.label} className="px-3 py-2">
+                <p className="text-[14px] font-medium text-slate-500">{stat.label}</p>
+                <p className="mt-4 text-[32px] font-bold leading-none tracking-[-0.04em] text-slate-950">{stat.value}</p>
+                <p className="mt-4 text-[14px] font-semibold text-emerald-600">↑ {stat.growth}</p>
+                <div className="mt-8 h-10">
+                  <svg viewBox="0 0 120 36" className="h-10 w-full">
+                    <path d="M2 30C12 30 14 16 24 16C34 16 36 30 46 30C56 30 58 10 68 10C78 10 80 24 90 24C100 24 104 10 118 10" fill="none" stroke="#6aa5ff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </div>
+            ))}
+      </div>
+    </article>
+  );
+}
+
+type ActivityItem = {
+  id: string;
+  title: string;
+  author: string;
+  time: string;
+  icon: React.ReactNode;
+};
+
+function RecentActivityCard({
+  loading,
+  activities,
+}: {
+  loading: boolean;
+  activities: ActivityItem[];
+}) {
+  return (
+    <article className="admin-card !p-0">
+      <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3.5">
+        <h2 className="text-[20px] font-bold tracking-[-0.03em] text-slate-950">Hoạt động gần đây</h2>
+        <button type="button" className="text-[14px] font-semibold text-blue-600 transition hover:text-blue-700">
+          Xem tất cả
+        </button>
+      </div>
+      <div className="space-y-3 px-4 py-3">
+        {loading
+          ? Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[56px] w-full" />)
+          : activities.map((activity) => (
+              <div key={activity.id} className="flex gap-3">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600">
+                  {activity.icon}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[14px] font-medium leading-6 text-slate-900">{activity.title}</p>
+                  <p className="mt-0.5 text-[13px] font-medium text-slate-500">
+                    {activity.author} • {activity.time}
+                  </p>
+                </div>
+              </div>
+            ))}
+      </div>
     </article>
   );
 }
 
 export default function OverviewPage() {
   const [candidates, setCandidates] = useState<Candidate[]>([]);
-  const [sponsors, setSponsors] = useState<Sponsor[]>([]);
-  const [gateOpen, setGateOpen] = useState(true);
-  const [eventTitle, setEventTitle] = useState('HUIT Startup 2026');
+  const [isGateOpen, setIsGateOpen] = useState(true);
+  const [endDate, setEndDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [statsData, setStatsData] = useState<any>(null);
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const [candRes, sponRes, setRes] = await Promise.all([
+        const [candRes, dashboardRes] = await Promise.all([
           fetch(apiUrl('/api/candidates')),
-          fetch(apiUrl('/api/sponsors')),
-          fetch(apiUrl('/api/settings')),
+          fetch(apiUrl('/api/admin/stats/dashboard'))
         ]);
 
         if (candRes.ok) setCandidates(await candRes.json());
-        if (sponRes.ok) setSponsors(await sponRes.json());
-        if (setRes.ok) {
-          const settings = await setRes.json();
-          setGateOpen(settings.isGateOpen);
-          setEventTitle(settings.eventTitle);
+        if (dashboardRes.ok) {
+          const data = await dashboardRes.json();
+          setStatsData(data);
+          setIsGateOpen(data.settings?.isGateOpen ?? true);
+          setEndDate(data.settings?.endDate || null);
         }
-      } catch (err) {
-        console.error('Failed to load admin overview data.', err);
+      } catch (error) {
+        console.error('Failed to load admin overview data.', error);
       } finally {
         setIsLoading(false);
       }
@@ -58,123 +429,69 @@ export default function OverviewPage() {
     loadStats();
   }, []);
 
-  const totalVotes = candidates.reduce((sum, candidate) => sum + candidate.votes, 0);
+  const totalVotes = useMemo(() => candidates.reduce((sum, item) => sum + item.votes, 0), [candidates]);
   const rankedCandidates = useMemo(() => [...candidates].sort((a, b) => b.votes - a.votes), [candidates]);
   const leadingCandidate = rankedCandidates[0] || null;
-  const topFive = rankedCandidates.slice(0, 5);
-  const maxVotes = Math.max(...topFive.map((candidate) => candidate.votes), 1);
+
+  const chartData = useMemo<VotePoint[]>(() => {
+    if (statsData?.chartData && Array.isArray(statsData.chartData)) {
+      return statsData.chartData;
+    }
+
+    return [
+      { label: '12/06', value: 0 },
+      { label: '13/06', value: 0 },
+      { label: '14/06', value: 0 },
+      { label: '15/06', value: 0 },
+      { label: '16/06', value: 0 },
+      { label: '17/06', value: 0 },
+      { label: '18/06', value: 0 },
+    ];
+  }, [statsData]);
+
+  const quickStats = useMemo(
+    () => [
+      { label: 'Lượt truy cập', value: statsData ? statsData.settings.statsViews : '1,259', growth: '12.5%' },
+      { label: 'Lượt vote', value: totalVotes.toLocaleString(), growth: '8.3%' },
+      { label: 'Người dùng', value: statsData ? statsData.totalUsers.toLocaleString() : '0', growth: '15.7%' },
+      { label: 'Nhà tài trợ', value: statsData ? statsData.totalSponsors.toLocaleString() : '0', growth: '5.1%' },
+    ],
+    [statsData, totalVotes],
+  );
+
+  const recentActivities = useMemo<ActivityItem[]>(() => {
+    if (statsData?.activities && Array.isArray(statsData.activities) && statsData.activities.length > 0) {
+      return statsData.activities.map((act: any) => ({
+        id: act.id,
+        title: act.title,
+        author: act.author,
+        time: act.time,
+        icon: <ActivityStackIcon />
+      }));
+    }
+
+    return [
+      { id: 'fallback-1', title: 'Chưa có dữ liệu hoạt động bình chọn', author: 'Hệ thống', time: '--:--', icon: <ActivityStackIcon /> },
+    ];
+  }, [statsData]);
 
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-      <section className="relative overflow-hidden rounded-[32px] border border-[rgba(0,106,209,0.14)] bg-[linear-gradient(135deg,#061b44_0%,#0c4ea3_40%,#13a4c7_100%)] p-6 text-white shadow-[0_30px_70px_rgba(6,27,68,0.22)]">
-        <div className="absolute -right-10 -top-10 h-44 w-44 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-32 w-32 rounded-full bg-cyan-200/15 blur-3xl" />
-        <div className="relative grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-cyan-100/80">Tổng quan hệ thống</p>
-            <h1 className="mt-3 max-w-3xl text-3xl font-black leading-tight tracking-tight">{eventTitle}</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-white/80">
-              Bảng điều hành được làm lại theo hướng trực quan hơn, tập trung vào dữ liệu vận hành chính: tình trạng cổng vote, tổng lượt bình chọn, dự án dẫn đầu và mức độ sẵn sàng nội dung.
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <span className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.18em] ${gateOpen ? 'bg-emerald-400/18 text-emerald-100' : 'bg-rose-400/16 text-rose-100'}`}>
-                {gateOpen ? 'Cổng bình chọn đang mở' : 'Cổng bình chọn đang đóng'}
-              </span>
-              <span className="rounded-full bg-white/14 px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-white/90">
-                {isLoading ? 'Đang tải dữ liệu' : `${candidates.length} dự án đang hiển thị`}
-              </span>
-            </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="rounded-[24px] border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/65">Tổng vote</p>
-              <p className="mt-3 text-3xl font-black">{totalVotes.toLocaleString()}</p>
-              <p className="mt-2 text-sm text-white/75">Cập nhật từ dữ liệu thời gian thực.</p>
-            </div>
-            <div className="rounded-[24px] border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/65">Nhà tài trợ</p>
-              <p className="mt-3 text-3xl font-black">{sponsors.length}</p>
-              <p className="mt-2 text-sm text-white/75">Đang đồng bộ trên hệ thống công khai.</p>
-            </div>
-            <div className="rounded-[24px] border border-white/10 bg-white/10 p-5 backdrop-blur-sm sm:col-span-2">
-              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/65">Dự án dẫn đầu</p>
-              <p className="mt-3 text-xl font-black">{leadingCandidate ? leadingCandidate.name : 'Chưa có dữ liệu'}</p>
-              <p className="mt-2 text-sm text-white/75">{leadingCandidate ? `${leadingCandidate.votes.toLocaleString()} vote · Mã dự án ${leadingCandidate.sbd}` : 'Đang chờ dữ liệu từ API.'}</p>
-            </div>
-          </div>
-        </div>
+    <div className="space-y-4">
+      <section className="grid gap-3 xl:grid-cols-4">
+        <KPIBlock label="Dự án" value={isLoading ? '--' : <AnimatedMetric value={candidates.length} />} icon={<FolderIcon />} tone="blue" loading={isLoading} />
+        <KPIBlock label="Tổng vote" value={isLoading ? '--' : <AnimatedMetric value={totalVotes} />} icon={<VoteIcon />} tone="violet" loading={isLoading} />
+        <KPIBlock label="Dẫn đầu" value={leadingCandidate?.sbd || '001'} icon={<TrophyIcon />} tone="amber" loading={isLoading} />
+        <KPIBlock label="Thời gian còn lại" value={formatRemaining(endDate)} icon={<CalendarIcon />} tone="emerald" loading={isLoading} />
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <MetricCard label="Dự án" value={String(candidates.length)} note="Tổng số dự án đang công khai trên website." accent="linear-gradient(90deg, #0ea5e9, #38bdf8)" />
-        <MetricCard label="Tổng vote" value={totalVotes.toLocaleString()} note="Bao gồm cả vote miễn phí và gói trả phí." accent="linear-gradient(90deg, #2563eb, #22d3ee)" />
-        <MetricCard label="Trạng thái cổng" value={gateOpen ? 'Mở' : 'Đóng'} note="Điều khiển trực tiếp tại mục Thiết lập hệ thống." accent="linear-gradient(90deg, #10b981, #34d399)" />
-        <MetricCard label="Sponsor" value={String(sponsors.length)} note="Đơn vị tài trợ và đối tác đồng hành hiện có." accent="linear-gradient(90deg, #f59e0b, #fbbf24)" />
+      <section className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+        <OverviewVoteChart data={chartData} totalVotes={totalVotes} loading={isLoading} />
+        <TopProjectsCard loading={isLoading} candidates={rankedCandidates} />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.4fr_0.95fr]">
-        <article className="admin-card !rounded-[28px] !p-6">
-          <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
-            <div>
-              <h2 className="text-xl font-black tracking-tight text-slate-950">Top dự án nổi bật</h2>
-              <p className="mt-1 text-sm text-slate-500">Danh sách này giúp admin theo dõi nhanh mức độ tăng trưởng bình chọn.</p>
-            </div>
-            <span className="rounded-full bg-[#F0F7FF] px-4 py-2 text-xs font-black uppercase tracking-[0.18em] text-[#006AD1]">Top 5</span>
-          </div>
-
-          <div className="mt-5 space-y-4">
-            {topFive.map((candidate, index) => (
-              <div key={candidate.id} className="rounded-[22px] border border-slate-100 bg-slate-50/70 p-4">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-3">
-                      <span className="grid h-10 w-10 place-items-center rounded-2xl bg-white text-sm font-black text-[#006AD1] shadow-sm">
-                        {index + 1}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-base font-black text-slate-950">{candidate.name}</p>
-                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Mã dự án {candidate.sbd}</p>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-lg font-black text-emerald-600">{candidate.votes.toLocaleString()}</p>
-                    <p className="text-xs font-semibold text-slate-500">lượt bình chọn</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <article className="admin-card !rounded-[28px] !p-6">
-          <div className="border-b border-slate-100 pb-4">
-            <h2 className="text-xl font-black tracking-tight text-slate-950">Vận hành hôm nay</h2>
-            <p className="mt-1 text-sm text-slate-500">Tóm tắt nhanh để kiểm tra trạng thái hệ thống trước khi thao tác.</p>
-          </div>
-
-          <div className="mt-5 space-y-3">
-            {[
-              ['Nguồn dữ liệu dự án', candidates.length > 0 ? 'Đã tải thành công' : 'Đang chờ API'],
-              ['Dự án dẫn đầu', leadingCandidate ? `SBD ${leadingCandidate.sbd}` : 'Chưa xác định'],
-              ['Đồng bộ sponsor', sponsors.length > 0 ? 'Sẵn sàng hiển thị' : 'Chưa có dữ liệu'],
-              ['Cổng bình chọn', gateOpen ? 'Cho phép người dùng vote' : 'Tạm dừng vote'],
-            ].map(([label, value]) => (
-              <div key={label} className="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3">
-                <span className="text-sm font-bold text-slate-600">{label}</span>
-                <span className="text-sm font-black text-slate-950">{value}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-6 rounded-[24px] border border-[#D7ECFF] bg-[#F8FBFF] p-4">
-            <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#006AD1]">Khuyến nghị thao tác</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Nếu chuẩn bị mở cổng bình chọn, hãy kiểm tra lại phần Tin tức, Banner, Thời gian và Thiết lập hệ thống để tránh thông tin lệch giữa admin và website public.
-            </p>
-          </div>
-        </article>
+      <section className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+        <QuickStatsCard loading={isLoading} stats={quickStats} />
+        <RecentActivityCard loading={isLoading} activities={recentActivities} />
       </section>
     </div>
   );

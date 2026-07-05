@@ -1,0 +1,277 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
+import { apiUrl } from '../../api';
+
+interface VoteLog {
+  id: string;
+  voterPhone: string;
+  voterName: string;
+  voterEmail: string;
+  candidateSbd: string;
+  candidateName: string;
+  voteTime: string;
+}
+
+function formatDate(value?: string) {
+  if (!value) return 'Chưa rõ';
+  return new Intl.DateTimeFormat('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(new Date(value));
+}
+
+function escapeCSVValue(val: any): string {
+  if (val === null || val === undefined) return '';
+  let str = String(val);
+  if (str.includes(',') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
+    str = str.replace(/"/g, '""');
+    return `"${str}"`;
+  }
+  return str;
+}
+
+export default function VoteLogsAdminPage() {
+  const [logs, setLogs] = useState<VoteLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [candidateFilter, setCandidateFilter] = useState('ALL');
+
+  const loadLogs = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(apiUrl('/api/admin/votes'));
+      if (res.ok) {
+        setLogs(await res.json());
+      }
+    } catch (err) {
+      console.error('Lỗi tải danh sách bình chọn:', err);
+      setLogs([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLogs();
+  }, []);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('CẢNH BÁO: Xóa bản ghi bình chọn này sẽ tự động giảm trừ 1 điểm của ứng viên tương ứng. Bạn có chắc chắn muốn xóa không?')) {
+      return;
+    }
+    try {
+      const res = await fetch(apiUrl(`/api/admin/votes/${id}`), {
+        method: 'DELETE',
+      });
+      if (res.ok) {
+        alert('Xóa lượt bình chọn thành công và đã hoàn lại điểm ứng viên!');
+        loadLogs();
+      } else {
+        const errorData = await res.json();
+        alert(errorData.message || 'Xóa lượt bình chọn thất bại.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Đã xảy ra lỗi kết nối đến server.');
+    }
+  };
+
+  const handleExportCSV = () => {
+    const headers = [
+      'ID Lượt Vote',
+      'Số ĐT/ID Người vote',
+      'Tên cử tri',
+      'Email cử tri',
+      'SBD ứng viên',
+      'Tên ứng viên được vote',
+      'Thời gian bình chọn'
+    ];
+
+    const csvRows = [headers.join(',')];
+
+    for (const log of filteredLogs) {
+      const row = [
+        escapeCSVValue(log.id),
+        escapeCSVValue(log.voterPhone),
+        escapeCSVValue(log.voterName),
+        escapeCSVValue(log.voterEmail),
+        escapeCSVValue(log.candidateSbd),
+        escapeCSVValue(log.candidateName),
+        escapeCSVValue(formatDate(log.voteTime))
+      ];
+      csvRows.push(row.join(','));
+    }
+
+    const csvContent = '\uFEFF' + csvRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `vote_logs_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredLogs = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    return logs
+      .filter((log) => candidateFilter === 'ALL' || log.candidateSbd === candidateFilter)
+      .filter((log) =>
+        !keyword ||
+        log.voterPhone.toLowerCase().includes(keyword) ||
+        log.voterName.toLowerCase().includes(keyword) ||
+        log.voterEmail.toLowerCase().includes(keyword) ||
+        log.candidateName.toLowerCase().includes(keyword) ||
+        log.candidateSbd.toLowerCase().includes(keyword)
+      );
+  }, [candidateFilter, search, logs]);
+
+  const uniqueCandidates = useMemo(() => {
+    const seen = new Set<string>();
+    const list: { sbd: string; name: string }[] = [];
+    for (const log of logs) {
+      if (log.candidateSbd && !seen.has(log.candidateSbd)) {
+        seen.add(log.candidateSbd);
+        list.push({ sbd: log.candidateSbd, name: log.candidateName });
+      }
+    }
+    return list.sort((a, b) => a.sbd.localeCompare(b.sbd));
+  }, [logs]);
+
+  return (
+    <div className="space-y-4">
+      {/* Header section */}
+      <section className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Nhật ký cử tri</p>
+          <h2 className="mt-0.5 text-lg font-black text-[#123c34]">Lịch sử bình chọn chi tiết</h2>
+          <p className="text-xs text-[#6b7773] mt-0.5">Theo dõi thời gian, thông tin cử tri và mã dự án nhận bình chọn. Dữ liệu thời gian thực từ cơ sở dữ liệu.</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleExportCSV}
+            disabled={filteredLogs.length === 0}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow transition hover:border-[#0f766e] hover:text-[#0f766e] active:scale-[0.98] disabled:opacity-50 shrink-0"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Xuất file CSV
+          </button>
+        </div>
+      </section>
+
+      {/* KPI block */}
+      <section className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        {[
+          ['Tổng số phiếu bầu', logs.length.toLocaleString()],
+          ['Kết quả bộ lọc', filteredLogs.length.toLocaleString()],
+          ['Số dự án nhận vote', uniqueCandidates.length.toLocaleString()],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#7a8b85]">{label}</p>
+            <p className="mt-1 text-2xl font-black text-[#123c34]">{value}</p>
+          </div>
+        ))}
+      </section>
+
+      {/* Filter card */}
+      <section className="rounded-xl border border-[#dce5e1] bg-white shadow-sm">
+        <div className="grid gap-3 border-b border-[#edf2f0] p-4 md:grid-cols-[1fr_260px]">
+          <input
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder="Tìm theo số điện thoại, tên, email cử tri hoặc tên dự án..."
+            className="h-10 rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-semibold text-[#18211f] outline-none focus:border-[#0f766e] focus:bg-white"
+          />
+          <select
+            value={candidateFilter}
+            onChange={(event) => setCandidateFilter(event.target.value)}
+            className="h-10 rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-bold text-[#52605b] outline-none focus:border-[#0f766e]"
+          >
+            <option value="ALL">Tất cả dự án</option>
+            {uniqueCandidates.map((c) => (
+              <option key={c.sbd} value={c.sbd}>
+                SBD {c.sbd} - {c.name.slice(0, 24)}...
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Bảng dữ liệu */}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[950px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-[#edf2f0] bg-[#fbfdfc] text-[10px] font-black uppercase tracking-[0.12em] text-[#7a8b85]">
+                <th className="px-5 py-3 w-1/3">Cử tri (Người bình chọn)</th>
+                <th className="px-5 py-3">Dự án được bình chọn</th>
+                <th className="px-5 py-3">Thời gian</th>
+                <th className="px-5 py-3 text-center w-24">Hành động</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#edf2f0] text-xs">
+              {filteredLogs.map((log) => (
+                <tr key={log.id} className="hover:bg-[#edf4f1]/25 transition-colors">
+                  <td className="px-5 py-3">
+                    <div>
+                      <p className="font-black text-[#123c34]">{log.voterName}</p>
+                      <p className="mt-0.5 text-[11px] text-[#6b7773]">
+                        SĐT/ID: <span className="font-mono font-bold text-slate-700">{log.voterPhone}</span>
+                        {log.voterEmail && <span className="ml-2 font-semibold">| Email: {log.voterEmail}</span>}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3">
+                    <div>
+                      <p className="font-black text-[#123c34]">
+                        <span className="mr-1.5 inline-block rounded bg-[#edf8f4] px-1.5 py-0.5 text-[10px] font-bold text-[#0f766e] border border-[#b9d8cf]">
+                          SBD {log.candidateSbd}
+                        </span>
+                        {log.candidateName}
+                      </p>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 font-semibold text-[#52605b]">
+                    {formatDate(log.voteTime)}
+                  </td>
+                  <td className="px-5 py-3 text-center">
+                    <div className="flex justify-center">
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(log.id)}
+                        className="grid h-7 w-7 place-items-center rounded-md border border-red-200 bg-red-50 text-red-600 hover:border-red-400 hover:bg-red-100 transition"
+                        title="Hủy lượt bình chọn này"
+                      >
+                        <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M3 6h18" />
+                          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        </svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filteredLogs.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-5 py-10 text-center text-sm font-semibold text-[#7a8b85]">
+                    {loading ? 'Đang tải lịch sử bình chọn...' : 'Chưa có lượt bình chọn nào phù hợp.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  );
+}

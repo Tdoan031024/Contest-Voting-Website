@@ -218,7 +218,7 @@ export default function TimelineAdminPage() {
       </section>
 
       <section className="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px]">
-        <div className="admin-card !rounded-[24px]">
+        <div className="admin-card !rounded-[24px] p-5">
           <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Tìm kiếm mốc thời gian</label>
           <input
             type="text"
@@ -228,7 +228,7 @@ export default function TimelineAdminPage() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <div className="admin-card !rounded-[24px]">
+        <div className="admin-card !rounded-[24px] p-5">
           <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">Kết quả hiển thị</p>
           <p className="mt-2 text-3xl font-black text-slate-950">{filteredEvents.length}</p>
           <p className="mt-2 text-xs text-slate-500">Mỗi mốc hiển thị dưới dạng thẻ, không cần bảng kéo ngang.</p>

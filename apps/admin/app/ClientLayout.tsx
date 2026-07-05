@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const dashboardIcon = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="3" width="7" height="9" rx="1.5" />
     <rect x="14" y="3" width="7" height="5" rx="1.5" />
     <rect x="14" y="12" width="7" height="9" rx="1.5" />
@@ -14,7 +14,7 @@ const dashboardIcon = (
 );
 
 const candidatesIcon = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
     <circle cx="9.5" cy="7" r="4" />
     <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
@@ -23,7 +23,7 @@ const candidatesIcon = (
 );
 
 const usersIcon = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
     <circle cx="9" cy="7" r="4" />
     <path d="M22 11h-6" />
@@ -32,66 +32,57 @@ const usersIcon = (
 );
 
 const sponsorsIcon = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 3 3 8l9 5 9-5-9-5Z" />
     <path d="m3 14 9 5 9-5" />
     <path d="m3 11 9 5 9-5" />
   </svg>
 );
 
+const newsIcon = (
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20" />
+    <path d="M4 4h16v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4Z" />
+    <path d="M8 8h8" />
+    <path d="M8 12h8" />
+  </svg>
+);
+
+const votesIcon = (
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 11l3 3L22 4" />
+    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+  </svg>
+);
+
 const bannerIcon = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <rect x="3" y="5" width="18" height="14" rx="2" />
     <circle cx="8" cy="10" r="1.5" />
     <path d="m21 15-5-5L5 19" />
   </svg>
 );
 
+const introIcon = (
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+    <polyline points="14 2 14 8 20 8" />
+    <line x1="16" y1="13" x2="8" y2="13" />
+    <line x1="16" y1="17" x2="8" y2="17" />
+  </svg>
+);
+
 const timelineIcon = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 8v5l3 2" />
     <circle cx="12" cy="12" r="9" />
   </svg>
 );
 
 const settingsIcon = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
     <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
-  </svg>
-);
-
-const introIcon = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-    <polyline points="14 2 14 8 20 8" />
-    <line x1="16" y1="13" x2="8" y2="13" />
-    <line x1="16" y1="17" x2="8" y2="17" />
-    <polyline points="10 9 9 9 8 9" />
-  </svg>
-);
-
-const guidesIcon = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-  </svg>
-);
-
-const toggleSidebarIcon = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect width="18" height="18" x="3" y="3" rx="2" />
-    <path d="M9 3v18" />
-  </svg>
-);
-
-const newsIcon = (
-  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-    <path d="M16 8h2" />
-    <path d="M16 12h2" />
-    <path d="M16 16h2" />
-    <path d="M6 8h6v8H6z" />
   </svg>
 );
 
@@ -101,24 +92,19 @@ const navGroups = [
     items: [
       { href: '/', label: 'Tổng quan', icon: dashboardIcon },
       { href: '/candidates', label: 'Dự án', icon: candidatesIcon },
-      { href: '/users', label: 'Quản lý người dùng', icon: usersIcon },
+      { href: '/votes', label: 'Lịch sử vote', icon: votesIcon },
+      { href: '/users', label: 'Người dùng', icon: usersIcon },
       { href: '/sponsors', label: 'Nhà tài trợ', icon: sponsorsIcon },
-      { href: '/news', label: 'Tin tức & Thông báo', icon: newsIcon },
+      { href: '/news', label: 'Tin tức', icon: newsIcon },
     ],
   },
   {
-    title: 'Quản lý giao diện',
+    title: 'Nội dung',
     items: [
-      { href: '/banners', label: 'Banner quảng cáo', icon: bannerIcon },
+      { href: '/banners', label: 'Banner', icon: bannerIcon },
       { href: '/introduction', label: 'Thông tin cuộc thi', icon: introIcon },
-      { href: '/timeline', label: 'Thời gian cuộc thi', icon: timelineIcon },
-      { href: '/guides', label: 'Thông tin Hướng dẫn', icon: guidesIcon },
-    ],
-  },
-  {
-    title: 'Cài đặt',
-    items: [
-      { href: '/settings', label: 'Cấu hình hệ thống', icon: settingsIcon },
+      { href: '/timeline', label: 'Mốc thời gian', icon: timelineIcon },
+      { href: '/settings', label: 'Cài đặt', icon: settingsIcon },
     ],
   },
 ];
@@ -126,21 +112,56 @@ const navGroups = [
 const navItems = navGroups.flatMap((group) => group.items);
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
+const pageMeta: Record<string, { title: string; description: string }> = {
+  '/': { title: 'Tổng quan', description: 'Theo dõi trạng thái nền tảng và dữ liệu vận hành.' },
+  '/candidates': { title: 'Dự án', description: 'Quản lý danh sách dự án, điểm bình chọn và hồ sơ hiển thị.' },
+  '/votes': { title: 'Lịch sử bình chọn', description: 'Theo dõi nhật ký phiếu bầu chi tiết và xuất dữ liệu đối soát.' },
+  '/users': { title: 'Người dùng', description: 'Kiểm soát tài khoản và phân quyền truy cập hệ thống.' },
+  '/sponsors': { title: 'Nhà tài trợ', description: 'Cập nhật đối tác đồng hành và tài nguyên thương hiệu.' },
+  '/news': { title: 'Tin tức', description: 'Quản trị nội dung cập nhật và thông báo quan trọng.' },
+  '/banners': { title: 'Banner', description: 'Điều chỉnh hình ảnh chiến dịch và điểm chạm chính.' },
+  '/introduction': { title: 'Thông tin cuộc thi', description: 'Quản lý phần giới thiệu và nội dung landing page.' },
+  '/timeline': { title: 'Mốc thời gian', description: 'Cập nhật lịch trình và trạng thái các vòng thi.' },
+  '/settings': { title: 'Cài đặt', description: 'Thiết lập hệ thống, promotion và trạng thái hoạt động.' },
+};
+
+function getPageMeta(pathname: string) {
+  const matched = Object.keys(pageMeta)
+    .filter((key) => (key === '/' ? pathname === '/' : pathname.startsWith(key)))
+    .sort((a, b) => b.length - a.length)[0];
+  return pageMeta[matched || '/'];
+}
+
+function BellButton() {
+  return (
+    <button
+      type="button"
+      className="relative grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[var(--primary)] hover:text-[var(--primary-strong)]"
+      aria-label="Thông báo"
+    >
+      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
+        <path d="M10 21a2 2 0 0 0 4 0" />
+      </svg>
+      <span className="absolute right-1.5 top-1.5 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+        3
+      </span>
+    </button>
+  );
+}
+
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [sidebarWidth, setSidebarWidth] = React.useState(280);
+  const currentMeta = getPageMeta(pathname);
+  const [sidebarWidth, setSidebarWidth] = React.useState(238);
   const [isResizing, setIsResizing] = React.useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
 
   React.useEffect(() => {
     const savedWidth = localStorage.getItem('admin_sidebar_width');
-    if (savedWidth) {
-      setSidebarWidth(parseInt(savedWidth, 10));
-    }
+    if (savedWidth) setSidebarWidth(parseInt(savedWidth, 10));
     const savedCollapsed = localStorage.getItem('admin_sidebar_collapsed');
-    if (savedCollapsed) {
-      setIsSidebarCollapsed(savedCollapsed === 'true');
-    }
+    if (savedCollapsed) setIsSidebarCollapsed(savedCollapsed === 'true');
   }, []);
 
   const toggleSidebar = () => {
@@ -151,9 +172,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
 
   const handleLogout = async () => {
     try {
-      // Xóa cookie xác thực
-      document.cookie = "HUIT_AUTH_V1=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      // Có thể gọi thêm API logout nếu cần
+      document.cookie = 'HUIT_AUTH_V1=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       await fetch('/admin/api/admin/logout', { method: 'POST' }).catch(() => null);
     } catch (error) {
       console.error(error);
@@ -162,16 +181,13 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     }
   };
 
-  // Helper function to check if active
   const isActive = (href: string) => {
-    if (href === '/') {
-      return pathname === '/';
-    }
+    if (href === '/') return pathname === '/';
     return pathname.startsWith(href);
   };
 
-  const startResizing = React.useCallback((mouseDownEvent: React.MouseEvent) => {
-    mouseDownEvent.preventDefault();
+  const startResizing = React.useCallback((event: React.MouseEvent) => {
+    event.preventDefault();
     setIsResizing(true);
   }, []);
 
@@ -179,31 +195,26 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     setIsResizing(false);
   }, []);
 
-  const resize = React.useCallback((mouseMoveEvent: MouseEvent) => {
-    if (isResizing) {
-      let newWidth = mouseMoveEvent.clientX;
-      if (newWidth < 140) {
-        newWidth = 80;
+  const resize = React.useCallback(
+    (event: MouseEvent) => {
+      if (!isResizing) return;
+      let newWidth = event.clientX;
+      if (newWidth < 148) {
+        newWidth = 88;
       } else {
-        if (newWidth < 200) {
-          newWidth = 200;
-        }
-        if (newWidth > 450) {
-          newWidth = 450;
-        }
+        if (newWidth < 204) newWidth = 204;
+        if (newWidth > 296) newWidth = 296;
       }
       setSidebarWidth(newWidth);
       localStorage.setItem('admin_sidebar_width', newWidth.toString());
-    }
-  }, [isResizing]);
+    },
+    [isResizing],
+  );
 
   React.useEffect(() => {
     if (isResizing) {
       window.addEventListener('mousemove', resize);
       window.addEventListener('mouseup', stopResizing);
-    } else {
-      window.removeEventListener('mousemove', resize);
-      window.removeEventListener('mouseup', stopResizing);
     }
     return () => {
       window.removeEventListener('mousemove', resize);
@@ -214,194 +225,152 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const isCollapsed = isSidebarCollapsed || sidebarWidth <= 120;
 
   return (
-    <div className={`flex h-screen w-screen overflow-hidden bg-[#f5f7fa] ${isResizing ? 'select-none cursor-col-resize' : ''}`}>
-      {/* Sidebar - macOS Styled */}
-      <aside 
-        style={{ width: isCollapsed ? '80px' : `${sidebarWidth}px` }}
-        className={`relative hidden h-screen shrink-0 border-r border-slate-200/60 bg-white/80 backdrop-blur-xl lg:flex lg:flex-col shadow-[1px_0_0_rgba(0,0,0,0.01)] overflow-hidden ${
-          isResizing ? '' : 'transition-[width] duration-300 ease-in-out'
-        }`}
+    <div className={`flex h-screen w-screen overflow-hidden bg-transparent ${isResizing ? 'select-none cursor-col-resize' : ''}`}>
+      <aside
+        style={{ width: isCollapsed ? '88px' : `${sidebarWidth}px` }}
+        className={`admin-shell-surface relative hidden h-screen shrink-0 overflow-hidden border-r border-white/70 lg:flex lg:flex-col ${isResizing ? '' : 'transition-[width] duration-300 ease-out'}`}
       >
-        
-        {/* Brand header */}
-        <div className={`shrink-0 border-b border-slate-100/60 transition-all duration-200 flex items-center justify-between ${
-          isCollapsed ? 'px-2 py-4 flex-col gap-3 justify-center' : 'px-6 py-5'
-        }`}>
-          <Link href="/" className={`flex items-center gap-3 select-none active:scale-[0.98] transition-transform duration-200 ${
-            isCollapsed ? 'justify-center' : ''
-          }`}>
-            <div className="h-10 w-10 overflow-hidden rounded-xl bg-white shadow-sm border border-slate-100 flex items-center justify-center shrink-0">
-              <img src="/admin/uploads/logo-startup.png" alt="Logo" className="h-full w-full object-contain p-1" />
-            </div>
-            {!isCollapsed && (
-              <span className="transition-opacity duration-200 animate-in fade-in">
-                <span className="block text-[14px] font-bold text-slate-800 tracking-wide font-heading leading-tight whitespace-nowrap">HUIT STARTUP</span>
-                <span className="block text-[10px] font-semibold text-slate-400 mt-0.5 leading-none whitespace-nowrap">Hệ thống quản trị</span>
-              </span>
-            )}
-          </Link>
-          
-          <button
-            onClick={toggleSidebar}
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200/60 bg-white text-slate-500 shadow-sm transition hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-[var(--primary-soft)] active:scale-[0.95] shrink-0"
-            title={isCollapsed ? "Mở rộng sidebar" : "Thu gọn sidebar"}
-          >
-            {isCollapsed ? (
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
+        <div className={`border-b border-slate-200/60 ${isCollapsed ? 'px-3 py-4' : 'px-4 py-4'}`}>
+          <div className={`flex items-center ${isCollapsed ? 'flex-col gap-3' : 'justify-between gap-3'}`}>
+            <Link href="/" className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3'}`}>
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] border border-slate-200 bg-white shadow-sm">
+                <img src="/admin/uploads/logo-startup.png" alt="HUIT Startup" className="h-full w-full object-contain p-1.5" />
+              </div>
+              {!isCollapsed && (
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-extrabold text-slate-900">HUIT STARTUP</p>
+                  <p className="mt-0.5 truncate text-[11px] font-medium text-slate-500">Dashboard quản trị</p>
+                </div>
+              )}
+            </Link>
+
+            <button
+              onClick={toggleSidebar}
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-[10px] border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
+              title={isCollapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+              aria-label={isCollapsed ? 'Mở rộng sidebar' : 'Thu gọn sidebar'}
+            >
+              <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                {isCollapsed ? <polyline points="9 18 15 12 9 6" /> : <polyline points="15 18 9 12 15 6" />}
               </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            )}
-          </button>
+            </button>
+          </div>
         </div>
 
-        {/* Navigation list */}
-        <nav className={`min-h-0 flex-1 space-y-6 overflow-y-auto py-5 select-none transition-all duration-200 ${isCollapsed ? 'px-2' : 'px-4'}`}>
+        <nav className={`min-h-0 flex-1 space-y-4 overflow-y-auto px-2 pb-3 pt-3 ${isCollapsed ? 'px-2' : 'px-4'}`}>
           {navGroups.map((group) => (
-            <div key={group.title} className="space-y-1.5">
-              {!isCollapsed && (
-                <p className="px-4 text-[11px] font-bold uppercase tracking-wider text-slate-400 font-heading pb-1 truncate animate-in fade-in">
-                  {group.title}
-                </p>
-              )}
-              <div className="space-y-0.5">
+            <section key={group.title} className="space-y-2">
+              {!isCollapsed && <p className="px-3 text-[11px] font-black uppercase tracking-[0.14em] text-slate-400">{group.title}</p>}
+              <div className="space-y-1">
                 {group.items.map((item) => {
                   const active = isActive(item.href);
                   return (
                     <Link
                       key={item.href}
                       href={item.href}
-                      className={`group flex items-center rounded-xl transition-all duration-200 ${
-                        isCollapsed ? 'justify-center p-3 mx-1' : 'gap-3 px-4 py-2 mx-2'
-                      } text-[13px] md:text-sm ${
-                        active
-                           ? 'bg-[var(--primary-soft)] text-[var(--primary)] font-bold border border-[var(--primary)]/5 shadow-sm'
-                           : 'text-slate-600 font-semibold hover:bg-slate-50 hover:text-[var(--primary)]'
-                       }`}
                       title={isCollapsed ? item.label : undefined}
+                      className={`group flex items-center rounded-[12px] border transition-all duration-200 ${isCollapsed ? 'justify-center px-2 py-2.5' : 'gap-3 px-3 py-2.5'} ${active
+                        ? 'border-blue-100 bg-blue-50 text-[var(--primary-strong)] shadow-[0_8px_20px_rgba(21,101,216,0.08)]'
+                        : 'border-transparent text-slate-700 hover:border-slate-200 hover:bg-white hover:text-slate-900'
+                      }`}
                     >
-                      <span className={`transition-colors duration-200 flex items-center justify-center shrink-0 ${active ? 'text-[var(--primary)]' : 'text-slate-400 group-hover:text-[var(--primary)]'}`}>
+                      <span className={`flex shrink-0 items-center justify-center ${active ? 'text-[var(--primary)]' : 'text-slate-400 group-hover:text-slate-700'}`}>
                         {item.icon}
                       </span>
-                      {!isCollapsed && <span className="truncate animate-in fade-in">{item.label}</span>}
+                      {!isCollapsed && <span className="truncate text-[13px] font-semibold">{item.label}</span>}
                     </Link>
                   );
                 })}
               </div>
-            </div>
+            </section>
           ))}
         </nav>
 
-        {/* Footer Account Section */}
-        <div className={`shrink-0 transition-all duration-200 ${isCollapsed ? 'p-2' : 'p-4'}`}>
-          <div className={`group relative rounded-2xl border border-slate-100 bg-slate-50/50 transition-all duration-300 hover:bg-white hover:shadow-md ${
-            isCollapsed ? 'p-2 flex flex-col items-center justify-center' : 'p-4'
-          }`}>
-            {!isCollapsed && (
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 font-heading animate-in fade-in">Tài khoản quản trị</p>
-            )}
-            
-            <div className={`mt-2 flex items-center justify-between gap-3 ${isCollapsed ? 'mt-0 justify-center w-full' : ''}`}>
-              {isCollapsed ? (
-                <div className="relative h-9 w-9 select-none">
-                  <div className="absolute inset-0 overflow-hidden rounded-full border border-slate-200 bg-white flex items-center justify-center transition-opacity duration-200 group-hover:opacity-0">
-                    <img src="/admin/uploads/logo-startup.png" alt="AD" className="h-full w-full object-contain p-0.5" />
-                  </div>
-                  <button 
-                    onClick={handleLogout}
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 grid place-items-center rounded-full text-red-500 hover:bg-red-50 transition-all duration-200"
-                    title="Đăng xuất"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-                  </button>
+        <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-t border-slate-200/60`}>
+          <div className={`rounded-[14px] border border-slate-200 bg-white/92 shadow-sm ${isCollapsed ? 'p-2' : 'p-3'}`}>
+            <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between gap-3'}`}>
+              <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 min-w-0'}`}>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-slate-200 bg-slate-50">
+                  <img src="/admin/uploads/logo-startup.png" alt="Administrator" className="h-full w-full object-contain p-1" />
                 </div>
-              ) : (
-                <>
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="h-9 w-9 overflow-hidden rounded-full border border-slate-200 bg-white flex items-center justify-center shrink-0">
-                      <img src="/admin/uploads/logo-startup.png" alt="AD" className="h-full w-full object-contain p-0.5" />
-                    </div>
-                    <div className="min-w-0">
-                      <span className="block truncate text-[13px] font-bold text-slate-700 font-heading">Administrator</span>
-                      <span className="block text-[10px] font-semibold text-slate-400 mt-0.5">Quản trị viên</span>
-                    </div>
+                {!isCollapsed && (
+                  <div className="min-w-0">
+                    <p className="truncate text-[13px] font-extrabold text-slate-900">Administrator</p>
+                    <p className="truncate text-[11px] font-medium text-slate-500">Quản trị viên hệ thống</p>
                   </div>
-                  
-                  <button 
-                    onClick={handleLogout}
-                    className="opacity-0 group-hover:opacity-100 p-2 rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200 shrink-0"
-                    title="Đăng xuất"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
-                  </button>
-                </>
+                )}
+              </div>
+              {!isCollapsed && (
+                <button type="button" className="grid h-8 w-8 place-items-center rounded-[10px] text-slate-500 transition hover:bg-slate-100" aria-label="Tài khoản">
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
               )}
             </div>
+            {!isCollapsed && (
+              <button
+                onClick={handleLogout}
+                className="mt-3 w-full rounded-[12px] border border-slate-200 px-3 py-2 text-[12px] font-semibold text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+              >
+                Đăng xuất
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Resize Handle */}
         {!isCollapsed && (
-          <div 
+          <div
             onMouseDown={startResizing}
-            className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-slate-300/50 active:bg-slate-400/80 transition-colors z-30 select-none ${
-              isResizing ? 'bg-slate-400/80' : ''
-            }`}
+            className={`absolute right-0 top-0 z-30 h-full w-1 cursor-col-resize transition-colors ${isResizing ? 'bg-[var(--primary)]/50' : 'hover:bg-slate-300/70'}`}
           />
         )}
       </aside>
 
-      {/* Main Panel */}
-      <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-        
-        {/* Top Header - macOS styled toolbar */}
-        <header className="z-20 shrink-0 border-b border-slate-200/50 bg-white/80 px-6 py-4 backdrop-blur-md flex flex-col gap-4 md:flex-row md:items-center md:justify-between shadow-sm select-none">
-          <div className="space-y-1">
-            <h1 className="text-sm md:text-base font-black tracking-wide font-heading leading-tight flex items-center">
-              <span className="typewriter-title">Hệ thống quản lý bình chọn HUIT STARTUP</span>
-            </h1>
-            <p className="text-[10px] md:text-xs font-semibold text-slate-500">
-              Quản trị nội dung, cấu hình và dữ liệu bình chọn
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3.5">
-            <Link 
-              href={SITE_URL} 
-              target="_blank" 
-              className="rounded-xl border border-slate-200/60 bg-white px-4 py-2 text-[11px] font-bold text-[var(--text-primary)] shadow-sm transition hover:border-[var(--primary)] hover:text-[var(--primary)] hover:bg-[var(--primary-soft)] active:scale-[0.98]"
-            >
-              Xem trang chủ
-            </Link>
-          </div>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="sticky top-0 z-20 border-b border-white/70 bg-[rgba(248,251,255,0.9)] px-5 py-3 backdrop-blur-xl md:px-6">
+          <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-3">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-[17px] font-extrabold leading-tight text-slate-950">{currentMeta.title}</h1>
+                <p className="mt-0.5 text-[13px] font-medium text-slate-500">{currentMeta.description}</p>
+              </div>
 
-          {/* Mobile navigation row (scrollable horizontally) */}
-          <nav className="flex gap-1.5 overflow-x-auto lg:hidden w-full pb-1 mt-1">
-            {navItems.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link 
-                  key={item.href} 
-                  href={item.href} 
-                  className={`inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-[11px] font-semibold transition border shadow-sm ${
-                    active 
-                      ? 'bg-[var(--primary-soft)] text-[var(--primary)] border-[var(--primary)]/20' 
-                      : 'bg-white text-[#64748B] border-slate-200/60 hover:bg-slate-50'
-                  }`}
-                >
-                  <span className="h-3.5 w-3.5 flex items-center justify-center">{item.icon}</span>
-                  {item.label}
+              <div className="flex flex-wrap items-center gap-3">
+                <Link href={SITE_URL} target="_blank" className="admin-btn admin-btn-secondary">
+                  Xem trang chủ
+                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 17 17 7" />
+                    <path d="M8 7h9v9" />
+                  </svg>
                 </Link>
-              );
-            })}
-          </nav>
+                <BellButton />
+              </div>
+            </div>
+
+            <nav className="flex gap-2 overflow-x-auto pb-0.5 lg:hidden">
+              {navItems.map((item) => {
+                const active = isActive(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`inline-flex shrink-0 items-center gap-2 rounded-[14px] border px-3 py-2 text-[12px] font-semibold shadow-sm transition ${active
+                      ? 'border-[rgba(21,101,216,0.16)] bg-[var(--primary-soft)] text-[var(--primary-strong)]'
+                      : 'border-slate-200 bg-white text-slate-600'
+                    }`}
+                  >
+                    <span className="flex h-4 w-4 items-center justify-center">{item.icon}</span>
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
         </header>
 
-        {/* Content viewport wrapper */}
-        <main className="min-h-0 flex-1 overflow-y-auto px-6 py-6 md:px-8 md:py-8">
-          <div className="mx-auto w-full max-w-[1280px] animate-in fade-in slide-in-from-bottom-2 duration-300 space-y-6">
+        <main className="min-h-0 flex-1 overflow-y-auto px-5 py-4 md:px-6 md:py-4">
+          <div className="mx-auto w-full max-w-[1320px] space-y-4">
             {children}
           </div>
         </main>

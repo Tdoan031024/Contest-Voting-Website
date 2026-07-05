@@ -1,31 +1,15 @@
 'use client';
 
 import React, { useEffect, useMemo, useState, useRef } from 'react';
-import { Candidate, VotePackage, WebUser } from '@huitfest/shared';
+import { Candidate, WebUser } from '@huitfest/shared';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAlert } from '../../AlertProvider';
 import { apiUrl } from '../../api';
 import VoteModal from '../../VoteModal';
 
-function formatMoney(value: number) {
-  if (!value) return 'Miễn phí';
-  return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(value);
-}
-
-function getStoredUser(): WebUser | null {
-  if (typeof window === 'undefined') return null;
-  const raw = localStorage.getItem('huit_web_user');
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
-
 function getCandidateImageUrl(url?: string | null) {
-  if (!url) return '/uploads/poster-khoi-nghiep.jpg';
+  if (!url) return '/duan/anhmauduan.png';
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
   return url;
 }
@@ -36,8 +20,6 @@ export default function CandidateDetailPage() {
   const sbd = params.sbd as string;
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
-  const [packages, setPackages] = useState<VotePackage[]>([]);
-  const [selectedPackageId, setSelectedPackageId] = useState('free-5');
   const [isLoading, setIsLoading] = useState(true);
   const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
   const [settings, setSettings] = useState<any>(null);
@@ -54,9 +36,8 @@ export default function CandidateDetailPage() {
 
     async function loadData() {
       setIsLoading(true);
-      const [candidateRes, packageRes, settingsRes] = await Promise.all([
-        fetch(apiUrl(`/api/candidates/${sbd}`)),
-        fetch(apiUrl('/api/voting/packages')),
+      const [candidateRes, settingsRes] = await Promise.all([
+        fetch(apiUrl('/api/candidates/' + sbd)),
         fetch(apiUrl('/api/settings')),
       ]);
 
@@ -67,23 +48,15 @@ export default function CandidateDetailPage() {
           setActiveImage(getCandidateImageUrl(data.imageUrl));
         }
       }
-      if (packageRes.ok) {
-        const data = await packageRes.json();
-        setPackages(data);
-        setSelectedPackageId(data[0]?.id || 'free-5');
+
+      if (settingsRes.ok) {
+        setSettings(await settingsRes.json());
       }
-      if (settingsRes.ok) setSettings(await settingsRes.json());
       setIsLoading(false);
     }
 
     loadData().catch(() => setIsLoading(false));
   }, [sbd]);
-
-  const selectedPackage = useMemo(
-    () => packages.find((item) => item.id === selectedPackageId) || packages[0],
-    [packages, selectedPackageId]
-  );
-
   const showcaseUrls = useMemo(() => {
     if (!candidate || !candidate.showcaseImages) return [];
     return candidate.showcaseImages.split(',').map(url => url.trim()).filter(Boolean);
@@ -305,38 +278,13 @@ export default function CandidateDetailPage() {
 
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--site-primary)]">Thí sinh được yêu thích nhất</p>
-            <h2 className="mt-2 text-lg font-black text-[var(--site-text)]">Bình chọn cho dự án</h2>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {packages.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => setSelectedPackageId(item.id)}
-                  className={`rounded-xl border p-3 text-left transition ${selectedPackageId === item.id ? 'border-[#0A2FFF] bg-blue-50 dark:bg-blue-500/10' : 'border-[var(--site-line)] bg-[var(--site-soft)] hover:border-[var(--site-primary)]'}`}
-                >
-                  <p className="text-sm font-black text-[var(--site-text)]">{item.points.toLocaleString()} điểm</p>
-                  <p className="mt-1 text-xs font-bold text-[var(--site-primary)]">{formatMoney(item.price)}</p>
-                </button>
-              ))}
-            </div>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--site-primary)]">Th?? sinh ???????c y??u th??ch nh???t</p>
+            <h2 className="mt-2 text-lg font-black text-[var(--site-text)]">B??nh ch???n cho d??? ??n</h2>
             <div className="mt-4 rounded-xl bg-[var(--site-soft)] p-4">
-              <div className="flex justify-between text-sm">
-                <span className="font-bold text-[var(--site-muted)]">Thành tiền</span>
-                <span className="font-black text-[var(--site-text)]">{formatMoney(selectedPackage?.price || 0)}</span>
-              </div>
-              <p className="mt-2 text-[13px] leading-5 text-[var(--site-muted)]">Giá hiển thị đã bao gồm VAT 10%. Gói miễn phí yêu cầu đăng nhập và được cấp theo ngày cho mỗi tài khoản.</p>
-              {selectedPackage?.packageType === 'PAID' && (
-                <div className="mt-3 pt-3 border-t border-[var(--site-line)] flex items-center gap-2 text-[13px] text-[var(--site-primary)] font-bold select-none">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-                    <rect x="2" y="2" width="20" height="20" rx="3" />
-                    <rect x="6" y="6" width="4" height="4" />
-                    <rect x="14" y="6" width="4" height="4" />
-                    <rect x="6" y="14" width="4" height="4" />
-                    <rect x="14" y="14" width="4" height="4" />
-                  </svg>
-                  <span>Chuyển khoản QR tự động qua cổng Sepay</span>
-                </div>
-              )}
+              <p className="text-sm font-black text-[var(--site-text)]">M???i l???n b??nh ch???n c???ng 1 l?????t cho d??? ??n.</p>
+              <p className="mt-2 text-[13px] leading-5 text-[var(--site-muted)]">
+                M???i t??i kho???n c?? 2 l?????t mi???n ph?? m???i ng??y cho to??n b??? d??? ??n. D??ng h???t 2 l?????t th?? kh??ng th??? vote cho d??? ??n kh??c cho ?????n ng??y h??m sau.
+              </p>
             </div>
             <button
               onClick={handleVote}
@@ -346,14 +294,11 @@ export default function CandidateDetailPage() {
                   : 'bg-slate-200 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                 }`}
             >
-              {isGateOpen
-                ? (selectedPackage?.packageType === 'FREE' ? 'Bình chọn miễn phí' : 'Thanh toán QR (Sepay) & Bình chọn')
-                : 'Cổng bình chọn đã đóng'
-              }
+              {isGateOpen ? 'B??nh ch???n mi???n ph??' : 'C???ng b??nh ch???n ???? ????ng'}
             </button>
-            {!currentUser && selectedPackage?.packageType === 'FREE' && (
+            {!currentUser && (
               <Link href={`/dang-nhap?redirect=/thi-sinh/${candidate.sbd}`} className="mt-3 block text-center text-sm font-bold text-[var(--site-primary)]">
-                Đăng nhập ngay để dùng lượt miễn phí
+                ????ng nh???p ngay ????? d??ng l?????t mi???n ph??
               </Link>
             )}
           </div>
@@ -448,7 +393,6 @@ export default function CandidateDetailPage() {
       {isVoteModalOpen && (
         <VoteModal
           candidate={candidate}
-          initialPackageId={selectedPackageId}
           onClose={() => setIsVoteModalOpen(false)}
           onSuccess={(updatedCandidate) => {
             setCandidate(updatedCandidate);
@@ -458,3 +402,4 @@ export default function CandidateDetailPage() {
     </main>
   );
 }
+

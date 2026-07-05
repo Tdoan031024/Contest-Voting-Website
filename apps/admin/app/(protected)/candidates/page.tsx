@@ -5,6 +5,39 @@ import Link from 'next/link';
 import { Candidate } from '@huitfest/shared';
 import { apiUrl, formatAssetUrl } from '../../api';
 
+type VotingPromotion = {
+  id: string;
+  name: string;
+  multiplier: number;
+  startAt: string;
+  endAt: string;
+  isEnabled: boolean;
+  appliesTo: 'FREE' | 'PAID' | 'ALL';
+  note?: string;
+};
+
+function createPromotionDraft(): VotingPromotion {
+  const now = new Date();
+  const start = new Date(now.getTime() + 10 * 60 * 1000);
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  const toLocalInput = (value: Date) => {
+    const offset = value.getTimezoneOffset();
+    const local = new Date(value.getTime() - offset * 60 * 1000);
+    return local.toISOString().slice(0, 16);
+  };
+
+  return {
+    id: `promo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: 'Khung giờ nhân điểm',
+    multiplier: 2,
+    startAt: toLocalInput(start),
+    endAt: toLocalInput(end),
+    isEnabled: true,
+    appliesTo: 'FREE',
+    note: '',
+  };
+}
+
 const tableLabels: Record<string, string> = {
   HIGH_SCHOOL: 'Bảng học sinh',
   STUDENT: 'Bảng sinh viên, học viên',
@@ -45,15 +78,15 @@ function Pill({
   tone?: 'green' | 'blue' | 'orange' | 'red' | 'slate';
 }) {
   const classes = {
-    green: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    blue: 'border-sky-200 bg-sky-50 text-sky-700',
-    orange: 'border-orange-200 bg-orange-50 text-orange-700',
-    red: 'border-red-200 bg-red-50 text-red-700',
-    slate: 'border-slate-200 bg-slate-50 text-slate-600',
+    green: 'border-emerald-200/80 bg-emerald-50 text-emerald-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]',
+    blue: 'border-sky-200/80 bg-sky-50 text-sky-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]',
+    orange: 'border-orange-200/80 bg-orange-50 text-orange-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]',
+    red: 'border-rose-200/80 bg-rose-50 text-rose-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]',
+    slate: 'border-slate-200/80 bg-slate-50 text-slate-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]',
   };
 
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold leading-none ${classes[tone]}`}>
+    <span className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[11px] font-extrabold leading-none tracking-[-0.01em] ${classes[tone]}`}>
       {children}
     </span>
   );
@@ -73,11 +106,11 @@ function ActionButton({
   href?: string;
 }) {
   const classes = {
-    view: 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700',
-    edit: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100',
-    delete: 'border-red-200 bg-red-50 text-red-600 hover:border-red-400 hover:bg-red-100',
+    view: 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900',
+    edit: 'border-emerald-200/80 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100',
+    delete: 'border-rose-200/80 bg-rose-50 text-rose-600 hover:border-rose-300 hover:bg-rose-100',
   };
-  const className = `grid h-9 w-9 place-items-center rounded-lg border transition ${classes[tone]}`;
+  const className = `grid h-9 w-9 place-items-center rounded-lg border shadow-sm transition duration-150 hover:-translate-y-[1px] ${classes[tone]}`;
 
   if (href) {
     return (
@@ -1065,6 +1098,11 @@ export default function CandidatesAdminPage() {
   const [selectedProject, setSelectedProject] = useState<Candidate | null>(null);
   const [form, setForm] = useState<Partial<Candidate>>(emptyProject);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+  const [registrationDeadline, setRegistrationDeadline] = useState('2026-06-20T23:59');
+  const [votingPromotions, setVotingPromotions] = useState<VotingPromotion[]>([]);
+  const [settingsSaving, setSettingsSaving] = useState(false);
+  const [showPromotionManager, setShowPromotionManager] = useState(false);
 
   const loadProjects = async () => {
     try {
@@ -1077,6 +1115,21 @@ export default function CandidatesAdminPage() {
 
   useEffect(() => {
     loadProjects();
+  }, []);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch(apiUrl('/api/admin/settings'));
+        if (!res.ok) return;
+        const data = await res.json();
+        setIsRegistrationOpen(data.isRegistrationOpen ?? true);
+        setRegistrationDeadline(data.registrationDeadline || '2026-06-20T23:59');
+        setVotingPromotions(Array.isArray(data.votingPromotions) ? data.votingPromotions : []);
+      } catch {}
+    }
+
+    loadSettings();
   }, []);
 
   const rankedProjects = useMemo(() => [...projects].sort((a, b) => b.votes - a.votes), [projects]);
@@ -1096,9 +1149,58 @@ export default function CandidatesAdminPage() {
       );
   }, [rankedProjects, roundFilter, search, tableFilter]);
 
-  const totalVotes = projects.reduce((sum, project) => sum + project.votes, 0);
   const missingInfo = projects.filter((project) => !project.teamName || !project.leaderName || !project.contestTable).length;
-  const leadingProject = rankedProjects[0];
+  const activePromotion = useMemo(() => {
+    const now = Date.now();
+    return votingPromotions.find((promotion) => {
+      if (!promotion.isEnabled) return false;
+      const start = new Date(promotion.startAt).getTime();
+      const end = new Date(promotion.endAt).getTime();
+      return Number.isFinite(start) && Number.isFinite(end) && start <= now && end >= now;
+    }) || null;
+  }, [votingPromotions]);
+
+  const saveVotingSettings = async (
+    nextPromotions = votingPromotions,
+    nextRegistrationOpen = isRegistrationOpen,
+    nextRegistrationDeadline = registrationDeadline,
+  ) => {
+    setSettingsSaving(true);
+    try {
+      const currentRes = await fetch(apiUrl('/api/admin/settings'));
+      if (!currentRes.ok) throw new Error('load_failed');
+      const currentSettings = await currentRes.json();
+      const res = await fetch(apiUrl('/api/admin/settings'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...currentSettings,
+          isRegistrationOpen: nextRegistrationOpen,
+          registrationDeadline: nextRegistrationDeadline,
+          votingPromotions: nextPromotions,
+        }),
+      });
+      if (!res.ok) throw new Error('save_failed');
+    } catch {
+      alert('Khong the luu cau hinh promotion / dang ky. Vui long kiem tra backend.');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const updatePromotion = (id: string, field: keyof VotingPromotion, value: string | number | boolean) => {
+    setVotingPromotions((prev) => prev.map((promotion) => (
+      promotion.id === id ? { ...promotion, [field]: value } : promotion
+    )));
+  };
+
+  const addPromotion = () => {
+    setVotingPromotions((prev) => [...prev, createPromotionDraft()]);
+  };
+
+  const removePromotion = (id: string) => {
+    setVotingPromotions((prev) => prev.filter((promotion) => promotion.id !== id));
+  };
 
   const openAddModal = () => {
     setSelectedProject(null);
@@ -1215,131 +1317,230 @@ export default function CandidatesAdminPage() {
   };
 
   return (
-    <div className="w-full max-w-full space-y-5">
-      <section className="w-full rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-5 border-b border-slate-100 p-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Quản lý cuộc thi</p>
-            <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">Danh sách dự án tham gia HUIT Startup</h2>
+    <div className="w-full max-w-full space-y-3.5">
+      <section className="admin-card overflow-hidden p-0">
+        <div className="flex flex-col gap-2.5 border-b border-slate-200/70 px-4 py-3.5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--primary-strong)]">Quản lý cuộc thi</p>
+            <h2 className="mt-0.5 text-[20px] font-extrabold tracking-[-0.04em] text-slate-950">Danh sách dự án tham gia</h2>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={handleExportCandidates}
-              className="h-11 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black text-slate-700 shadow-sm transition hover:border-emerald-600 hover:text-emerald-700"
-            >
-              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="17 8 12 3 7 8" />
-                <line x1="12" y1="3" x2="12" y2="15" />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button onClick={handleExportCandidates} className="admin-btn admin-btn-secondary !h-8 !min-h-0 px-2.5 text-xs gap-1.5 rounded-lg">
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="16 6 12 2 8 6" />
+                <line x1="12" y1="2" x2="12" y2="15" />
               </svg>
-              Xuất CSV
+              Xuất
             </button>
-            <button
-              onClick={() => setIsImportModalOpen(true)}
-              className="h-11 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black text-slate-700 shadow-sm transition hover:border-emerald-600 hover:text-emerald-700"
-            >
-              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
+            <button onClick={() => setIsImportModalOpen(true)} className="admin-btn admin-btn-secondary !h-8 !min-h-0 px-2.5 text-xs gap-1.5 rounded-lg">
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                <polyline points="8 10 12 14 16 10" />
+                <line x1="12" y1="14" x2="12" y2="2" />
               </svg>
-              Nhập CSV
+              Nhập
             </button>
-            <button onClick={openAddModal} className="h-11 rounded-xl bg-[#e45136] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#c83f28]">
+            <button onClick={openAddModal} className="admin-btn admin-btn-primary min-w-[132px]">
               Thêm dự án mới
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-4 md:divide-x md:divide-y-0">
+        <div className="grid gap-2 p-3 xl:grid-cols-6">
           {[
-            ['Tổng dự án', projects.length.toLocaleString(), 'Hồ sơ trong hệ thống'],
-            ['Thiếu thông tin', missingInfo.toLocaleString(), 'Cần bổ sung nhóm/trưởng nhóm'],
-            ['Tổng điểm', totalVotes.toLocaleString(), 'Điểm bình chọn toàn hệ thống'],
-            ['Dẫn đầu', leadingProject?.name || 'Chưa có', leadingProject ? `Mã ${leadingProject.sbd}` : 'Chưa có dữ liệu'],
-          ].map(([label, value, note]) => (
-            <div key={label} className="p-5 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">{label}</p>
-              <p className="mt-2 truncate text-2xl font-black text-slate-950">{value}</p>
-              <p className="mt-1 truncate text-xs font-semibold text-slate-500">{note}</p>
+            ['Tổng dự án', projects.length.toLocaleString()],
+            ['Thiếu thông tin', missingInfo.toLocaleString()],
+          ].map(([label, value]) => (
+            <div key={label} className="dashboard-stat-card flex min-h-[104px] flex-col justify-center xl:col-span-1">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</p>
+                <p className="mt-1.5 text-[20px] font-extrabold tracking-[-0.04em] text-slate-950">{value}</p>
+              </div>
             </div>
           ))}
+
+          <div className="dashboard-stat-card flex min-h-[118px] flex-col justify-between xl:col-span-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Đăng ký</p>
+                <p className="mt-2 text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
+                  {isRegistrationOpen ? 'Đang mở' : 'Đang đóng'}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={settingsSaving}
+                onClick={async () => {
+                  const nextValue = !isRegistrationOpen;
+                  setIsRegistrationOpen(nextValue);
+                  await saveVotingSettings(votingPromotions, nextValue, registrationDeadline);
+                }}
+                className={`relative mt-1 flex h-7 w-12 items-center rounded-full transition ${isRegistrationOpen ? 'bg-emerald-500' : 'bg-slate-300'} ${settingsSaving ? 'opacity-60' : ''}`}
+              >
+                <span className={`absolute h-5 w-5 rounded-full bg-white shadow-md transition ${isRegistrationOpen ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+            <div className="space-y-1">
+              <label className="block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Hạn đăng ký</label>
+              <input
+                type="datetime-local"
+                value={registrationDeadline}
+                onChange={(event) => setRegistrationDeadline(event.target.value)}
+                onBlur={() => saveVotingSettings(votingPromotions, isRegistrationOpen, registrationDeadline)}
+                className="admin-input"
+              />
+            </div>
+          </div>
+
+          <div className="dashboard-stat-card flex min-h-[118px] flex-col justify-between xl:col-span-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Promotion</p>
+                <p className="mt-2 truncate text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
+                  {activePromotion ? `x${activePromotion.multiplier}` : 'Chưa chạy'}
+                </p>
+                <p className="mt-1 text-[11px] font-semibold text-slate-500">{votingPromotions.length} khung giờ</p>
+              </div>
+              <button type="button" onClick={() => setShowPromotionManager((prev) => !prev)} className="admin-btn admin-btn-secondary min-w-[82px]">
+                {showPromotionManager ? 'Thu gọn' : 'Quản lý'}
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button type="button" onClick={addPromotion} className="admin-btn admin-btn-secondary flex-1">
+                + Thêm
+              </button>
+              <button type="button" disabled={settingsSaving} onClick={() => saveVotingSettings()} className="admin-btn admin-btn-primary flex-1">
+                {settingsSaving ? 'Đang lưu...' : 'Lưu'}
+              </button>
+            </div>
+          </div>
         </div>
+
+        {showPromotionManager && (
+          <div className="border-t border-slate-200/70 px-3 py-3">
+            <div className="mb-2.5 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Promotion chi tiết</p>
+                <p className="mt-1 text-[13px] font-medium text-slate-500">Quản lý khung giờ nhân điểm mà không làm nặng màn hình chính.</p>
+              </div>
+              <button type="button" onClick={addPromotion} className="admin-btn admin-btn-secondary">
+                + Thêm promotion
+              </button>
+            </div>
+
+            <div className="grid gap-2 xl:grid-cols-2">
+              {votingPromotions.length === 0 ? (
+                <div className="rounded-[14px] border border-dashed border-slate-200 bg-slate-50/80 px-4 py-5 text-sm font-medium text-slate-500">
+                  Chưa có promotion nhân điểm nào.
+                </div>
+              ) : (
+                votingPromotions.map((promotion) => (
+                  <div key={promotion.id} className="rounded-[14px] border border-slate-200 bg-white/90 p-3 shadow-sm">
+                    <div className="grid gap-2">
+                      <input value={promotion.name} onChange={(event) => updatePromotion(promotion.id, 'name', event.target.value)} className="admin-input" />
+                      <div className="grid grid-cols-1 gap-2">
+                        <label className="flex items-center gap-2">
+                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Hệ số nhân điểm:</span>
+                          <input type="number" min={2} max={10} value={promotion.multiplier} onChange={(event) => updatePromotion(promotion.id, 'multiplier', Number(event.target.value))} className="admin-input" />
+                        </label>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">
+                        <input type="datetime-local" value={promotion.startAt} onChange={(event) => updatePromotion(promotion.id, 'startAt', event.target.value)} className="admin-input" />
+                        <input type="datetime-local" value={promotion.endAt} onChange={(event) => updatePromotion(promotion.id, 'endAt', event.target.value)} className="admin-input" />
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <label className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                          <input type="checkbox" checked={promotion.isEnabled} onChange={(event) => updatePromotion(promotion.id, 'isEnabled', event.target.checked)} />
+                          Kích hoạt
+                        </label>
+                        <button type="button" onClick={() => removePromotion(promotion.id)} className="admin-btn admin-btn-danger !h-8 px-3">
+                          Xóa
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-[1fr_200px_180px_110px]">
+      <section className="dashboard-filter-bar p-2.5">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_190px_170px_110px]">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Tìm theo tên dự án, mã, nhóm, trưởng nhóm hoặc đơn vị..."
-            className="h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white"
+            className="admin-input min-w-0"
           />
-          <select value={tableFilter} onChange={(event) => setTableFilter(event.target.value)} className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 outline-none focus:border-emerald-600">
+          <select value={tableFilter} onChange={(event) => setTableFilter(event.target.value)} className="admin-select px-3 text-xs font-bold text-slate-700">
             <option value="ALL">Tất cả bảng thi</option>
             <option value="HIGH_SCHOOL">Bảng học sinh</option>
             <option value="STUDENT">Bảng sinh viên</option>
             <option value="ENTERPRISE">Bảng doanh nghiệp</option>
           </select>
-          <select value={roundFilter} onChange={(event) => setRoundFilter(event.target.value)} className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 outline-none focus:border-emerald-600">
+          <select value={roundFilter} onChange={(event) => setRoundFilter(event.target.value)} className="admin-select px-3 text-xs font-bold text-slate-700">
             <option value="ALL">Tất cả vòng</option>
             <option>Vòng loại</option>
             <option>Vòng bán kết</option>
             <option>Vòng chung kết</option>
           </select>
-          <div className="flex h-11 items-center justify-center rounded-xl bg-slate-50 text-xs font-black text-slate-500">
+          <div className="flex h-[38px] items-center justify-center rounded-[12px] border border-slate-200 bg-white text-[11px] font-black text-slate-500 shadow-sm">
             {filteredProjects.length.toLocaleString()} kết quả
           </div>
         </div>
       </section>
 
-      <section className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <section className="admin-card overflow-hidden p-0">
         <div className="w-full overflow-x-auto">
-          <table className="w-full min-w-[800px] border-collapse text-left">
+          <table className="dashboard-table min-w-[860px] text-left">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
-                <th className="px-5 py-4">Dự án</th>
-                <th className="px-5 py-4">Đại diện</th>
-                <th className="px-5 py-4">Vòng thi</th>
-                <th className="px-5 py-4 text-right">Điểm bình chọn</th>
-                <th className="px-5 py-4 text-right">Thao tác</th>
+              <tr className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                <th className="px-4 py-3">Dự án</th>
+                <th className="px-4 py-3">Đại diện</th>
+                <th className="px-4 py-3">Vòng thi</th>
+                <th className="px-4 py-3 text-right">Điểm bình chọn</th>
+                <th className="px-4 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
+            <tbody className="text-sm">
               {filteredProjects.map((project) => {
                 const projectTableLabel = project.contestTableLabel || tableLabels[project.contestTable || ''] || 'Chưa phân bảng';
  
                 return (
-                  <tr key={project.id} className="align-middle transition hover:bg-emerald-50/35">
-                    <td className="px-5 py-4">
-                      <div className="flex min-w-[240px] items-center gap-3">
-                        <img src={formatAssetUrl(project.imageUrl)} alt={project.name} className="h-12 w-12 shrink-0 rounded-xl border border-slate-200 object-cover" />
+                  <tr key={project.id} className="align-middle transition hover:bg-slate-50/80">
+                    <td className="px-4 py-3">
+                      <div className="flex min-w-[220px] items-center gap-3">
+                        <img src={formatAssetUrl(project.imageUrl)} alt={project.name} className="h-11 w-11 shrink-0 rounded-[14px] border border-slate-200 object-cover shadow-sm" />
                         <div className="min-w-0">
-                          <p className="truncate font-black text-slate-950 text-sm">{project.name}</p>
-                          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                            <span className="text-[10px] bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded">
+                          <p className="truncate text-[14px] font-extrabold tracking-[-0.02em] text-slate-950">{project.name}</p>
+                          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                            <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
                               {project.sbd}
                             </span>
-                            <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded">
+                            <span className="rounded-md border border-emerald-200/80 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
                               {projectTableLabel}
                             </span>
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <div className="max-w-[180px]">
-                        <p className="truncate font-bold text-slate-900">{project.leaderName || 'Chưa có đại diện'}</p>
-                        <p className="mt-1 truncate text-xs text-slate-500 font-medium">{project.representativeSchool || 'Chưa cập nhật đơn vị'}</p>
+                        <p className="truncate text-[13px] font-bold text-slate-900">{project.leaderName || 'Chưa có đại diện'}</p>
+                        <p className="mt-0.5 truncate text-[12px] text-slate-500 font-medium">{project.representativeSchool || 'Chưa cập nhật đơn vị'}</p>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <Pill tone={roundTone(project.currentRound)}>{project.currentRound || 'Vòng loại'}</Pill>
                     </td>
-                    <td className="px-5 py-4 text-right">
-                      <p className="text-lg font-black tabular-nums text-[#e45136]">{project.votes.toLocaleString()}</p>
+                    <td className="px-4 py-3 text-right">
+                      <p className="text-[20px] font-bold tracking-[-0.02em] tabular-nums text-slate-800">{project.votes.toLocaleString()}</p>
+                      <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400">điểm</p>
                     </td>
-                    <td className="px-5 py-4">
+                    <td className="px-4 py-3">
                       <div className="flex justify-end gap-1.5">
                         <ActionButton href={`/candidates/${project.sbd}`} title="Xem chi tiết" tone="view">
                           <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

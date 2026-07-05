@@ -1,10 +1,27 @@
 import { Injectable, NotFoundException, OnModuleInit, UnauthorizedException, BadRequestException } from '@nestjs/common';
-import { Candidate, Sponsor, TimelineEvent, Banner, VotePackage, WebUser } from '@huitfest/shared';
+import { Candidate, Sponsor, TimelineEvent, Banner, VotePackage, VotingPromotion, WebUser } from '@huitfest/shared';
 import { PrismaService } from './prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
+
+function hashPasswordMd5(value: string): string {
+  return crypto.createHash('md5').update(String(value || '')).digest('hex');
+}
+
+function isMd5Hash(value?: string | null): boolean {
+  return !!value && /^[a-f0-9]{32}$/i.test(value);
+}
+
+export function normalizeEmail(email: string): string {
+  const trimmed = String(email || '').trim().toLowerCase();
+  const parts = trimmed.split('@');
+  if (parts.length !== 2) return trimmed;
+  const [localPart, domain] = parts;
+  const baseLocal = localPart.split('+')[0];
+  return `${baseLocal}@${domain}`;
+}
 
 export function getEnvVar(key: string, defaultValue?: string): string {
   if (process.env[key]) return process.env[key];
@@ -116,6 +133,8 @@ export interface SystemSettings {
   guideSections?: Array<{ title: string; content: string; imageUrl?: string }>;
   exchangeRates?: Array<{ points: number; price: number; label: string }>;
   votePackages?: VotePackage[];
+  votingPromotions?: VotingPromotion[];
+  activeVotingPromotion?: VotingPromotion | null;
   sepayBankName?: string;
   sepayAccountNo?: string;
   sepayAccountName?: string;
@@ -178,7 +197,7 @@ export class AppService implements OnModuleInit {
     registrationUrl: 'https://khoinghiep.huit.edu.vn',
     detailUrl: 'https://khoinghiep.huit.edu.vn',
     supportZaloUrl: 'https://zalo.me/4418938306145458374',
-    freeVotesPerAccountPerDay: 1,
+    freeVotesPerAccountPerDay: 2,
     sepayBankName: 'KienLongBank',
     sepayAccountNo: '101499100004001667',
     sepayAccountName: 'DANG XUAN DUONG',
@@ -213,6 +232,7 @@ export class AppService implements OnModuleInit {
       { points: 2300, price: 1000000, label: '2.300 điểm' },
       { points: 7000, price: 3000000, label: '7.000 điểm' }
     ],
+    votingPromotions: [],
     votePackages: [
       { id: 'free-5', code: 'FREE_5', name: '5 điểm miễn phí', points: 5, price: 0, currency: 'VND', vatRate: 10, packageType: 'FREE', isActive: true },
       { id: 'vote-10', code: 'PAID_10', name: '10 điểm', points: 10, price: 10000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
@@ -227,6 +247,8 @@ export class AppService implements OnModuleInit {
 
   constructor(private readonly prisma: PrismaService) {
     this.loadSettings();
+    this.normalizeVotingSettings();
+    this.saveSettings();
   }
 
   async onModuleInit() {
@@ -281,6 +303,101 @@ export class AppService implements OnModuleInit {
 
   private writeLocalData(data: LocalData) {
     fs.writeFileSync(this.dbFilePath, JSON.stringify(data, null, 2), 'utf8');
+  }
+
+  private getFreeVotePackage(): VotePackage {
+    return {
+      id: 'free-daily-vote',
+      code: 'FREE_DAILY_VOTE',
+      name: '1 lÆ°á»£t bÃ¬nh chá»n',
+      points: 1,
+      price: 0,
+      currency: 'VND',
+      vatRate: 0,
+      packageType: 'FREE',
+      isActive: true,
+    };
+  }
+
+  private normalizeVotingPromotions(input: any): VotingPromotion[] {
+    if (!Array.isArray(input)) return [];
+
+    return input
+      .map((item: any, index: number) => {
+        const multiplier = Number(item?.multiplier);
+        const startAt = String(item?.startAt || '').trim();
+        const endAt = String(item?.endAt || '').trim();
+        const appliesTo = item?.appliesTo === 'PAID' || item?.appliesTo === 'ALL' ? item.appliesTo : 'FREE';
+
+        if (!startAt || !endAt || !Number.isFinite(multiplier) || multiplier < 1) {
+          return null;
+        }
+
+        return {
+          id: String(item?.id || `promo-${index + 1}-${Date.now()}`),
+          name: String(item?.name || `Nhân ${multiplier} điểm`).trim(),
+          multiplier: Math.max(1, Math.floor(multiplier)),
+          startAt,
+          endAt,
+          isEnabled: item?.isEnabled !== false,
+          appliesTo,
+          note: item?.note ? String(item.note) : undefined,
+        } as VotingPromotion;
+      })
+      .filter((promotion): promotion is VotingPromotion => promotion !== null)
+      .sort((a, b) => {
+        if (b.multiplier !== a.multiplier) return b.multiplier - a.multiplier;
+        return new Date(b.startAt).getTime() - new Date(a.startAt).getTime();
+      });
+  }
+
+  private getActiveVotingPromotion(now = new Date(), voteType: 'FREE' | 'PAID' = 'FREE'): VotingPromotion | null {
+    const promotions = this.normalizeVotingPromotions(this.settings.votingPromotions);
+    for (const promotion of promotions) {
+      if (!promotion.isEnabled) continue;
+      if (!(promotion.appliesTo === 'ALL' || promotion.appliesTo === voteType)) continue;
+
+      const start = new Date(promotion.startAt);
+      const end = new Date(promotion.endAt);
+      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) continue;
+      if (now >= start && now <= end) return promotion;
+    }
+    return null;
+  }
+
+  private calculateVotePoints(basePoints: number, voteType: 'FREE' | 'PAID' = 'FREE') {
+    const promotion = this.getActiveVotingPromotion(new Date(), voteType);
+    const multiplierApplied = promotion?.multiplier || 1;
+
+    return {
+      basePoints,
+      multiplierApplied,
+      finalPoints: basePoints * multiplierApplied,
+      promotion,
+    };
+  }
+
+  private normalizeVotingSettings() {
+    this.settings.freeVotesPerAccountPerDay = Number(this.settings.freeVotesPerAccountPerDay) > 0
+      ? Number(this.settings.freeVotesPerAccountPerDay)
+      : 2;
+    this.settings.exchangeRates = [
+      { points: 1, price: 0, label: '1 lượt bình chọn miễn phí' },
+    ];
+    this.settings.votePackages = [this.getFreeVotePackage()];
+    this.settings.votingPromotions = this.normalizeVotingPromotions(this.settings.votingPromotions);
+    this.settings.activeVotingPromotion = this.getActiveVotingPromotion();
+    this.settings.guideSections = [
+      {
+        title: 'Bình chọn miễn phí mỗi ngày',
+        steps: [
+          { number: '01', description: 'Đăng ký hoặc đăng nhập tài khoản để bình chọn.' },
+          { number: '02', description: 'Mỗi tài khoản có 2 lượt bình chọn miễn phí trong mỗi ngày.' },
+          { number: '03', description: 'Mỗi lần bình chọn tăng 1 lượt cho dự án bạn chọn.' },
+          { number: '04', description: 'Dùng hết 2 lượt trong ngày thì không thể bình chọn cho bất kỳ dự án nào khác cho đến ngày hôm sau.' },
+        ],
+      },
+    ] as any;
   }
 
   private mergeCandidate(candidate: any): Candidate {
@@ -685,8 +802,7 @@ export class AppService implements OnModuleInit {
   }
 
   getVotePackages(): VotePackage[] {
-    const data = this.readLocalData();
-    return (data.votePackages || this.settings.votePackages || []).filter((item) => item.isActive);
+    return [this.getFreeVotePackage()];
   }
 
   async getFreeVoteQuota(userId: string): Promise<{ remaining: number; limit: number }> {
@@ -695,15 +811,15 @@ export class AppService implements OnModuleInit {
     return this.getFreeVoteQuotaSecure(webUser);
   }
 
-  async getFreeVoteQuotaSecure(user: { phone?: string | null; email?: string | null }): Promise<{ remaining: number; limit: number }> {
-    const limit = this.settings.freeVotesPerAccountPerDay || 1;
+  async getFreeVoteQuotaSecure(user: { id?: string | null; phone?: string | null; email?: string | null }): Promise<{ remaining: number; limit: number }> {
+    const limit = this.settings.freeVotesPerAccountPerDay || 2;
     
     const startOfDay = new Date();
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date();
     endOfDay.setHours(23, 59, 59, 999);
     
-    const identifiers = [user.phone, user.email].filter(Boolean) as string[];
+    const identifiers = [user.phone, user.email, user.id].filter(Boolean) as string[];
     
     const voteCount = await this.prisma.voteRecord.count({
       where: {
@@ -722,28 +838,18 @@ export class AppService implements OnModuleInit {
 
   async voteCandidate(sbd: string, body: any = {}, authHeader?: string): Promise<any> {
     if (!this.settings.isGateOpen) {
-      throw new BadRequestException('Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng.');
+      throw new BadRequestException('C???ng b??nh ch???n hi???n ??ang ????ng ho???c ch??a ?????n th???i gian m??? c???ng.');
     }
 
     const candidate = await this.prisma.candidate.findUnique({
       where: { sbd },
     });
     if (!candidate) {
-      throw new NotFoundException(`Không tìm thấy thí sinh với SBD ${sbd}`);
+      throw new NotFoundException(`Kh??ng t??m th???y th?? sinh v???i SBD ${sbd}`);
     }
 
-    const packages = this.getVotePackages();
-    const selectedPackage =
-      packages.find((item) => item.id === body.packageId || item.code === body.packageId) ||
-      packages.find((item) => item.id === 'vote-10') ||
-      packages[0];
-
-    if (!selectedPackage) {
-      throw new BadRequestException('Gói bình chọn không hợp lệ.');
-    }
-
-    const points = selectedPackage.points;
-    let transactionId: string | undefined = undefined;
+    const selectedPackage = this.getFreeVotePackage();
+    const { basePoints, multiplierApplied, finalPoints, promotion } = this.calculateVotePoints(selectedPackage.points, 'FREE');
     let userId: string | null = null;
 
     const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.substring(7) : null;
@@ -751,102 +857,36 @@ export class AppService implements OnModuleInit {
       userId = extractWebUserFromToken(token, this.getAdminSessionSecret());
     }
 
-    if (selectedPackage.packageType === 'FREE') {
-      if (!userId) {
-        throw new UnauthorizedException('Gói bình chọn miễn phí yêu cầu đăng nhập tài khoản hợp lệ.');
-      }
+    if (!userId) {
+      throw new UnauthorizedException('B??nh ch???n mi???n ph?? y??u c???u ????ng nh???p t??i kho???n h???p l???.');
+    }
 
-      const webUser = await this.prisma.webUser.findUnique({
-        where: { id: userId },
-      });
-      if (!webUser || webUser.status === 'LOCKED') {
-        throw new UnauthorizedException('Tài khoản người dùng không tồn tại hoặc đã bị khóa.');
-      }
+    const webUser = await this.prisma.webUser.findUnique({
+      where: { id: userId },
+    });
+    if (!webUser || webUser.status === 'LOCKED') {
+      throw new UnauthorizedException('T??i kho???n ng?????i d??ng kh??ng t???n t???i ho???c ???? b??? kh??a.');
+    }
 
-      const quota = await this.getFreeVoteQuotaSecure(webUser);
-      if (quota.remaining <= 0) {
-        throw new BadRequestException('Tài khoản đã sử dụng hết lượt bình chọn miễn phí trong ngày.');
-      }
-    } else if (selectedPackage.packageType === 'PAID') {
-      const sepayToken = this.settings.sepayApiKey || '1dcd4e6cd52fde1e4bf0510a9b406476322d811f3bbae785';
-      const expectedMemo = `${this.settings.sepayPrefix || 'HUIT'} ${candidate.sbd} ${userId || 'GUEST'}`.toUpperCase();
-      
-      const isDemoKey = sepayToken === 'sepay_api_key_placeholder' || sepayToken.startsWith('demo') || this.settings.isTestMode !== false;
-      if (isDemoKey) {
-        console.warn(`[VOTE] Sepay check bypassed because API key is placeholder/demo or isTestMode is enabled.`);
-        transactionId = `TX-DEMO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      } else {
-        try {
-          const response = await fetch('https://userapi.sepay.vn/v2/transactions', {
-            headers: {
-              'Authorization': `Bearer ${sepayToken}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Không thể kết nối đến cổng thanh toán Sepay: ${response.statusText}`);
-          }
-          
-          const result = await response.json();
-          const transactions = result.transactions || [];
-          
-          const matchingTx = transactions.find((tx: any) => {
-            const content = String(tx.transaction_content || '').toUpperCase();
-            const amount = Number(tx.amount_in || tx.amount || 0);
-            
-            const matchesMemo = content.includes(expectedMemo);
-            const matchesAmount = amount === selectedPackage.price;
-            
-            return matchesMemo && matchesAmount;
-          });
-          
-          if (!matchingTx) {
-            throw new BadRequestException(
-              `Không tìm thấy giao dịch chuyển khoản hợp lệ với số tiền ${selectedPackage.price.toLocaleString('vi-VN')}đ và nội dung "${expectedMemo}". Vui lòng đợi 1-2 phút hoặc kiểm tra lại thông tin chuyển khoản.`
-            );
-          }
-          
-          const data = this.readLocalData();
-          const isUsed = (data.voteHistory || []).some(
-            (vote) => String(vote.transactionId) === String(matchingTx.id) || String(vote.transactionId) === String(matchingTx.reference_number)
-          );
-          
-          if (isUsed) {
-            throw new BadRequestException('Mã giao dịch chuyển khoản này đã được sử dụng để bình chọn trước đó.');
-          }
-          
-          transactionId = String(matchingTx.id || matchingTx.reference_number);
-        } catch (err: any) {
-          if (err instanceof BadRequestException || err instanceof UnauthorizedException) {
-            throw err;
-          }
-          throw new BadRequestException(err.message || 'Không thể xác thực giao dịch chuyển khoản qua Sepay.');
-        }
-      }
+    const quota = await this.getFreeVoteQuotaSecure(webUser);
+    if (quota.remaining <= 0) {
+      throw new BadRequestException('T??i kho???n ???? d??ng h???t 2 l?????t b??nh ch???n trong ng??y h??m nay.');
     }
 
     const updatedCandidate = await this.prisma.$transaction(async (tx: any) => {
       const candidateUpdate = await tx.candidate.update({
         where: { id: candidate.id },
-        data: { votes: { increment: points } },
+        data: { votes: { increment: finalPoints } },
       });
 
-      let voterPhoneIdentifier = 'WEB_USER';
-      if (userId) {
-        const webUser = await tx.webUser.findUnique({ where: { id: userId } });
-        if (webUser) {
-          voterPhoneIdentifier = webUser.phone || webUser.email || 'WEB_USER';
-        }
-      } else {
-        voterPhoneIdentifier = body.phone || body.voterPhone || 'WEB_USER';
-      }
+      const votingUser = await tx.webUser.findUnique({ where: { id: userId } });
+      const voterPhoneIdentifier = votingUser?.phone || votingUser?.email || votingUser?.id || 'WEB_USER';
 
       await tx.voteRecord.create({
         data: {
           candidateId: candidate.id,
           voterPhone: voterPhoneIdentifier,
-          transactionId,
+          transactionId: null,
         },
       });
 
@@ -859,37 +899,28 @@ export class AppService implements OnModuleInit {
       candidateId: candidate.id,
       candidateSbd: sbd,
       eventId: body.eventId || 'thi-sinh-duoc-yeu-thich-nhat',
-      packageId: selectedPackage?.id,
-      packageType: selectedPackage?.packageType,
-      points,
-      amount: selectedPackage?.price || 0,
-      userId: userId || body.userId,
-      voterPhone: body.phone || body.voterPhone,
-      transactionId,
+      packageId: selectedPackage.id,
+      packageType: selectedPackage.packageType,
+      points: finalPoints,
+      basePoints,
+      multiplierApplied,
+      promotionId: promotion?.id,
+      promotionName: promotion?.name,
+      amount: 0,
+      userId,
+      voterPhone: webUser.phone || webUser.email || webUser.id,
       createdAt: new Date().toISOString(),
     };
-    
-    const transaction = transactionId ? {
-      id: transactionId,
-      candidateSbd: sbd,
-      packageId: selectedPackage?.id,
-      amount: selectedPackage?.price || 0,
-      vatRate: selectedPackage?.vatRate || 10,
-      status: 'SUCCESS',
-      createdAt: voteRecord.createdAt,
-    } : null;
 
     data.voteHistory = [voteRecord, ...(data.voteHistory || [])];
-    if (transaction) {
-      data.transactions = [transaction, ...(data.transactions || [])];
-    }
     this.writeLocalData(data);
 
-    console.log(`[VOTE] ${points} points received for SBD ${sbd}. New total: ${updatedCandidate.votes}`);
+    console.log(`[VOTE] ${finalPoints} point received for SBD ${sbd}. New total: ${updatedCandidate.votes}`);
     return {
       candidate: this.mergeCandidate(updatedCandidate),
       voteRecord,
-      transaction,
+      promotion,
+      transaction: null,
     };
   }
 
@@ -1170,9 +1201,11 @@ export class AppService implements OnModuleInit {
       throw new Error('Email đã được đăng ký.');
     }
     const password = payload.password || '123456';
-    const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = hashPasswordMd5(password);
+    const id = await this.generateUniqueWebUserId(email);
     const user = await this.prisma.webUser.create({
       data: {
+        id,
         fullName: payload.fullName,
         email,
         phone: payload.phone || null,
@@ -1197,7 +1230,7 @@ export class AppService implements OnModuleInit {
     if (payload.schoolOrCompany !== undefined) data.schoolOrCompany = payload.schoolOrCompany || null;
     if (payload.contestTable !== undefined) data.contestTable = payload.contestTable || null;
     if (payload.password) {
-      data.passwordHash = await bcrypt.hash(payload.password, 10);
+      data.passwordHash = hashPasswordMd5(payload.password);
     }
     const user = await this.prisma.webUser.update({
       where: { id },
@@ -1214,10 +1247,26 @@ export class AppService implements OnModuleInit {
   }
 
   async registerWebUser(payload: Partial<WebUser> & { password?: string }): Promise<{ ok: boolean; user: WebUser; token: string }> {
-    const email = String(payload.email || '').trim().toLowerCase();
-
-    if (!email || !payload.fullName || !payload.password) {
+    const emailInput = String(payload.email || '').trim().toLowerCase();
+    if (!emailInput || !payload.fullName || !payload.password) {
       throw new UnauthorizedException('Thiếu họ tên, email hoặc mật khẩu.');
+    }
+
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(emailInput)) {
+      throw new BadRequestException('Định dạng email không hợp lệ.');
+    }
+
+    const email = normalizeEmail(emailInput);
+
+    const domain = email.split('@')[1];
+    const disposableDomains = [
+      'mailinator.com', 'yopmail.com', 'tempmail.com', 'temp-mail.org', 
+      'guerrillamail.com', 'sharklasers.com', 'dispostable.com', 'getairmail.com',
+      'maildrop.cc', 'mintemail.com', 'trashmail.com', '10minutemail.com', 'generator.email'
+    ];
+    if (disposableDomains.some(d => domain && domain.endsWith(d))) {
+      throw new BadRequestException('Hệ thống không chấp nhận đăng ký bằng email ảo/tạm thời.');
     }
 
     const existing = await this.prisma.webUser.findUnique({
@@ -1227,12 +1276,14 @@ export class AppService implements OnModuleInit {
       throw new UnauthorizedException('Email đã được đăng ký.');
     }
 
+    const id = await this.generateUniqueWebUserId(email);
     const user = await this.prisma.webUser.create({
       data: {
+        id,
         fullName: payload.fullName,
         email,
         phone: payload.phone,
-        passwordHash: await bcrypt.hash(payload.password, 10),
+        passwordHash: hashPasswordMd5(payload.password),
         provider: 'email',
         role: 'USER',
         status: 'ACTIVE',
@@ -1265,8 +1316,10 @@ export class AppService implements OnModuleInit {
       return { ok: true, user: this.publicWebUser(updated), token: generateWebToken(updated.id, this.getAdminSessionSecret()) };
     }
 
+    const id = await this.generateUniqueWebUserId(email);
     const user = await this.prisma.webUser.create({
       data: {
+        id,
         fullName: payload.fullName || 'Người dùng bình chọn',
         email,
         phone: payload.phone,
@@ -1285,14 +1338,17 @@ export class AppService implements OnModuleInit {
 
   async loginWebUser(email: string, password: string): Promise<{ ok: boolean; user: WebUser; token: string }> {
     const user = await this.prisma.webUser.findUnique({
-      where: { email: String(email || '').trim().toLowerCase() },
+      where: { email: normalizeEmail(email) },
     });
 
     if (!user || user.status === 'LOCKED' || !user.passwordHash) {
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác.');
     }
 
-    const matched = await bcrypt.compare(password || '', user.passwordHash);
+    const normalizedPassword = String(password || '');
+    const matched = isMd5Hash(user.passwordHash)
+      ? user.passwordHash.toLowerCase() === hashPasswordMd5(normalizedPassword).toLowerCase()
+      : await bcrypt.compare(normalizedPassword, user.passwordHash);
     if (!matched) {
       throw new UnauthorizedException('Email hoặc mật khẩu không chính xác.');
     }
@@ -1325,7 +1381,7 @@ export class AppService implements OnModuleInit {
       }
     }
 
-    const email = String(googleProfile?.email || payload.email || '').trim().toLowerCase();
+    const email = normalizeEmail(googleProfile?.email || payload.email || '');
     if (!email) {
       throw new UnauthorizedException('Thiếu email Google.');
     }
@@ -1335,8 +1391,10 @@ export class AppService implements OnModuleInit {
     });
 
     if (!user) {
+      const id = await this.generateUniqueWebUserId(email);
       user = await this.prisma.webUser.create({
         data: {
+          id,
           fullName: googleProfile?.name || payload.fullName || email.split('@')[0],
           email,
           phone: payload.phone,
@@ -1361,10 +1419,14 @@ export class AppService implements OnModuleInit {
 
   // --- SYSTEM SETTINGS ---
   getSettings(): SystemSettings {
+    this.normalizeVotingSettings();
+    this.settings.activeVotingPromotion = this.getActiveVotingPromotion();
     return this.settings;
   }
 
   getPublicSettings(): Partial<SystemSettings> {
+    this.normalizeVotingSettings();
+    this.settings.activeVotingPromotion = this.getActiveVotingPromotion();
     const publicFields: Array<keyof SystemSettings> = [
       'isGateOpen',
       'startDate',
@@ -1402,15 +1464,12 @@ export class AppService implements OnModuleInit {
       'registrationUrl',
       'detailUrl',
       'supportZaloUrl',
-      'freeVotesPerAccountPerDay',
-      'guideSections',
-      'exchangeRates',
-      'votePackages',
-      'sepayBankName',
-      'sepayAccountNo',
-      'sepayAccountName',
-      'sepayPrefix',
-    ];
+       'freeVotesPerAccountPerDay',
+       'guideSections',
+       'exchangeRates',
+       'votePackages',
+       'activeVotingPromotion',
+     ];
     const publicSettings: any = {};
     for (const field of publicFields) {
       if (this.settings[field] !== undefined) {
@@ -1422,11 +1481,9 @@ export class AppService implements OnModuleInit {
 
   updateSettings(updatedFields: Partial<SystemSettings>): SystemSettings {
     Object.assign(this.settings, updatedFields);
+    this.normalizeVotingSettings();
+    this.settings.activeVotingPromotion = this.getActiveVotingPromotion();
     this.saveSettings();
-
-    if (updatedFields.exchangeRates) {
-      this.syncVotePackagesWithExchangeRates(updatedFields.exchangeRates);
-    }
 
     return this.settings;
   }
@@ -1688,5 +1745,161 @@ export class AppService implements OnModuleInit {
     return this.prisma.post.delete({
       where: { id },
     });
+  }
+
+  async getDashboardStats() {
+    const totalCandidates = await this.prisma.candidate.count();
+    const totalUsers = await this.prisma.webUser.count();
+    const totalSponsors = await this.prisma.sponsor.count();
+
+    const votesAgg = await this.prisma.candidate.aggregate({
+      _sum: { votes: true }
+    });
+    const totalVotes = votesAgg._sum.votes || 0;
+
+    // Group vote history of the last 7 days
+    const chartData: { label: string; value: number }[] = [];
+    const now = new Date();
+
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+      const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+
+      const count = await this.prisma.voteRecord.count({
+        where: {
+          voteTime: {
+            gte: startOfDay,
+            lte: endOfDay
+          }
+        }
+      });
+
+      const label = `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
+      chartData.push({ label, value: count });
+    }
+
+    // Recent activities (last 4 votes)
+    const recentVotes = await this.prisma.voteRecord.findMany({
+      take: 4,
+      orderBy: { voteTime: 'desc' },
+    });
+
+    const candidateIds = recentVotes.map(v => v.candidateId);
+    const relatedCandidates = await this.prisma.candidate.findMany({
+      where: { id: { in: candidateIds } }
+    });
+
+    const candidatesMap = new Map(relatedCandidates.map(c => [c.id, c]));
+
+    const activities = recentVotes.map((v) => {
+      const cand = candidatesMap.get(v.candidateId);
+      const date = new Date(v.voteTime);
+      const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+      return {
+        id: v.id,
+        title: cand ? `Bình chọn dự án: ${cand.name}` : `Bình chọn dự án ẩn`,
+        author: v.voterPhone || 'Người dùng ẩn',
+        time: timeStr,
+      };
+    });
+
+    const postsViews = await this.prisma.post.aggregate({
+      _sum: { views: true }
+    });
+    const totalPostViews = postsViews._sum.views || 0;
+
+    return {
+      totalCandidates,
+      totalUsers,
+      totalSponsors,
+      totalVotes,
+      chartData,
+      activities,
+      totalPostViews,
+      settings: {
+        isGateOpen: this.settings.isGateOpen,
+        endDate: this.settings.endDate,
+        statsViews: this.settings.statsViews || '1,259',
+      }
+    };
+  }
+
+  private async generateUniqueWebUserId(email: string): Promise<string> {
+    const emailName = email.split('@')[0];
+    let baseId = emailName.replace(/[^a-zA-Z0-9\._-]/g, '');
+    if (!baseId) {
+      baseId = `user-${Date.now()}`;
+    }
+    
+    let id = baseId;
+    let userExists = await this.prisma.webUser.findUnique({ where: { id } });
+    let counter = 1;
+    while (userExists) {
+      id = `${baseId}-${counter}`;
+      userExists = await this.prisma.webUser.findUnique({ where: { id } });
+      counter++;
+    }
+    return id;
+  }
+
+  async getAdminVoteLogs() {
+    const votes = await this.prisma.voteRecord.findMany({
+      orderBy: { voteTime: 'desc' },
+    });
+
+    const candidateIds = [...new Set(votes.map((v: any) => v.candidateId))];
+    const candidates = await this.prisma.candidate.findMany({
+      where: { id: { in: candidateIds } },
+    });
+    const candidatesMap = new Map(candidates.map((c: any) => [c.id, c]));
+
+    const webUsers = await this.prisma.webUser.findMany();
+    const userMap = new Map<string, any>();
+    for (const u of webUsers) {
+      if (u.id) userMap.set(u.id, u);
+      if (u.email) userMap.set(u.email.toLowerCase(), u);
+      if (u.phone) userMap.set(u.phone, u);
+    }
+
+    return votes.map((v: any) => {
+      const cand = candidatesMap.get(v.candidateId);
+      const voterKey = String(v.voterPhone || '').trim().toLowerCase();
+      const user = userMap.get(voterKey) || userMap.get(v.voterPhone);
+      return {
+        id: v.id,
+        voterPhone: v.voterPhone,
+        voterName: user ? user.fullName : 'Người dùng ẩn',
+        voterEmail: user ? user.email : '',
+        candidateSbd: cand ? cand.sbd : '---',
+        candidateName: cand ? cand.name : 'Dự án không tồn tại',
+        voteTime: v.voteTime,
+      };
+    });
+  }
+
+  async deleteVoteLog(id: string) {
+    const vote = await this.prisma.voteRecord.findUnique({
+      where: { id },
+    });
+    if (!vote) {
+      throw new NotFoundException('Không tìm thấy bản ghi bình chọn.');
+    }
+
+    // Decrement candidate votes
+    await this.prisma.$transaction(async (tx: any) => {
+      // Find candidate to see if we can decrement votes (avoid negative votes)
+      const cand = await tx.candidate.findUnique({ where: { id: vote.candidateId } });
+      const currentVotes = cand?.votes || 0;
+      await tx.candidate.update({
+        where: { id: vote.candidateId },
+        data: { votes: { set: Math.max(0, currentVotes - 1) } },
+      });
+      await tx.voteRecord.delete({
+        where: { id },
+      });
+    });
+
+    return { success: true };
   }
 }
