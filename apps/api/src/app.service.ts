@@ -1785,14 +1785,16 @@ export class AppService implements OnModuleInit {
       orderBy: { voteTime: 'desc' },
     });
 
-    const candidateIds = recentVotes.map(v => v.candidateId);
+    const candidateIds = recentVotes.map((v: (typeof recentVotes)[number]) => v.candidateId);
     const relatedCandidates = await this.prisma.candidate.findMany({
       where: { id: { in: candidateIds } }
     });
 
-    const candidatesMap = new Map(relatedCandidates.map(c => [c.id, c]));
+    const candidatesMap = new Map<string, { id: string; name: string; sbd: string }>(
+      relatedCandidates.map((c: (typeof relatedCandidates)[number]) => [c.id, { id: c.id, name: c.name, sbd: c.sbd }]),
+    );
 
-    const activities = recentVotes.map((v) => {
+    const activities = recentVotes.map((v: (typeof recentVotes)[number]) => {
       const cand = candidatesMap.get(v.candidateId);
       const date = new Date(v.voteTime);
       const timeStr = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
@@ -1852,7 +1854,9 @@ export class AppService implements OnModuleInit {
     const candidates = await this.prisma.candidate.findMany({
       where: { id: { in: candidateIds } },
     });
-    const candidatesMap = new Map(candidates.map((c: any) => [c.id, c]));
+    const candidatesMap = new Map<string, { id: string; sbd: string; name: string }>(
+      candidates.map((c: any) => [c.id, { id: c.id, sbd: c.sbd, name: c.name }]),
+    );
 
     const webUsers = await this.prisma.webUser.findMany();
     const userMap = new Map<string, any>();
