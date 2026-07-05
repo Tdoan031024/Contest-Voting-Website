@@ -14,10 +14,12 @@ const nextConfig = {
     webpackBuildWorker: false,
   },
   async rewrites() {
+    const isProd = process.env.NODE_ENV === 'production';
+    const defaultApi = isProd ? 'https://startup.huitmedia.edu.vn' : 'http://localhost:5000';
     return [
       {
         source: '/api/:path*',
-        destination: `${process.env.ADMIN_API_URL || 'http://localhost:5000'}/api/:path*`,
+        destination: `${process.env.ADMIN_API_URL || defaultApi}/api/:path*`,
       },
     ];
   },
