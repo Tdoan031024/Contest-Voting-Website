@@ -29,10 +29,16 @@ jobs:
             unset npm_config_prefix
             unset NPM_CONFIG_PRODUCTION
             unset npm_config_production
-            export NODE_OPTIONS="--max-old-space-size=768"
+            export NODE_OPTIONS="--max-old-space-size=450"
             export NEXT_TELEMETRY_DISABLED=1
             export NEXT_PRIVATE_DISABLE_SOURCEMAPS=1
             export NEXT_DISABLE_ESLINT=1
+
+            # Stop services to free up RAM before building
+            echo "[deploy] Stopping services to free up memory..."
+            cloudlinux-selector stop --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/admin || true
+            cloudlinux-selector stop --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/api || true
+            cloudlinux-selector stop --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/web || true
 
             cd "$PROJECT_DIR"
             echo "[deploy] Fetch latest main"
@@ -41,18 +47,23 @@ jobs:
 
             echo "[deploy] Install dependencies"
             env -u NODE_ENV -u NPM_CONFIG_PRODUCTION -u npm_config_production -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" ci --include=dev --no-audit --no-fund
-            echo "[deploy] Build shared"
-            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=packages/shared
-            echo "[deploy] Build api"
-            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/api
-            echo "[deploy] Build web"
-            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/web
-            echo "[deploy] Build admin"
-            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/admin
+            
             echo "[deploy] Prisma generate"
             env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run prisma:generate --workspace=apps/api
 
-            echo "[deploy] Restart services"
-            cloudlinux-selector restart --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/admin
-            cloudlinux-selector restart --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/api
-            cloudlinux-selector restart --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/web
+            echo "[deploy] Build shared"
+            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=packages/shared
+            
+            echo "[deploy] Build api"
+            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/api
+            
+            echo "[deploy] Build web"
+            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/web
+            
+            echo "[deploy] Build admin"
+            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/admin
+
+            echo "[deploy] Starting services..."
+            cloudlinux-selector start --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/admin || cloudlinux-selector restart --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/admin
+            cloudlinux-selector start --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/api || cloudlinux-selector restart --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/api
+            cloudlinux-selector start --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/web || cloudlinux-selector restart --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/web
