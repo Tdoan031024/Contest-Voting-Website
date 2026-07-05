@@ -335,8 +335,8 @@ export class AppService implements OnModuleInit {
           note: item?.note ? String(item.note) : undefined,
         } as VotingPromotion;
       })
-      .filter(Boolean)
-      .sort((a: VotingPromotion, b: VotingPromotion) => {
+      .filter((promotion): promotion is VotingPromotion => promotion !== null)
+      .sort((a, b) => {
         if (b.multiplier !== a.multiplier) return b.multiplier - a.multiplier;
         return new Date(b.startAt).getTime() - new Date(a.startAt).getTime();
       });
@@ -373,19 +373,19 @@ export class AppService implements OnModuleInit {
       ? Number(this.settings.freeVotesPerAccountPerDay)
       : 2;
     this.settings.exchangeRates = [
-      { points: 1, price: 0, label: '1 lÆ°á»£t bÃ¬nh chá»n miá»…n phÃ­' },
+      { points: 1, price: 0, label: '1 lượt bình chọn miễn phí' },
     ];
     this.settings.votePackages = [this.getFreeVotePackage()];
     this.settings.votingPromotions = this.normalizeVotingPromotions(this.settings.votingPromotions);
     this.settings.activeVotingPromotion = this.getActiveVotingPromotion();
     this.settings.guideSections = [
       {
-        title: 'BÃ¬nh chá»n miá»…n phÃ­ má»—i ngÃ y',
+        title: 'Bình chọn miễn phí mỗi ngày',
         steps: [
-          { number: '01', description: 'ÄÄƒng kÃ½ hoáº·c Ä‘Äƒng nháº­p tÃ i khoáº£n Ä‘á»ƒ bÃ¬nh chá»n.' },
-          { number: '02', description: 'Má»—i tÃ i khoáº£n cÃ³ 2 lÆ°á»£t bÃ¬nh chá»n miá»…n phÃ­ trong má»—i ngÃ y.' },
-          { number: '03', description: 'Má»—i láº§n bÃ¬nh chá»n tÄƒng 1 lÆ°á»£t cho dá»± Ã¡n báº¡n chá»n.' },
-          { number: '04', description: 'DÃ¹ng háº¿t 2 lÆ°á»£t trong ngÃ y thÃ¬ khÃ´ng thá»ƒ bÃ¬nh chá»n cho báº¥t ká»³ dá»± Ã¡n nÃ o khÃ¡c cho Ä‘áº¿n ngÃ y hÃ´m sau.' },
+          { number: '01', description: 'Đăng ký hoặc đăng nhập tài khoản để bình chọn.' },
+          { number: '02', description: 'Mỗi tài khoản có 2 lượt bình chọn miễn phí trong mỗi ngày.' },
+          { number: '03', description: 'Mỗi lần bình chọn tăng 1 lượt cho dự án bạn chọn.' },
+          { number: '04', description: 'Dùng hết 2 lượt trong ngày thì không thể bình chọn cho bất kỳ dự án nào khác cho đến ngày hôm sau.' },
         ],
       },
     ] as any;

@@ -5,10 +5,43 @@ import Link from 'next/link';
 import { Candidate } from '@huitfest/shared';
 import { apiUrl, formatAssetUrl } from '../../api';
 
+type VotingPromotion = {
+  id: string;
+  name: string;
+  multiplier: number;
+  startAt: string;
+  endAt: string;
+  isEnabled: boolean;
+  appliesTo: 'FREE' | 'PAID' | 'ALL';
+  note?: string;
+};
+
+function createPromotionDraft(): VotingPromotion {
+  const now = new Date();
+  const start = new Date(now.getTime() + 10 * 60 * 1000);
+  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
+  const toLocalInput = (value: Date) => {
+    const offset = value.getTimezoneOffset();
+    const local = new Date(value.getTime() - offset * 60 * 1000);
+    return local.toISOString().slice(0, 16);
+  };
+
+  return {
+    id: `promo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    name: 'Khung giờ nhân điểm',
+    multiplier: 2,
+    startAt: toLocalInput(start),
+    endAt: toLocalInput(end),
+    isEnabled: true,
+    appliesTo: 'FREE',
+    note: '',
+  };
+}
+
 const tableLabels: Record<string, string> = {
-  HIGH_SCHOOL: 'Bảng học sinh',
-  STUDENT: 'Bảng sinh viên, học viên',
-  ENTERPRISE: 'Bảng cá nhân, tổ chức, doanh nghiệp',
+  HIGH_SCHOOL: 'B?ng h?c sinh',
+  STUDENT: 'B?ng sinh vi?n, h?c vi?n',
+  ENTERPRISE: 'B?ng c? nh?n, t? ch?c, doanh nghi?p',
 };
 
 const emptyProject: Partial<Candidate> = {
@@ -45,15 +78,15 @@ function Pill({
   tone?: 'green' | 'blue' | 'orange' | 'red' | 'slate';
 }) {
   const classes = {
-    green: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    blue: 'border-sky-200 bg-sky-50 text-sky-700',
-    orange: 'border-orange-200 bg-orange-50 text-orange-700',
-    red: 'border-red-200 bg-red-50 text-red-700',
-    slate: 'border-slate-200 bg-slate-50 text-slate-600',
+    green: 'border-emerald-200/80 bg-emerald-50 text-emerald-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]',
+    blue: 'border-sky-200/80 bg-sky-50 text-sky-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]',
+    orange: 'border-orange-200/80 bg-orange-50 text-orange-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]',
+    red: 'border-rose-200/80 bg-rose-50 text-rose-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]',
+    slate: 'border-slate-200/80 bg-slate-50 text-slate-600 shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]',
   };
 
   return (
-    <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-bold leading-none ${classes[tone]}`}>
+    <span className={`inline-flex items-center rounded-full border px-3 py-1.5 text-[11px] font-extrabold leading-none tracking-[-0.01em] ${classes[tone]}`}>
       {children}
     </span>
   );
@@ -73,11 +106,11 @@ function ActionButton({
   href?: string;
 }) {
   const classes = {
-    view: 'border-slate-200 bg-white text-slate-600 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700',
-    edit: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100',
-    delete: 'border-red-200 bg-red-50 text-red-600 hover:border-red-400 hover:bg-red-100',
+    view: 'border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900',
+    edit: 'border-emerald-200/80 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100',
+    delete: 'border-rose-200/80 bg-rose-50 text-rose-600 hover:border-rose-300 hover:bg-rose-100',
   };
-  const className = `grid h-9 w-9 place-items-center rounded-lg border transition ${classes[tone]}`;
+  const className = `grid h-10 w-10 place-items-center rounded-xl border shadow-sm transition duration-150 hover:-translate-y-[1px] ${classes[tone]}`;
 
   if (href) {
     return (
@@ -1065,6 +1098,10 @@ export default function CandidatesAdminPage() {
   const [selectedProject, setSelectedProject] = useState<Candidate | null>(null);
   const [form, setForm] = useState<Partial<Candidate>>(emptyProject);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
+  const [registrationDeadline, setRegistrationDeadline] = useState('2026-06-20T23:59');
+  const [votingPromotions, setVotingPromotions] = useState<VotingPromotion[]>([]);
+  const [settingsSaving, setSettingsSaving] = useState(false);
 
   const loadProjects = async () => {
     try {
@@ -1077,6 +1114,21 @@ export default function CandidatesAdminPage() {
 
   useEffect(() => {
     loadProjects();
+  }, []);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch(apiUrl('/api/admin/settings'));
+        if (!res.ok) return;
+        const data = await res.json();
+        setIsRegistrationOpen(data.isRegistrationOpen ?? true);
+        setRegistrationDeadline(data.registrationDeadline || '2026-06-20T23:59');
+        setVotingPromotions(Array.isArray(data.votingPromotions) ? data.votingPromotions : []);
+      } catch {}
+    }
+
+    loadSettings();
   }, []);
 
   const rankedProjects = useMemo(() => [...projects].sort((a, b) => b.votes - a.votes), [projects]);
@@ -1096,9 +1148,58 @@ export default function CandidatesAdminPage() {
       );
   }, [rankedProjects, roundFilter, search, tableFilter]);
 
-  const totalVotes = projects.reduce((sum, project) => sum + project.votes, 0);
   const missingInfo = projects.filter((project) => !project.teamName || !project.leaderName || !project.contestTable).length;
-  const leadingProject = rankedProjects[0];
+  const activePromotion = useMemo(() => {
+    const now = Date.now();
+    return votingPromotions.find((promotion) => {
+      if (!promotion.isEnabled) return false;
+      const start = new Date(promotion.startAt).getTime();
+      const end = new Date(promotion.endAt).getTime();
+      return Number.isFinite(start) && Number.isFinite(end) && start <= now && end >= now;
+    }) || null;
+  }, [votingPromotions]);
+
+  const saveVotingSettings = async (
+    nextPromotions = votingPromotions,
+    nextRegistrationOpen = isRegistrationOpen,
+    nextRegistrationDeadline = registrationDeadline,
+  ) => {
+    setSettingsSaving(true);
+    try {
+      const currentRes = await fetch(apiUrl('/api/admin/settings'));
+      if (!currentRes.ok) throw new Error('load_failed');
+      const currentSettings = await currentRes.json();
+      const res = await fetch(apiUrl('/api/admin/settings'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...currentSettings,
+          isRegistrationOpen: nextRegistrationOpen,
+          registrationDeadline: nextRegistrationDeadline,
+          votingPromotions: nextPromotions,
+        }),
+      });
+      if (!res.ok) throw new Error('save_failed');
+    } catch {
+      alert('Khong the luu cau hinh promotion / dang ky. Vui long kiem tra backend.');
+    } finally {
+      setSettingsSaving(false);
+    }
+  };
+
+  const updatePromotion = (id: string, field: keyof VotingPromotion, value: string | number | boolean) => {
+    setVotingPromotions((prev) => prev.map((promotion) => (
+      promotion.id === id ? { ...promotion, [field]: value } : promotion
+    )));
+  };
+
+  const addPromotion = () => {
+    setVotingPromotions((prev) => [...prev, createPromotionDraft()]);
+  };
+
+  const removePromotion = (id: string) => {
+    setVotingPromotions((prev) => prev.filter((promotion) => promotion.id !== id));
+  };
 
   const openAddModal = () => {
     setSelectedProject(null);
@@ -1216,88 +1317,178 @@ export default function CandidatesAdminPage() {
 
   return (
     <div className="w-full max-w-full space-y-5">
-      <section className="w-full rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex flex-col gap-5 border-b border-slate-100 p-5 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">Quản lý cuộc thi</p>
-            <h2 className="mt-1 text-2xl font-black tracking-tight text-slate-950">Danh sách dự án tham gia HUIT Startup</h2>
+      <section className="admin-card overflow-hidden p-0">
+        <div className="flex flex-col gap-6 border-b border-slate-200/70 px-6 py-6 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--primary-strong)]">Quản lý cuộc thi</p>
+            <h2 className="mt-2 text-[34px] font-extrabold tracking-[-0.04em] text-slate-950">Danh sách dự án tham gia</h2>
+            <p className="mt-2 max-w-2xl text-sm font-medium leading-6 text-slate-500">
+              Theo dõi hồ sơ dự án, điều chỉnh promotion bình chọn và quản lý trạng thái mở đăng ký ngay trên cùng một màn hình vận hành.
+            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              onClick={handleExportCandidates}
-              className="h-11 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black text-slate-700 shadow-sm transition hover:border-emerald-600 hover:text-emerald-700"
-            >
-              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <div className="flex flex-wrap items-center gap-3">
+            <button onClick={handleExportCandidates} className="admin-btn admin-btn-secondary">
+              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="17 8 12 3 7 8" />
                 <line x1="12" y1="3" x2="12" y2="15" />
               </svg>
               Xuất CSV
             </button>
-            <button
-              onClick={() => setIsImportModalOpen(true)}
-              className="h-11 flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 text-xs font-black text-slate-700 shadow-sm transition hover:border-emerald-600 hover:text-emerald-700"
-            >
-              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <button onClick={() => setIsImportModalOpen(true)} className="admin-btn admin-btn-secondary">
+              <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                 <polyline points="7 10 12 15 17 10" />
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
               Nhập CSV
             </button>
-            <button onClick={openAddModal} className="h-11 rounded-xl bg-[#e45136] px-5 text-sm font-black text-white shadow-sm transition hover:bg-[#c83f28]">
+            <button onClick={openAddModal} className="admin-btn admin-btn-primary min-w-[148px]">
               Thêm dự án mới
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 divide-y divide-slate-100 md:grid-cols-4 md:divide-x md:divide-y-0">
+        <div className="grid gap-4 p-6 xl:grid-cols-4">
           {[
-            ['Tổng dự án', projects.length.toLocaleString(), 'Hồ sơ trong hệ thống'],
-            ['Thiếu thông tin', missingInfo.toLocaleString(), 'Cần bổ sung nhóm/trưởng nhóm'],
-            ['Tổng điểm', totalVotes.toLocaleString(), 'Điểm bình chọn toàn hệ thống'],
-            ['Dẫn đầu', leadingProject?.name || 'Chưa có', leadingProject ? `Mã ${leadingProject.sbd}` : 'Chưa có dữ liệu'],
+            ['Tổng dự án', projects.length.toLocaleString(), 'Số hồ sơ hiện có trong hệ thống'],
+            ['Thiếu thông tin', missingInfo.toLocaleString(), 'Cần bổ sung nhóm, trưởng nhóm hoặc bảng thi'],
           ].map(([label, value, note]) => (
-            <div key={label} className="p-5 min-w-0">
-              <p className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-400">{label}</p>
-              <p className="mt-2 truncate text-2xl font-black text-slate-950">{value}</p>
-              <p className="mt-1 truncate text-xs font-semibold text-slate-500">{note}</p>
+            <div key={label} className="dashboard-stat-card">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</p>
+              <p className="mt-3 text-[34px] font-extrabold tracking-[-0.04em] text-slate-950">{value}</p>
+              <p className="mt-2 text-sm font-medium leading-6 text-slate-500">{note}</p>
             </div>
           ))}
+
+          <div className="dashboard-stat-card">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Đăng ký</p>
+                <p className="mt-3 text-[30px] font-extrabold tracking-[-0.04em] text-slate-950">
+                  {isRegistrationOpen ? 'Đang mở' : 'Đang đóng'}
+                </p>
+                <p className="mt-2 text-sm font-medium leading-6 text-slate-500">Điều khiển hiển thị nút đăng ký ở website public.</p>
+              </div>
+              <button
+                type="button"
+                disabled={settingsSaving}
+                onClick={async () => {
+                  const nextValue = !isRegistrationOpen;
+                  setIsRegistrationOpen(nextValue);
+                  await saveVotingSettings(votingPromotions, nextValue, registrationDeadline);
+                }}
+                className={`relative mt-1 flex h-8 w-14 items-center rounded-full transition ${isRegistrationOpen ? 'bg-emerald-500' : 'bg-slate-300'} ${settingsSaving ? 'opacity-60' : ''}`}
+              >
+                <span className={`absolute h-6 w-6 rounded-full bg-white shadow-md transition ${isRegistrationOpen ? 'translate-x-7' : 'translate-x-1'}`} />
+              </button>
+            </div>
+            <div className="mt-4">
+              <label className="mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-slate-400">Hạn đăng ký</label>
+              <input
+                type="datetime-local"
+                value={registrationDeadline}
+                onChange={(event) => setRegistrationDeadline(event.target.value)}
+                onBlur={() => saveVotingSettings(votingPromotions, isRegistrationOpen, registrationDeadline)}
+                className="admin-input"
+              />
+            </div>
+          </div>
+
+          <div className="dashboard-stat-card">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Promotion</p>
+                <p className="mt-3 truncate text-[30px] font-extrabold tracking-[-0.04em] text-slate-950">
+                  {activePromotion ? `x${activePromotion.multiplier}` : 'Chưa chạy'}
+                </p>
+                <p className="mt-2 text-sm font-medium leading-6 text-slate-500">
+                  {activePromotion ? activePromotion.name : 'Chưa có khung giờ nhân điểm đang hoạt động.'}
+                </p>
+              </div>
+              <button type="button" onClick={addPromotion} className="admin-btn admin-btn-secondary min-w-[84px]">
+                + Thêm
+              </button>
+            </div>
+            <div className="mt-4 space-y-3">
+              {votingPromotions.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-5 text-sm font-medium text-slate-500">
+                  Chưa có promotion nhân điểm nào.
+                </div>
+              ) : (
+                votingPromotions.slice(0, 2).map((promotion) => (
+                  <div key={promotion.id} className="rounded-2xl border border-slate-200 bg-white/90 p-4 shadow-sm">
+                    <div className="grid gap-2.5">
+                      <input value={promotion.name} onChange={(event) => updatePromotion(promotion.id, 'name', event.target.value)} className="admin-input" />
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <input type="number" min={2} max={10} value={promotion.multiplier} onChange={(event) => updatePromotion(promotion.id, 'multiplier', Number(event.target.value))} className="admin-input" />
+                        <select value={promotion.appliesTo} onChange={(event) => updatePromotion(promotion.id, 'appliesTo', event.target.value)} className="admin-select">
+                          <option value="FREE">FREE</option>
+                          <option value="PAID">PAID</option>
+                          <option value="ALL">ALL</option>
+                        </select>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2.5 2xl:grid-cols-2">
+                        <input type="datetime-local" value={promotion.startAt} onChange={(event) => updatePromotion(promotion.id, 'startAt', event.target.value)} className="admin-input" />
+                        <input type="datetime-local" value={promotion.endAt} onChange={(event) => updatePromotion(promotion.id, 'endAt', event.target.value)} className="admin-input" />
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <label className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                          <input type="checkbox" checked={promotion.isEnabled} onChange={(event) => updatePromotion(promotion.id, 'isEnabled', event.target.checked)} />
+                          Kích hoạt
+                        </label>
+                        <button type="button" onClick={() => removePromotion(promotion.id)} className="admin-btn admin-btn-danger !h-9 px-3">
+                          Xóa
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+              {votingPromotions.length > 2 && (
+                <p className="text-xs font-medium leading-5 text-slate-500">
+                  Còn {votingPromotions.length - 2} promotion khác. Vào trang cấu hình để quản lý toàn bộ.
+                </p>
+              )}
+              <button type="button" disabled={settingsSaving} onClick={() => saveVotingSettings()} className="admin-btn admin-btn-primary w-full">
+                {settingsSaving ? 'Đang lưu...' : 'Lưu promotion'}
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-[1fr_200px_180px_110px]">
+      <section className="dashboard-filter-bar p-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_220px_200px_132px]">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Tìm theo tên dự án, mã, nhóm, trưởng nhóm hoặc đơn vị..."
-            className="h-11 w-full min-w-0 rounded-xl border border-slate-200 bg-slate-50 px-4 text-sm font-semibold text-slate-800 outline-none transition focus:border-emerald-600 focus:bg-white"
+            className="admin-input min-w-0"
           />
-          <select value={tableFilter} onChange={(event) => setTableFilter(event.target.value)} className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 outline-none focus:border-emerald-600">
+          <select value={tableFilter} onChange={(event) => setTableFilter(event.target.value)} className="admin-select px-3 text-xs font-bold text-slate-700">
             <option value="ALL">Tất cả bảng thi</option>
             <option value="HIGH_SCHOOL">Bảng học sinh</option>
             <option value="STUDENT">Bảng sinh viên</option>
             <option value="ENTERPRISE">Bảng doanh nghiệp</option>
           </select>
-          <select value={roundFilter} onChange={(event) => setRoundFilter(event.target.value)} className="h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-bold text-slate-700 outline-none focus:border-emerald-600">
+          <select value={roundFilter} onChange={(event) => setRoundFilter(event.target.value)} className="admin-select px-3 text-xs font-bold text-slate-700">
             <option value="ALL">Tất cả vòng</option>
             <option>Vòng loại</option>
             <option>Vòng bán kết</option>
             <option>Vòng chung kết</option>
           </select>
-          <div className="flex h-11 items-center justify-center rounded-xl bg-slate-50 text-xs font-black text-slate-500">
+          <div className="flex h-[46px] items-center justify-center rounded-2xl border border-slate-200 bg-white text-xs font-black text-slate-500 shadow-sm">
             {filteredProjects.length.toLocaleString()} kết quả
           </div>
         </div>
       </section>
 
-      <section className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <section className="admin-card overflow-hidden p-0">
         <div className="w-full overflow-x-auto">
-          <table className="w-full min-w-[800px] border-collapse text-left">
+          <table className="dashboard-table min-w-[920px] text-left">
             <thead>
-              <tr className="border-b border-slate-100 bg-slate-50 text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+              <tr className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
                 <th className="px-5 py-4">Dự án</th>
                 <th className="px-5 py-4">Đại diện</th>
                 <th className="px-5 py-4">Vòng thi</th>
@@ -1305,22 +1496,22 @@ export default function CandidatesAdminPage() {
                 <th className="px-5 py-4 text-right">Thao tác</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
+            <tbody className="text-sm">
               {filteredProjects.map((project) => {
                 const projectTableLabel = project.contestTableLabel || tableLabels[project.contestTable || ''] || 'Chưa phân bảng';
  
                 return (
-                  <tr key={project.id} className="align-middle transition hover:bg-emerald-50/35">
+                  <tr key={project.id} className="align-middle transition hover:bg-slate-50/80">
                     <td className="px-5 py-4">
                       <div className="flex min-w-[240px] items-center gap-3">
-                        <img src={formatAssetUrl(project.imageUrl)} alt={project.name} className="h-12 w-12 shrink-0 rounded-xl border border-slate-200 object-cover" />
+                        <img src={formatAssetUrl(project.imageUrl)} alt={project.name} className="h-14 w-14 shrink-0 rounded-2xl border border-slate-200 object-cover shadow-sm" />
                         <div className="min-w-0">
-                          <p className="truncate font-black text-slate-950 text-sm">{project.name}</p>
+                          <p className="truncate text-[15px] font-extrabold tracking-[-0.02em] text-slate-950">{project.name}</p>
                           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                            <span className="text-[10px] bg-slate-100 text-slate-600 font-bold px-1.5 py-0.5 rounded">
+                            <span className="rounded-lg bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
                               {project.sbd}
                             </span>
-                            <span className="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-1.5 py-0.5 rounded">
+                            <span className="rounded-lg border border-emerald-200/80 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
                               {projectTableLabel}
                             </span>
                           </div>
@@ -1337,7 +1528,7 @@ export default function CandidatesAdminPage() {
                       <Pill tone={roundTone(project.currentRound)}>{project.currentRound || 'Vòng loại'}</Pill>
                     </td>
                     <td className="px-5 py-4 text-right">
-                      <p className="text-lg font-black tabular-nums text-[#e45136]">{project.votes.toLocaleString()}</p>
+                      <p className="text-[28px] font-extrabold tracking-[-0.03em] tabular-nums text-slate-950">{project.votes.toLocaleString()}</p>
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-end gap-1.5">

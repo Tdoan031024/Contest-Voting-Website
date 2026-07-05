@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAlert } from '../AlertProvider';
 import { apiUrl } from '../api';
 import VoteModal from '../VoteModal';
-const PROJECT_FALLBACK_IMAGE = '/uploads/poster-khoi-nghiep.jpg';
+const PROJECT_FALLBACK_IMAGE = '/duan/anhmauduan.png';
 
 function getCandidateImageUrl(url?: string | null) {
   if (!url) return PROJECT_FALLBACK_IMAGE;
@@ -360,7 +360,7 @@ export default function RankingPage() {
   }, []);
 
   const isGateOpen = (() => {
-    if (!settings) return false;
+    if (!settings) return true;
     if (!settings.isGateOpen) return false;
     const now = new Date();
     return now >= new Date(settings.startDate) && now <= new Date(settings.endDate);

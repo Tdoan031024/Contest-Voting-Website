@@ -96,7 +96,7 @@ function getStoredUser() {
   }
 }
 
-const PROJECT_FALLBACK_IMAGE = '/uploads/poster-khoi-nghiep.jpg';
+const PROJECT_FALLBACK_IMAGE = '/duan/anhmauduan.png';
 
 function getCandidateImageUrl(url?: string | null) {
   if (!url) return PROJECT_FALLBACK_IMAGE;

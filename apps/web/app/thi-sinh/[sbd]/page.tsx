@@ -9,7 +9,7 @@ import { apiUrl } from '../../api';
 import VoteModal from '../../VoteModal';
 
 function getCandidateImageUrl(url?: string | null) {
-  if (!url) return '/uploads/poster-khoi-nghiep.jpg';
+  if (!url) return '/duan/anhmauduan.png';
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
   return url;
 }
