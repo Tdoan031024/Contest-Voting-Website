@@ -163,7 +163,7 @@ export class AppService implements OnModuleInit {
     return process.env.DATABASE_FILE_PATH || path.resolve(__dirname, '..', 'contest_voting_db.json');
   }
   private settings: SystemSettings = {
-    isGateOpen: true,
+    isGateOpen: false,
     startDate: '2026-06-01T00:00',
     endDate: '2026-12-31T23:59',
     maxVotesPerPhone: 5,
