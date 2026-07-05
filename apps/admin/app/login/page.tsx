@@ -57,9 +57,9 @@ export default function AdminLoginPage() {
       </div>
 
       <div className="relative z-10 flex min-h-screen items-center justify-center p-4 sm:p-8">
-        <main className="w-full max-w-[1060px] lg:h-[720px] overflow-hidden rounded-[40px] bg-white/80 backdrop-blur-2xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.12)] flex flex-col lg:flex-row border border-white/50">
+        <main className="w-full max-w-[1060px] lg:min-h-[600px] xl:min-h-[700px] lg:h-auto overflow-hidden rounded-[40px] bg-white/80 backdrop-blur-2xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.12)] flex flex-col lg:flex-row border border-white/50">
           
-          <section className="relative hidden w-full lg:flex lg:w-[46%] flex-col overflow-hidden p-12 text-white">
+          <section className="relative hidden w-full lg:flex lg:w-[46%] flex-col overflow-hidden px-8 py-10 xl:p-12 text-white">
             <div className="absolute inset-0 bg-[#0062CC]" />
             <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 opacity-90" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,_rgba(255,255,255,0.15)_0%,_transparent_50%)]" />
@@ -73,7 +73,7 @@ export default function AdminLoginPage() {
                 <h3 className="text-sm font-extrabold tracking-tight text-white uppercase">HUIT STARTUP</h3>
               </div>
 
-              <div className="mt-14">
+              <div className="mt-8 xl:mt-14">
                 <h1 className="text-3xl font-black leading-tight tracking-tight mb-6">
                   Quản trị <br />
                   <span className="text-blue-200">bình chọn chuyên nghiệp</span>
@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
                 </p>
               </div>
 
-              <div className="mt-12 grid grid-cols-2 gap-3">
+              <div className="mt-8 xl:mt-12 grid grid-cols-2 gap-3">
                 {[
                   { icon: <CandidateIcon />, label: 'Quản lý thí sinh' },
                   { icon: <VoteIcon />, label: 'Bình chọn realtime' },
@@ -97,7 +97,7 @@ export default function AdminLoginPage() {
                 ))}
               </div>
 
-              <div className="mt-auto pt-12">
+              <div className="mt-auto pt-6 xl:pt-12">
                 <div className="inline-flex items-center gap-3 rounded-2xl bg-black/10 px-5 py-3 text-[11px] font-bold backdrop-blur-md border border-white/5">
                   <span className="relative flex h-2.5 w-2.5">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
@@ -109,8 +109,8 @@ export default function AdminLoginPage() {
             </div>
           </section>
 
-          <section className="flex w-full flex-col p-8 sm:p-14 lg:w-[52%] bg-white">
-            <div className="flex items-start justify-between mb-12">
+          <section className="flex w-full flex-col px-8 py-8 sm:px-14 sm:py-10 xl:py-14 lg:w-[52%] bg-white">
+            <div className="flex items-start justify-between mb-8 xl:mb-12">
               <div>
                 <h2 className="text-3xl font-black tracking-tighter text-slate-900">Đăng nhập</h2>
                 <p className="mt-2 text-base font-medium text-slate-500">Truy cập vào hệ thống quản trị của bạn.</p>
@@ -120,7 +120,7 @@ export default function AdminLoginPage() {
               </div>
             </div>
 
-            <form className="space-y-6" onSubmit={handleLogin}>
+            <form className="space-y-5 xl:space-y-6" onSubmit={handleLogin}>
               <div className="space-y-2.5">
                 <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-400 ml-1">Tài khoản quản trị</label>
                 <div className="relative group">
@@ -197,7 +197,7 @@ export default function AdminLoginPage() {
               </button>
             </form>
 
-            <div className="mt-auto pt-10 flex flex-col gap-5">
+            <div className="mt-auto pt-6 xl:pt-10 flex flex-col gap-5">
               <div className="h-px w-full bg-slate-100" />
               <div className="flex flex-col items-center sm:items-start gap-2.5">
                 <p className="text-[11px] font-bold text-slate-600">Nếu gặp sự cố đăng nhập, vui lòng liên hệ bộ phận kỹ thuật</p>
