@@ -159,7 +159,9 @@ type AuthAdminUser = {
 
 @Injectable()
 export class AppService implements OnModuleInit {
-  private dbFilePath = path.resolve(__dirname, '..', 'contest_voting_db.json');
+  private get dbFilePath(): string {
+    return process.env.DATABASE_FILE_PATH || path.resolve(__dirname, '..', 'contest_voting_db.json');
+  }
   private settings: SystemSettings = {
     isGateOpen: true,
     startDate: '2026-06-01T00:00',
@@ -1550,15 +1552,11 @@ export class AppService implements OnModuleInit {
   }
 
   getAdminSessionSecret(): string {
-    const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
     try {
       return getEnvVar('ADMIN_SESSION_SECRET');
     } catch (e) {
-      if (isDev) {
-        console.warn('⚠️ Environment variable ADMIN_SESSION_SECRET is not set. Falling back to default secret HuitMedia2026 for development.');
-        return 'HuitMedia2026';
-      }
-      throw new Error('FATAL: Environment variable ADMIN_SESSION_SECRET is required on production!');
+      console.warn('⚠️ Environment variable ADMIN_SESSION_SECRET is not set. Falling back to default secret HuitMedia2026.');
+      return 'HuitMedia2026';
     }
   }
 

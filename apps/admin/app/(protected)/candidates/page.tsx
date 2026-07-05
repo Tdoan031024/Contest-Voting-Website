@@ -1168,7 +1168,10 @@ export default function CandidatesAdminPage() {
     setSettingsSaving(true);
     try {
       const currentRes = await fetch(apiUrl('/api/admin/settings'));
-      if (!currentRes.ok) throw new Error('load_failed');
+      if (!currentRes.ok) {
+        const errorText = await currentRes.text().catch(() => '');
+        throw new Error(`Tải cấu hình hiện tại thất bại (HTTP ${currentRes.status}: ${errorText || currentRes.statusText})`);
+      }
       const currentSettings = await currentRes.json();
       const res = await fetch(apiUrl('/api/admin/settings'), {
         method: 'PUT',
@@ -1180,9 +1183,13 @@ export default function CandidatesAdminPage() {
           votingPromotions: nextPromotions,
         }),
       });
-      if (!res.ok) throw new Error('save_failed');
-    } catch {
-      alert('Khong the luu cau hinh promotion / dang ky. Vui long kiem tra backend.');
+      if (!res.ok) {
+        const errorText = await res.text().catch(() => '');
+        throw new Error(`Lưu cấu hình thất bại (HTTP ${res.status}: ${errorText || res.statusText})`);
+      }
+    } catch (err: any) {
+      console.error('Lỗi khi lưu cấu hình:', err);
+      alert(`Không thể lưu cấu hình promotion / đăng ký. Chi tiết: ${err.message || err}`);
     } finally {
       setSettingsSaving(false);
     }
