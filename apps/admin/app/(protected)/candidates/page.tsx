@@ -40,8 +40,8 @@ function createPromotionDraft(): VotingPromotion {
 
 const tableLabels: Record<string, string> = {
   HIGH_SCHOOL: 'Bảng học sinh',
-  STUDENT: 'Bảng sinh viên, học viên',
-  ENTERPRISE: 'Bảng cá nhân, tổ chức, doanh nghiệp',
+  STUDENT: 'Bảng sinh viên',
+  ENTERPRISE: 'Bảng doanh nghiệp',
 };
 
 const emptyProject: Partial<Candidate> = {
@@ -361,8 +361,8 @@ function ProjectModal({
               }}
             >
               <option value="HIGH_SCHOOL">Bảng học sinh</option>
-              <option value="STUDENT">Bảng sinh viên, học viên</option>
-              <option value="ENTERPRISE">Bảng cá nhân, tổ chức, doanh nghiệp</option>
+              <option value="STUDENT">Bảng sinh viên</option>
+              <option value="ENTERPRISE">Bảng doanh nghiệp</option>
             </select>
           </label>
           <label className="space-y-1.5">
