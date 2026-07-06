@@ -340,6 +340,8 @@
   }
 
   .dashboard-filter-bar {
+    position: relative;
+    z-index: 20;
     border-radius: 14px;
     border: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.82);
