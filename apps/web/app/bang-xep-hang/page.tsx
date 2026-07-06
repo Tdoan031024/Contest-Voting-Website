@@ -460,13 +460,20 @@ export default function RankingPage() {
         }
         .ranking-sort-label select {
           height: 38px;
-          padding: 0 30px 0 12px;
+          padding: 0 32px 0 12px !important;
           border: 1px solid var(--site-line);
           border-radius: 11px;
           background: var(--site-card);
           color: var(--site-text);
           font-size: 12px;
           font-weight: 700;
+          outline: none;
+          cursor: pointer;
+          transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .ranking-sort-label select:focus {
+          border-color: var(--site-primary);
+          box-shadow: 0 0 0 3px color-mix(in srgb, var(--site-primary) 15%, transparent);
         }
         .ranking-result-count {
           margin: 8px 0 0;
