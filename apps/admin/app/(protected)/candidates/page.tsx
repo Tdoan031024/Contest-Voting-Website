@@ -1665,7 +1665,6 @@ export default function CandidatesAdminPage() {
                 <th className="px-4 py-3">Dự án</th>
                 <th className="px-4 py-3">Bảng thi</th>
                 <th className="px-4 py-3">Đại diện</th>
-                <th className="px-4 py-3">Vòng thi</th>
                 <th className="px-4 py-3 text-right">Điểm bình chọn</th>
                 <th className="px-4 py-3 text-right">Thao tác</th>
               </tr>
@@ -1699,9 +1698,6 @@ export default function CandidatesAdminPage() {
                         <p className="truncate text-[13px] font-bold text-slate-900">{project.leaderName || 'Chưa có đại diện'}</p>
                         <p className="mt-0.5 truncate text-[12px] text-slate-500 font-medium">{project.representativeSchool || 'Chưa cập nhật đơn vị'}</p>
                       </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <Pill tone={roundTone(project.currentRound)}>{project.currentRound || 'Vòng loại'}</Pill>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <p className="text-[20px] font-bold tracking-[-0.02em] tabular-nums text-slate-800">{project.votes.toLocaleString()}</p>
@@ -1738,7 +1734,7 @@ export default function CandidatesAdminPage() {
 
               {filteredProjects.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-5 py-12 text-center text-sm font-semibold text-slate-500">
+                  <td colSpan={5} className="px-5 py-12 text-center text-sm font-semibold text-slate-500">
                     Không có dự án phù hợp bộ lọc hiện tại.
                   </td>
                 </tr>
