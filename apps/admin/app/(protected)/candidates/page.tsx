@@ -1101,6 +1101,7 @@ export default function CandidatesAdminPage() {
   const [isRegistrationOpen, setIsRegistrationOpen] = useState(true);
   const [registrationDeadline, setRegistrationDeadline] = useState('2026-06-20T23:59');
   const [votingPromotions, setVotingPromotions] = useState<VotingPromotion[]>([]);
+  const [isGateOpen, setIsGateOpen] = useState(true);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [showPromotionManager, setShowPromotionManager] = useState(false);
 
@@ -1125,6 +1126,7 @@ export default function CandidatesAdminPage() {
         const data = await res.json();
         setIsRegistrationOpen(data.isRegistrationOpen ?? true);
         setRegistrationDeadline(data.registrationDeadline || '2026-06-20T23:59');
+        setIsGateOpen(data.isGateOpen ?? false);
         setVotingPromotions(Array.isArray(data.votingPromotions) ? data.votingPromotions : []);
       } catch {}
     }
@@ -1164,6 +1166,7 @@ export default function CandidatesAdminPage() {
     nextPromotions = votingPromotions,
     nextRegistrationOpen = isRegistrationOpen,
     nextRegistrationDeadline = registrationDeadline,
+    nextGateOpen = isGateOpen,
   ) => {
     setSettingsSaving(true);
     try {
@@ -1181,6 +1184,7 @@ export default function CandidatesAdminPage() {
           isRegistrationOpen: nextRegistrationOpen,
           registrationDeadline: nextRegistrationDeadline,
           votingPromotions: nextPromotions,
+          isGateOpen: nextGateOpen,
         }),
       });
       if (!res.ok) {
@@ -1354,7 +1358,7 @@ export default function CandidatesAdminPage() {
           </div>
         </div>
 
-        <div className="grid gap-2 p-3 xl:grid-cols-6">
+        <div className="grid gap-2 p-3 xl:grid-cols-8">
           {[
             ['Tổng dự án', projects.length.toLocaleString()],
             ['Thiếu thông tin', missingInfo.toLocaleString()],
@@ -1397,6 +1401,35 @@ export default function CandidatesAdminPage() {
                 onBlur={() => saveVotingSettings(votingPromotions, isRegistrationOpen, registrationDeadline)}
                 className="admin-input"
               />
+            </div>
+          </div>
+
+          <div className="dashboard-stat-card flex min-h-[118px] flex-col justify-between xl:col-span-2">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Bình chọn</p>
+                <p className="mt-2 text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
+                  {isGateOpen ? 'Đang mở' : 'Đang đóng'}
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={settingsSaving}
+                onClick={async () => {
+                  const nextValue = !isGateOpen;
+                  setIsGateOpen(nextValue);
+                  await saveVotingSettings(votingPromotions, isRegistrationOpen, registrationDeadline, nextValue);
+                }}
+                className={`relative mt-1 flex h-7 w-12 items-center rounded-full transition ${isGateOpen ? 'bg-emerald-500' : 'bg-slate-300'} ${settingsSaving ? 'opacity-60' : ''}`}
+              >
+                <span className={`absolute h-5 w-5 rounded-full bg-white shadow-md transition ${isGateOpen ? 'translate-x-6' : 'translate-x-1'}`} />
+              </button>
+            </div>
+            <div className="space-y-1 text-left">
+              <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Trạng thái cổng</span>
+              <p className="text-[11px] font-semibold text-slate-500 truncate leading-normal">
+                {isGateOpen ? 'Đang mở nhận lượt vote' : 'Đã đóng nhận lượt vote'}
+              </p>
             </div>
           </div>
 
