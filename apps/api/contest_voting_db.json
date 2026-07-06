@@ -139,7 +139,7 @@
     "aboutContactPhone": "0975702463",
     "aboutContactWebsite": "https://khoinghiep.huit.edu.vn",
     "aboutContactQrUrl": "/images/qrdangky.png",
-    "isRegistrationOpen": false,
+    "isRegistrationOpen": true,
     "registrationDeadline": "2026-06-30T23:59",
     "registrationUrl": "https://khoinghiep.huit.edu.vn",
     "detailUrl": "https://khoinghiep.huit.edu.vn",

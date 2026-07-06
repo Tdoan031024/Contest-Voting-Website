@@ -56,6 +56,26 @@ export default function CandidateDetailPage() {
     }
 
     loadData().catch(() => setIsLoading(false));
+
+    const interval = setInterval(async () => {
+      try {
+        const [candidateRes, settingsRes] = await Promise.all([
+          fetch(apiUrl('/api/candidates/' + sbd)),
+          fetch(apiUrl('/api/settings')),
+        ]);
+        if (candidateRes.ok) {
+          const data = await candidateRes.json();
+          setCandidate(data);
+        }
+        if (settingsRes.ok) {
+          setSettings(await settingsRes.json());
+        }
+      } catch (err) {
+        console.error('Polling details failed', err);
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, [sbd]);
   const showcaseUrls = useMemo(() => {
     if (!candidate || !candidate.showcaseImages) return [];

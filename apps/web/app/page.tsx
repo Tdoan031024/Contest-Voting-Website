@@ -159,6 +159,21 @@ export default function HomePage() {
   const aboutTitleText = (settings?.aboutTitle || ABOUT_FALLBACK_TITLE).replace(/\s+NĂM\s+/i, ' ');
   const homepageNewsPosts = SAMPLE_NEWS_POSTS.slice(0, 3);
 
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const isRegistrationOpen = useMemo(() => {
+    if (!settings) return true;
+    if (settings.isRegistrationOpen === false) return false;
+    if (settings.registrationDeadline) {
+      const deadline = new Date(settings.registrationDeadline);
+      return deadline.getTime() >= Date.now();
+    }
+    return true;
+  }, [settings]);
+
   // Default banner when DB has no active banner
   const defaultSlides = [
     {
@@ -620,14 +635,16 @@ export default function HomePage() {
                   >
                     <span>Xem thêm</span>
                   </Link>
-                  <a
-                    href={ABOUT_REGISTER_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="about-action about-action-primary"
-                  >
-                    <span>Đăng ký</span>
-                  </a>
+                  {(!isMounted || isRegistrationOpen) && (
+                    <a
+                      href={settings?.registrationUrl || ABOUT_REGISTER_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="about-action about-action-primary"
+                    >
+                      <span>Đăng ký</span>
+                    </a>
+                  )}
                 </div>
               </div>
 

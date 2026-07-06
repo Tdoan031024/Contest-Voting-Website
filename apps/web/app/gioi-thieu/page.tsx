@@ -122,6 +122,15 @@ export default function GioiThieuPage() {
       }
     }
     loadData();
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(apiUrl('/api/settings'));
+        if (res.ok) setSettings(await res.json());
+      } catch {}
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   function formatImgUrl(url: string | undefined | null): string {
@@ -637,12 +646,12 @@ export default function GioiThieuPage() {
               className={`about-registration-card w-full max-w-[920px] mb-6 p-5 sm:p-6 rounded-[24px] flex flex-col sm:flex-row items-center justify-between gap-6 ${isMounted ? 'animate-on-scroll' : ''} ${isMounted && titleSection.visible ? 'visible' : ''}`}
             >
               <div className="text-center sm:text-left">
-                <span className={`about-status-pill ${registrationOpen === null ? 'pending' : registrationOpen ? 'open' : 'closed'}`}>
+                <span className={`about-status-pill ${!isMounted || registrationOpen === null ? 'pending' : registrationOpen ? 'open' : 'closed'}`}>
                   <span aria-hidden="true" />
-                  {registrationOpen === null ? 'Đang đồng bộ trạng thái' : registrationOpen ? "Đang nhận hồ sơ đăng ký" : "Đã kết thúc nhận hồ sơ"}
+                  {!isMounted || registrationOpen === null ? 'Đang đồng bộ trạng thái' : registrationOpen ? "Đang nhận hồ sơ đăng ký" : "Đã kết thúc nhận hồ sơ"}
                 </span>
                 <p className="mt-3 text-[14px] sm:text-[15px] text-[color:var(--about-text-secondary)]">
-                  {registrationOpen === null ? (
+                  {!isMounted || registrationOpen === null ? (
                     'Thông tin thời hạn đang được cập nhật từ hệ thống.'
                   ) : registrationDeadline ? (
                     <>{registrationOpen ? 'Hạn chót nhận hồ sơ' : 'Thời hạn nhận hồ sơ đã kết thúc'}: <b className="text-[color:var(--about-text-primary)]">{registrationDeadline.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</b></>
@@ -653,12 +662,12 @@ export default function GioiThieuPage() {
               </div>
               <div className="flex gap-3 w-full sm:w-auto shrink-0">
                 <a
-                  href={registrationHref}
-                  target={registrationOpen ? '_blank' : undefined}
-                  rel={registrationOpen ? 'noopener noreferrer' : undefined}
+                  href={isMounted ? registrationHref : '#timeline-section'}
+                  target={isMounted && registrationOpen ? '_blank' : undefined}
+                  rel={isMounted && registrationOpen ? 'noopener noreferrer' : undefined}
                   className="about-primary-action w-full sm:w-auto about-focusable"
                 >
-                  {registrationOpen === true ? 'Đăng ký ngay' : registrationOpen === false ? 'Xem lộ trình' : 'Đang cập nhật'} <span aria-hidden="true">→</span>
+                  {!isMounted ? 'Đang cập nhật' : registrationOpen === true ? 'Đăng ký ngay' : registrationOpen === false ? 'Xem lộ trình' : 'Đang cập nhật'} <span aria-hidden="true">→</span>
                 </a>
               </div>
             </div>
@@ -985,7 +994,12 @@ export default function GioiThieuPage() {
                   </div>
 
                   <div className="mt-6 rounded-xl border border-[color:var(--about-border)] bg-[color:var(--about-surface-sec)]/50 p-4 text-center">
-                    {registrationOpen === true ? (
+                    {!isMounted || registrationOpen === null ? (
+                      <div className="py-8" aria-live="polite">
+                        <div className="mx-auto h-10 w-10 rounded-full border-2 border-[color:var(--about-border)] border-t-[color:var(--about-primary)] animate-spin" />
+                        <p className="mt-3 text-[13px] text-[color:var(--about-text-secondary)]">Đang cập nhật thông tin đăng ký...</p>
+                      </div>
+                    ) : registrationOpen === true ? (
                       <>
                         <p className="mb-3 text-[12px] font-bold uppercase tracking-wider text-[color:var(--about-accent)]">Quét mã để đăng ký nhanh</p>
                         <img
@@ -994,25 +1008,20 @@ export default function GioiThieuPage() {
                           className="mx-auto h-auto w-full max-w-[150px] rounded-lg bg-white p-2 shadow-md object-contain"
                         />
                       </>
-                    ) : registrationOpen === false ? (
+                    ) : (
                       <div className="py-3">
                         <span className="text-[28px]" aria-hidden="true">📅</span>
                         <p className="mt-2 text-[14px] font-semibold text-[color:var(--about-text-primary)]">Đợt nhận hồ sơ đã kết thúc</p>
                         <p className="mt-1 text-[13px] text-[color:var(--about-text-secondary)]">Theo dõi lộ trình để cập nhật các vòng thi tiếp theo.</p>
                       </div>
-                    ) : (
-                      <div className="py-8" aria-live="polite">
-                        <div className="mx-auto h-10 w-10 rounded-full border-2 border-[color:var(--about-border)] border-t-[color:var(--about-primary)] animate-spin" />
-                        <p className="mt-3 text-[13px] text-[color:var(--about-text-secondary)]">Đang cập nhật thông tin đăng ký...</p>
-                      </div>
                     )}
                     <a
-                      href={registrationHref}
-                      target={registrationOpen ? '_blank' : undefined}
-                      rel={registrationOpen ? 'noopener noreferrer' : undefined}
+                      href={isMounted ? registrationHref : '#timeline-section'}
+                      target={isMounted && registrationOpen ? '_blank' : undefined}
+                      rel={isMounted && registrationOpen ? 'noopener noreferrer' : undefined}
                       className="mt-4 about-primary-action w-full about-focusable"
                     >
-                      {registrationOpen === true ? 'Đăng ký ngay' : registrationOpen === false ? 'Xem lộ trình' : 'Đang cập nhật'} <span aria-hidden="true">→</span>
+                      {!isMounted ? 'Đang cập nhật' : registrationOpen === true ? 'Đăng ký ngay' : registrationOpen === false ? 'Xem lộ trình' : 'Đang cập nhật'} <span aria-hidden="true">→</span>
                     </a>
                   </div>
                 </div>
