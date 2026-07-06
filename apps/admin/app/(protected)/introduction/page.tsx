@@ -352,8 +352,8 @@ export default function IntroductionAdminPage() {
       {/* Page Header */}
       <section className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e] font-heading">Quản lý giao diện</p>
-          <h2 className="mt-0.5 text-lg font-black text-[#123c34] font-heading">Cấu hình thông tin cuộc thi</h2>
+          <p className="text-xs font-bold text-[#0f766e] font-heading">Quản lý giao diện</p>
+          <h2 className="mt-0.5 text-lg font-bold text-[#123c34] font-heading">Cấu hình thông tin cuộc thi</h2>
           <p className="text-xs text-[#6b7773] mt-0.5">Chỉnh sửa chi tiết nội dung trang Giới thiệu hiển thị trên trang chủ của website bình chọn.</p>
         </div>
       </section>
@@ -365,7 +365,7 @@ export default function IntroductionAdminPage() {
         <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-[#edf2f0]">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">1</span>
-            <h3 className="text-xs font-black text-[#123c34] uppercase tracking-wider font-heading">Tiêu đề &amp; Giới thiệu chung</h3>
+            <h3 className="text-sm font-bold text-[#123c34] font-heading">Tiêu đề &amp; Giới thiệu chung</h3>
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -469,7 +469,7 @@ export default function IntroductionAdminPage() {
         <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-[#edf2f0]">
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">2</span>
-            <h3 className="text-xs font-black text-[#123c34] uppercase tracking-wider font-heading">Đơn vị tổ chức &amp; đồng hành</h3>
+            <h3 className="text-sm font-bold text-[#123c34] font-heading">Đơn vị tổ chức &amp; đồng hành</h3>
           </div>
           <div className="block space-y-1.5">
             <div className="flex items-center justify-between">
@@ -499,8 +499,8 @@ export default function IntroductionAdminPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#edf2f0]">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">3A</span>
-              <h3 className="text-xs font-black text-[#123c34] uppercase tracking-wider font-heading">Lĩnh vực dự thi</h3>
+              <span className="flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">3A</span>
+              <h3 className="text-sm font-bold text-[#123c34] font-heading">Lĩnh vực dự thi</h3>
             </div>
             <div className="block space-y-1.5">
               <div className="flex items-center justify-between">
@@ -528,8 +528,8 @@ export default function IntroductionAdminPage() {
 
           <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#edf2f0]">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">3B</span>
-              <h3 className="text-xs font-black text-[#123c34] uppercase tracking-wider font-heading">Quyền lợi khi tham gia</h3>
+              <span className="flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">3B</span>
+              <h3 className="text-sm font-bold text-[#123c34] font-heading">Quyền lợi khi tham gia</h3>
             </div>
             <div className="block space-y-1.5">
               <div className="flex items-center justify-between">
@@ -557,8 +557,8 @@ export default function IntroductionAdminPage() {
 
           <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#edf2f0]">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">3C</span>
-              <h3 className="text-xs font-black text-[#123c34] uppercase tracking-wider font-heading">Giải thưởng cuộc thi</h3>
+              <span className="flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">3C</span>
+              <h3 className="text-sm font-bold text-[#123c34] font-heading">Giải thưởng cuộc thi</h3>
             </div>
             <div className="block space-y-1.5">
               <div className="flex items-center justify-between">
@@ -599,7 +599,7 @@ export default function IntroductionAdminPage() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2b6cb0] text-[10px] font-bold text-white">4</span>
-                <h3 className="text-xs font-black text-[#2b6cb0] uppercase tracking-wider font-heading">Thời gian &amp; Lộ trình thực hiện</h3>
+                <h3 className="text-sm font-bold text-[#2b6cb0] font-heading">Thời gian &amp; Lộ trình thực hiện</h3>
               </div>
               <p className="text-xs text-[#2d3748] mt-1.5">
                 Các mốc lộ trình thời gian được đồng bộ tự động từ cơ sở dữ liệu. Để thay đổi hoặc thêm bớt các sự kiện lộ trình hiển thị trên website, vui lòng nhấn nút truy cập trang cấu hình Lộ trình bên cạnh.
@@ -619,8 +619,8 @@ export default function IntroductionAdminPage() {
           {/* Cột 1: Quy mô */}
           <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#edf2f0]">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">5A</span>
-              <h3 className="text-xs font-black text-[#123c34] uppercase tracking-wider font-heading">Số liệu thống kê (Quy mô)</h3>
+              <span className="flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">5A</span>
+              <h3 className="text-sm font-bold text-[#123c34] font-heading">Số liệu thống kê (Quy mô)</h3>
             </div>
             <div className="space-y-3">
               <label className="block space-y-1.5">
@@ -705,8 +705,8 @@ export default function IntroductionAdminPage() {
           {/* Cột 2: Đối tượng tham gia */}
           <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#edf2f0]">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">5B</span>
-              <h3 className="text-xs font-black text-[#123c34] uppercase tracking-wider font-heading">Đối tượng tham gia</h3>
+              <span className="flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">5B</span>
+              <h3 className="text-sm font-bold text-[#123c34] font-heading">Đối tượng tham gia</h3>
             </div>
             <div className="block space-y-1.5">
               <div className="flex items-center justify-between">
@@ -735,8 +735,8 @@ export default function IntroductionAdminPage() {
           {/* Cột 3: Liên hệ & Đăng ký */}
           <div className="rounded-xl border border-[#dce5e1] bg-white p-5 shadow-sm space-y-4">
             <div className="flex items-center gap-2 pb-2 border-b border-[#edf2f0]">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">5C</span>
-              <h3 className="text-xs font-black text-[#123c34] uppercase tracking-wider font-heading">Thông tin liên hệ &amp; Đăng ký</h3>
+              <span className="flex h-5 min-w-[20px] px-1 items-center justify-center rounded-full bg-[#123c34] text-[10px] font-bold text-white">5C</span>
+              <h3 className="text-sm font-bold text-[#123c34] font-heading">Thông tin liên hệ &amp; Đăng ký</h3>
             </div>
             <div className="space-y-3">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
