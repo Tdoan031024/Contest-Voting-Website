@@ -1105,6 +1105,24 @@ export default function CandidatesAdminPage() {
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [showPromotionManager, setShowPromotionManager] = useState(false);
 
+  const [isTableFilterOpen, setIsTableFilterOpen] = useState(false);
+  const [isRoundFilterOpen, setIsRoundFilterOpen] = useState(false);
+  const tableDropdownRef = useRef<HTMLDivElement>(null);
+  const roundDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (tableDropdownRef.current && !tableDropdownRef.current.contains(event.target as Node)) {
+        setIsTableFilterOpen(false);
+      }
+      if (roundDropdownRef.current && !roundDropdownRef.current.contains(event.target as Node)) {
+        setIsRoundFilterOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const loadProjects = async () => {
     try {
       const res = await fetch(apiUrl('/api/candidates'));
@@ -1508,25 +1526,131 @@ export default function CandidatesAdminPage() {
       </section>
 
       <section className="dashboard-filter-bar p-2.5">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_190px_170px_110px]">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_190px_170px_110px] items-start">
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Tìm theo tên dự án, mã, nhóm, trưởng nhóm hoặc đơn vị..."
             className="admin-input min-w-0"
           />
-          <select value={tableFilter} onChange={(event) => setTableFilter(event.target.value)} className="admin-select px-3 text-xs font-bold text-slate-700">
-            <option value="ALL">Tất cả bảng thi</option>
-            <option value="HIGH_SCHOOL">Bảng học sinh</option>
-            <option value="STUDENT">Bảng sinh viên</option>
-            <option value="ENTERPRISE">Bảng doanh nghiệp</option>
-          </select>
-          <select value={roundFilter} onChange={(event) => setRoundFilter(event.target.value)} className="admin-select px-3 text-xs font-bold text-slate-700">
-            <option value="ALL">Tất cả vòng</option>
-            <option>Vòng loại</option>
-            <option>Vòng bán kết</option>
-            <option>Vòng chung kết</option>
-          </select>
+          
+          {/* Custom Bảng thi Dropdown */}
+          <div className="relative w-full" ref={tableDropdownRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsTableFilterOpen(!isTableFilterOpen);
+                setIsRoundFilterOpen(false);
+              }}
+              className="flex h-[38px] w-full items-center justify-between rounded-[10px] border border-slate-200 bg-[#fbfdfc] px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-[#0f766e] focus:outline-none focus:border-[#0f766e]"
+            >
+              <span>
+                {tableFilter === 'ALL' && 'Tất cả bảng thi'}
+                {tableFilter === 'HIGH_SCHOOL' && 'Bảng học sinh'}
+                {tableFilter === 'STUDENT' && 'Bảng sinh viên'}
+                {tableFilter === 'ENTERPRISE' && 'Bảng doanh nghiệp'}
+              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`text-slate-500 transition-transform duration-200 ${isTableFilterOpen ? 'rotate-180' : ''}`}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            {isTableFilterOpen && (
+              <div className="absolute left-0 right-0 z-[60] mt-1.5 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur-md">
+                {[
+                  ['ALL', 'Tất cả bảng thi'],
+                  ['HIGH_SCHOOL', 'Bảng học sinh'],
+                  ['STUDENT', 'Bảng sinh viên'],
+                  ['ENTERPRISE', 'Bảng doanh nghiệp'],
+                ].map(([val, label]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => {
+                      setTableFilter(val);
+                      setIsTableFilterOpen(false);
+                    }}
+                    className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-bold transition-colors ${
+                      tableFilter === val
+                        ? 'bg-[#0f766e]/10 text-[#0f766e]'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Custom Vòng thi Dropdown */}
+          <div className="relative w-full" ref={roundDropdownRef}>
+            <button
+              type="button"
+              onClick={() => {
+                setIsRoundFilterOpen(!isRoundFilterOpen);
+                setIsTableFilterOpen(false);
+              }}
+              className="flex h-[38px] w-full items-center justify-between rounded-[10px] border border-slate-200 bg-[#fbfdfc] px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-[#0f766e] focus:outline-none focus:border-[#0f766e]"
+            >
+              <span>
+                {roundFilter === 'ALL' ? 'Tất cả vòng thi' : roundFilter}
+              </span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`text-slate-500 transition-transform duration-200 ${isRoundFilterOpen ? 'rotate-180' : ''}`}
+              >
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+
+            {isRoundFilterOpen && (
+              <div className="absolute left-0 right-0 z-[60] mt-1.5 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur-md">
+                {[
+                  'ALL',
+                  'Vòng loại',
+                  'Vòng bán kết',
+                  'Vòng chung kết',
+                ].map((val) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => {
+                      setRoundFilter(val);
+                      setIsRoundFilterOpen(false);
+                    }}
+                    className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-bold transition-colors ${
+                      roundFilter === val
+                        ? 'bg-[#0f766e]/10 text-[#0f766e]'
+                        : 'text-slate-700 hover:bg-slate-50'
+                    }`}
+                  >
+                    {val === 'ALL' ? 'Tất cả vòng thi' : val}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
           <div className="flex h-[38px] items-center justify-center rounded-[12px] border border-slate-200 bg-white text-[11px] font-black text-slate-500 shadow-sm">
             {filteredProjects.length.toLocaleString()} kết quả
           </div>
@@ -1539,6 +1663,7 @@ export default function CandidatesAdminPage() {
             <thead>
               <tr className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
                 <th className="px-4 py-3">Dự án</th>
+                <th className="px-4 py-3">Bảng thi</th>
                 <th className="px-4 py-3">Đại diện</th>
                 <th className="px-4 py-3">Vòng thi</th>
                 <th className="px-4 py-3 text-right">Điểm bình chọn</th>
@@ -1560,12 +1685,14 @@ export default function CandidatesAdminPage() {
                             <span className="rounded-md bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
                               {project.sbd}
                             </span>
-                            <span className="rounded-md border border-emerald-200/80 bg-emerald-50 px-2 py-1 text-[10px] font-bold text-emerald-700">
-                              {projectTableLabel}
-                            </span>
                           </div>
                         </div>
                       </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex rounded-md border border-emerald-200/80 bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                        {projectTableLabel}
+                      </span>
                     </td>
                     <td className="px-4 py-3">
                       <div className="max-w-[180px]">
@@ -1611,7 +1738,7 @@ export default function CandidatesAdminPage() {
 
               {filteredProjects.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-sm font-semibold text-slate-500">
+                  <td colSpan={6} className="px-5 py-12 text-center text-sm font-semibold text-slate-500">
                     Không có dự án phù hợp bộ lọc hiện tại.
                   </td>
                 </tr>
