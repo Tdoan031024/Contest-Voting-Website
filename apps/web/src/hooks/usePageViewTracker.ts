@@ -5,21 +5,20 @@
  * Call this once from a layout or root component.
  */
 import { useEffect } from 'react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 export function usePageViewTracker() {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const gtag = (window as any).gtag;
     if (typeof gtag !== 'function') return;
 
-    const url = pathname + (searchParams?.toString() ? `?${searchParams.toString()}` : '');
+    const url = pathname + (window.location.search || '');
     gtag('event', 'page_view', {
       page_path: url,
       page_title: document.title,
     });
-  }, [pathname, searchParams]);
+  }, [pathname]);
 }
