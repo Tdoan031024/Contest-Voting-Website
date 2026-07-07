@@ -87,12 +87,13 @@ function SkeletonCard() {
 }
 
 // Podium Item component
-function PodiumItem({ candidate, rank, maxVotes, onVote, isGateOpen }: {
+function PodiumItem({ candidate, rank, maxVotes, onVote, isGateOpen, activeVotingPromotion }: {
   candidate: Candidate;
   rank: number;
   maxVotes: number;
   onVote: (c: Candidate) => void;
   isGateOpen: boolean;
+  activeVotingPromotion?: any;
 }) {
   const podiumRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -147,13 +148,18 @@ function PodiumItem({ candidate, rank, maxVotes, onVote, isGateOpen }: {
             </h3>
           </div>
 
-          <div className="project-vote-stat">
+          <div className="project-vote-stat flex items-center justify-between">
             <div>
               <p className="project-vote-stat-label">Lượt bình chọn</p>
               <p className="project-vote-stat-value">
                 {visible ? votesDisplay.toLocaleString() : candidate.votes.toLocaleString()}
               </p>
             </div>
+            {activeVotingPromotion && (
+              <span className="inline-flex items-center rounded-lg bg-amber-500/10 border border-amber-500/25 px-2 py-1 text-xs font-black text-amber-600 dark:text-amber-400 animate-pulse">
+                x{activeVotingPromotion.multiplier} Điểm 🔥
+              </span>
+            )}
           </div>
 
           <p className="project-card-description mt-2 line-clamp-2 min-h-[42px] text-left">
@@ -200,7 +206,7 @@ function PodiumItem({ candidate, rank, maxVotes, onVote, isGateOpen }: {
 }
 
 // Regular candidate card
-function CandidateCard({ c, rank, maxVotes, visible, animationDelay, onVote, isGateOpen }: {
+function CandidateCard({ c, rank, maxVotes, visible, animationDelay, onVote, isGateOpen, activeVotingPromotion }: {
   c: Candidate;
   rank: number;
   maxVotes: number;
@@ -208,6 +214,7 @@ function CandidateCard({ c, rank, maxVotes, visible, animationDelay, onVote, isG
   animationDelay: string;
   onVote: (c: Candidate) => void;
   isGateOpen: boolean;
+  activeVotingPromotion?: any;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [inView, setInView] = useState(false);
@@ -264,13 +271,18 @@ function CandidateCard({ c, rank, maxVotes, visible, animationDelay, onVote, isG
             </h3>
           </div>
 
-          <div className="project-vote-stat">
+          <div className="project-vote-stat flex items-center justify-between">
             <div>
               <p className="project-vote-stat-label">Lượt bình chọn</p>
               <p className="project-vote-stat-value">
                 {inView ? votesDisplay.toLocaleString() : c.votes.toLocaleString()}
               </p>
             </div>
+            {activeVotingPromotion && (
+              <span className="inline-flex items-center rounded-lg bg-amber-500/10 border border-amber-500/25 px-2 py-1 text-xs font-black text-amber-600 dark:text-amber-400 animate-pulse">
+                x{activeVotingPromotion.multiplier} Điểm 🔥
+              </span>
+            )}
           </div>
 
           <p className="project-card-description mt-2 line-clamp-2 min-h-[42px] text-left">
@@ -306,6 +318,23 @@ function CandidateCard({ c, rank, maxVotes, visible, animationDelay, onVote, isG
       </div>
     </div>
   );
+}
+
+function parseVN(dStr: string | undefined | null) {
+  if (!dStr) return new Date();
+  let val = dStr.trim();
+  if (!val.includes('Z') && !/\+\d{2}:?\d{2}$/.test(val) && !/-\d{2}:?\d{2}$/.test(val)) {
+    val = `${val}+07:00`;
+  }
+  return new Date(val);
+}
+
+function formatDateTime(dStr: string | undefined | null) {
+  if (!dStr) return '';
+  const date = parseVN(dStr);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const utc7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  return `${pad(utc7.getUTCHours())}:${pad(utc7.getUTCMinutes())} ngày ${pad(utc7.getUTCDate())}/${pad(utc7.getUTCMonth() + 1)}/${utc7.getUTCFullYear()}`;
 }
 
 export default function RankingPage() {
@@ -392,6 +421,18 @@ export default function RankingPage() {
 
   return (
     <>
+      {/* Breadcrumb Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000' },
+            { '@type': 'ListItem', position: 2, name: 'Bảng xếp hạng', item: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/bang-xep-hang` },
+          ],
+        })}}
+      />
       <style>{`
         @keyframes fadeSlideUp { from { opacity:0; transform:translateY(32px); } to { opacity:1; transform:translateY(0); } }
         .anim-up { animation: fadeSlideUp 0.85s cubic-bezier(0.16,1,0.3,1) both; }
@@ -518,12 +559,51 @@ export default function RankingPage() {
           .ranking-sort-label { justify-content: space-between; }
           .ranking-sort-label select { flex: 1; max-width: 230px; }
         }
+        @keyframes shine-gold {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        .promotion-gold-banner {
+          background: linear-gradient(135deg, #d97706, #ea580c, #b45309, #d97706);
+          background-size: 300% 300%;
+          animation: shine-gold 10s ease infinite;
+          border-bottom: 2px solid rgba(251, 191, 36, 0.4);
+          box-shadow: 0 4px 20px rgba(234, 88, 12, 0.25);
+        }
+        .promotion-glow-badge {
+          background: rgba(255, 255, 255, 0.15);
+          box-shadow: 0 0 15px rgba(251, 191, 36, 0.35);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        .promotion-name-glow {
+          text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+        }
         @media (prefers-reduced-motion: reduce) {
-          .anim-up, .orb-pulse, .podium-crown { animation: none !important; }
+          .anim-up, .orb-pulse, .podium-crown, .promotion-gold-banner { animation: none !important; }
         }
       `}</style>
 
       <main className="sc-908a50-0 iUzfqH theme-page ranking-page-modern flex-1">
+        {settings?.activeVotingPromotion && (
+          <div className="promotion-gold-banner relative overflow-hidden py-3 px-4 text-center text-white z-[100]">
+            <div className="absolute inset-0 bg-white/5 pointer-events-none" />
+            <div className="relative flex items-center justify-center gap-2 flex-wrap text-xs sm:text-sm font-bold">
+              <span className="promotion-glow-badge inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-200 backdrop-blur-md">
+                <span>⚡</span> Khung giờ vàng <span>🔥</span>
+              </span>
+              <span className="text-white/95">
+                Đang nhân <span className="text-amber-300 font-extrabold text-base px-0.5">{settings.activeVotingPromotion.multiplier}</span> lần điểm bình chọn:
+              </span>
+              <span className="promotion-name-glow text-amber-200 font-black tracking-wide bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
+                "{settings.activeVotingPromotion.name}"
+              </span>
+              <span className="text-amber-100/80 font-medium text-[11px] sm:text-xs">
+                (Áp dụng từ {formatDateTime(settings.activeVotingPromotion.startAt)} đến {formatDateTime(settings.activeVotingPromotion.endAt)})
+              </span>
+            </div>
+          </div>
+        )}
         <div className="orb-pulse fixed top-20 -left-20 w-[350px] h-[350px] rounded-full bg-[#0A2FFF]/8 blur-[120px] pointer-events-none z-0" />
         <div className="orb-pulse fixed -bottom-10 -right-10 w-[400px] h-[400px] rounded-full bg-[#79BCC2]/6 blur-[130px] pointer-events-none z-0" style={{ animationDelay: '5s' }} />
 
@@ -638,24 +718,24 @@ export default function RankingPage() {
                       <>
                         <div className="podium-3 hidden md:flex">
                           {desktopPodiumOrder[0] && (
-                            <PodiumItem candidate={desktopPodiumOrder[0]} rank={2} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                            <PodiumItem candidate={desktopPodiumOrder[0]} rank={2} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} activeVotingPromotion={settings?.activeVotingPromotion} />
                           )}
                           {desktopPodiumOrder[1] && (
-                            <PodiumItem candidate={desktopPodiumOrder[1]} rank={1} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                            <PodiumItem candidate={desktopPodiumOrder[1]} rank={1} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} activeVotingPromotion={settings?.activeVotingPromotion} />
                           )}
                           {desktopPodiumOrder[2] && (
-                            <PodiumItem candidate={desktopPodiumOrder[2]} rank={3} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                            <PodiumItem candidate={desktopPodiumOrder[2]} rank={3} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} activeVotingPromotion={settings?.activeVotingPromotion} />
                           )}
                         </div>
                         <div className="podium-3 flex md:hidden">
                           {mobilePodiumOrder[0] && (
-                            <PodiumItem candidate={mobilePodiumOrder[0]} rank={1} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                            <PodiumItem candidate={mobilePodiumOrder[0]} rank={1} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} activeVotingPromotion={settings?.activeVotingPromotion} />
                           )}
                           {mobilePodiumOrder[1] && (
-                            <PodiumItem candidate={mobilePodiumOrder[1]} rank={2} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                            <PodiumItem candidate={mobilePodiumOrder[1]} rank={2} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} activeVotingPromotion={settings?.activeVotingPromotion} />
                           )}
                           {mobilePodiumOrder[2] && (
-                            <PodiumItem candidate={mobilePodiumOrder[2]} rank={3} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} />
+                            <PodiumItem candidate={mobilePodiumOrder[2]} rank={3} maxVotes={maxVotes} onVote={handleVote} isGateOpen={isGateOpen} activeVotingPromotion={settings?.activeVotingPromotion} />
                           )}
                         </div>
                       </>
@@ -688,6 +768,7 @@ export default function RankingPage() {
                           animationDelay={`${(rank - 1) * 70}ms`}
                           onVote={handleVote}
                           isGateOpen={isGateOpen}
+                          activeVotingPromotion={settings?.activeVotingPromotion}
                         />
                       );
                     })}

@@ -120,6 +120,11 @@ function DetailModal({
 export default function SponsorsAdminPage() {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [search, setSearch] = useState('');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [search]);
   
   // Modals state
   const [modalMode, setModalMode] = useState<'add' | 'edit' | 'detail' | null>(null);
@@ -264,6 +269,36 @@ export default function SponsorsAdminPage() {
     alert('Không thể kết nối đến server để xóa nhà tài trợ.');
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} nhà tài trợ đã chọn? Hành động này không thể hoàn tác.`)) return;
+
+    let successCount = 0;
+    let failCount = 0;
+
+    await Promise.all(
+      selectedIds.map(async (id) => {
+        try {
+          const res = await fetch(apiUrl(`/api/admin/sponsors/${id}`), { method: 'DELETE' });
+          if (res.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (err) {
+          console.error(err);
+          failCount++;
+        }
+      })
+    );
+
+    alert(`Đã xóa thành công ${successCount} nhà tài trợ.${failCount > 0 ? ` Thất bại ${failCount} nhà tài trợ.` : ''}`);
+    if (successCount > 0) {
+      loadFromApi();
+    }
+    setSelectedIds([]);
+  };
+
   const filteredSponsors = sponsors.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase()) || s.tier.toLowerCase().includes(search.toLowerCase())
   );
@@ -299,9 +334,42 @@ export default function SponsorsAdminPage() {
 
       {/* Sponsors Table */}
       <div className="w-full bg-white border border-[#dce5e1] rounded-xl overflow-hidden shadow-sm">
+        {selectedIds.length > 0 && (
+          <div className="flex items-center justify-between border-b border-rose-100 bg-rose-50/60 px-5 py-3 backdrop-blur-sm transition-all duration-300">
+            <span className="text-xs font-bold text-rose-700">
+              Đã chọn <b className="text-[14px]">{selectedIds.length}</b> nhà tài trợ
+            </span>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="flex items-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition"
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18" />
+                <path d="M8 6V4h8v2" />
+                <path d="M19 6l-1 14H6L5 6" />
+              </svg>
+              Xóa các mục đã chọn
+            </button>
+          </div>
+        )}
         <table className="w-full border-collapse text-left text-[#18211f]">
           <thead className="bg-[#fbfdfc] text-[10px] font-black uppercase tracking-wider text-[#7a8b85] border-b border-[#edf2f0]">
             <tr>
+              <th className="px-5 py-3 w-10">
+                <input
+                  type="checkbox"
+                  checked={filteredSponsors.length > 0 && selectedIds.length === filteredSponsors.length}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setSelectedIds(filteredSponsors.map((s) => s.id));
+                    } else {
+                      setSelectedIds([]);
+                    }
+                  }}
+                  className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                />
+              </th>
               <th className="px-5 py-3">Logo</th>
               <th className="px-5 py-3 min-w-[220px]">Tên Nhà Tài Trợ</th>
               <th className="px-5 py-3">Phân hạng</th>
@@ -311,6 +379,20 @@ export default function SponsorsAdminPage() {
           <tbody className="divide-y divide-[#edf2f0] text-xs">
             {filteredSponsors.map(s => (
               <tr key={s.id} className="hover:bg-[#edf4f1]/20 transition-colors">
+                <td className="px-5 py-2.5 w-10">
+                  <input
+                    type="checkbox"
+                    checked={selectedIds.includes(s.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds((prev) => [...prev, s.id]);
+                      } else {
+                        setSelectedIds((prev) => prev.filter((id) => id !== s.id));
+                      }
+                    }}
+                    className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                  />
+                </td>
                 <td className="px-5 py-2.5">
                   <div className="bg-white p-1 rounded-lg border border-[#dce5e1] flex items-center justify-center w-16 h-9 overflow-hidden shadow-sm">
                     <img src={formatAssetUrl(s.logoUrl)} className="max-w-full max-h-full object-contain" alt={s.name} />
@@ -364,7 +446,7 @@ export default function SponsorsAdminPage() {
             ))}
             {filteredSponsors.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-5 py-10 text-center text-sm font-semibold text-[#7a8b85]">
+                <td colSpan={5} className="px-5 py-10 text-center text-sm font-semibold text-[#7a8b85]">
                   Chưa có nhà tài trợ nào phù hợp bộ lọc.
                 </td>
               </tr>

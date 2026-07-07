@@ -38,8 +38,12 @@ export default function ClientPostDetail({ post, relatedPosts }: ClientPostDetai
 
   const formatDate = (dateStr: string) => {
     try {
-      const d = new Date(dateStr);
-      return d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      let val = dateStr.trim();
+      if (!val.includes('Z') && !/\+\d{2}:?\d{2}$/.test(val) && !/-\d{2}:?\d{2}$/.test(val)) val = `${val}+07:00`;
+      const d = new Date(val);
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const utc7 = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+      return `${pad(utc7.getUTCHours())}:${pad(utc7.getUTCMinutes())} ngày ${pad(utc7.getUTCDate())}/${pad(utc7.getUTCMonth() + 1)}/${utc7.getUTCFullYear()}`;
     } catch {
       return dateStr;
     }
@@ -201,7 +205,7 @@ export default function ClientPostDetail({ post, relatedPosts }: ClientPostDetai
                           <div className="news-meta">
                             <strong>{rp.category}</strong>
                             <span>•</span>
-                            <time>{formatDate(rp.createdAt).split(' ')[0]}</time>
+                            <time>{formatDate(rp.createdAt)}</time>
                           </div>
                           <h4 className="text-sm font-bold text-[var(--site-text)] leading-snug line-clamp-2 mt-2">
                             <Link href={`/tin-tuc/${rp.slug}`} className="hover:text-[var(--site-primary)] transition">

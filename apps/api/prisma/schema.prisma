@@ -1,107 +1,114 @@
-datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
-}
-
 generator client {
   provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-1.0.x", "debian-openssl-1.1.x", "debian-openssl-3.0.x", "rhel-openssl-1.0.x", "rhel-openssl-1.1.x", "rhel-openssl-3.0.x"]
 }
 
-enum SponsorTier {
-  PLATINUM
-  GOLD
-  SILVER
-  PARTNER
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
-model Candidate {
-  id                             String   @id @default(uuid())
-  sbd                            String   @unique
+model adminuser {
+  id           String   @id
+  username     String   @unique(map: "AdminUser_username_key")
+  passwordHash String
+  role         String   @default("admin")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+}
+
+model banner {
+  id        String   @id
+  title     String
+  imageUrl  String
+  link      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  isActive  Boolean  @default(true)
+}
+
+model candidate {
+  id                             String   @id
+  sbd                            String   @unique(map: "Candidate_sbd_key")
   name                           String
   votes                          Int      @default(0)
   imageUrl                       String
   description                    String   @db.Text
   biography                      String?  @db.Text
-  teamName                       String?
-  representativeSchool           String?
-  leaderName                     String?
-  leaderPhone                    String?
-  leaderEmail                    String?
+  createdAt                      DateTime @default(now())
+  updatedAt                      DateTime
   advisorName                    String?
-  members                        String?  @db.Text
-  implementationLocation         String?
-  intellectualPropertyCommitment Boolean? @default(false)
-  supportNeeds                   String?  @db.Text
-  expectations                   String?  @db.Text
   contestTable                   String?
   contestTableLabel              String?
   currentRound                   String?  @default("Vòng loại")
+  expectations                   String?  @db.Text
+  implementationLocation         String?
+  intellectualPropertyCommitment Boolean? @default(false)
+  leaderEmail                    String?
+  leaderName                     String?
+  leaderPhone                    String?
+  members                        String?  @db.Text
+  representativeSchool           String?
   status                         String?  @default("Đủ hồ sơ")
+  supportNeeds                   String?  @db.Text
+  teamName                       String?
   sector                         String?
   showcaseImages                 String?  @db.Text
-  createdAt                      DateTime @default(now())
-  updatedAt                      DateTime @updatedAt
 }
 
-model Sponsor {
-  id            String      @id @default(uuid())
+model post {
+  id           String   @id
+  title        String
+  slug         String   @unique(map: "Post_slug_key")
+  summary      String?  @db.Text
+  content      String   @db.Text
+  thumbnailUrl String?
+  isActive     Boolean  @default(true)
+  category     String   @default("Tin tức")
+  views        Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime
+}
+
+model sponsor {
+  id            String       @id
   name          String
   logoUrl       String
-  tier          SponsorTier @default(PARTNER)
-  description   String?     @db.Text
-  websiteUrl    String?
+  tier          sponsor_tier @default(PARTNER)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime
+  contactPerson String?
+  description   String?      @db.Text
   email         String?
   phone         String?
-  contactPerson String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  websiteUrl    String?
 }
 
-model Banner {
-  id        String   @id @default(uuid())
-  title     String
-  imageUrl  String
-  link      String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model TimelineEvent {
-  id          String   @id @default(uuid())
+model timelineevent {
+  id          String   @id
   date        String
   title       String
   description String   @db.Text
   isActive    Boolean  @default(true)
-  round       String   @default("Vòng loại")
-  isImportant Boolean  @default(false)
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  updatedAt   DateTime
+  isImportant Boolean  @default(false)
+  round       String   @default("Vòng loại")
 }
 
-model VoteRecord {
-  id            String   @id @default(uuid())
+model voterecord {
+  id            String   @id
   candidateId   String
   voterPhone    String
   voteTime      DateTime @default(now())
   transactionId String?
 }
 
-model AdminUser {
-  id           String   @id @default(uuid())
-  username     String   @unique
-  passwordHash String
-  role         String   @default("admin")
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-}
-
-model WebUser {
-  id              String   @id @default(uuid())
+model webuser {
+  id              String   @id
   fullName        String
-  email           String   @unique
+  email           String   @unique(map: "WebUser_email_key")
   phone           String?
   passwordHash    String?
   provider        String   @default("email")
@@ -112,19 +119,12 @@ model WebUser {
   registeredAt    DateTime @default(now())
   lastLoginAt     DateTime @default(now())
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  updatedAt       DateTime
 }
 
-model Post {
-  id           String   @id @default(uuid())
-  title        String
-  slug         String   @unique
-  summary      String?  @db.Text
-  content      String   @db.Text
-  thumbnailUrl String?
-  isActive     Boolean  @default(true)
-  category     String   @default("Tin tức")
-  views        Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+enum sponsor_tier {
+  PLATINUM
+  GOLD
+  SILVER
+  PARTNER
 }

@@ -203,13 +203,9 @@ function OverviewVoteChart({
           <Skeleton className="h-[286px] w-full" />
         ) : (
           <>
-            <div className="mb-3 flex items-end gap-2">
-              <div>
-                <p className="text-[13px] font-medium text-slate-500">Tổng lượt vote</p>
-                <p className="mt-1 text-[18px] font-medium text-slate-500">so với 7 ngày trước</p>
-              </div>
+            <div className="mb-3 flex flex-col gap-1.5">
+              <p className="text-[13px] font-medium text-slate-500">Tổng lượt vote</p>
               <p className="text-[32px] font-bold leading-none tracking-[-0.05em] text-slate-950">{totalVotes.toLocaleString()}</p>
-              <span className="pb-1 text-[14px] font-semibold text-emerald-600">↑ 12.5%</span>
             </div>
 
             <div className="overflow-hidden rounded-[14px] bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_100%)]">
@@ -340,7 +336,6 @@ function QuickStatsCard({
               <div key={stat.label} className="px-3 py-2">
                 <p className="text-[14px] font-medium text-slate-500">{stat.label}</p>
                 <p className="mt-4 text-[32px] font-bold leading-none tracking-[-0.04em] text-slate-950">{stat.value}</p>
-                <p className="mt-4 text-[14px] font-semibold text-emerald-600">↑ {stat.growth}</p>
                 <div className="mt-8 h-10">
                   <svg viewBox="0 0 120 36" className="h-10 w-full">
                     <path d="M2 30C12 30 14 16 24 16C34 16 36 30 46 30C56 30 58 10 68 10C78 10 80 24 90 24C100 24 104 10 118 10" fill="none" stroke="#6aa5ff" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
@@ -451,10 +446,10 @@ export default function OverviewPage() {
 
   const quickStats = useMemo(
     () => [
-      { label: 'Lượt truy cập', value: statsData ? statsData.settings.statsViews : '1,259', growth: '12.5%' },
-      { label: 'Lượt vote', value: totalVotes.toLocaleString(), growth: '8.3%' },
-      { label: 'Người dùng', value: statsData ? statsData.totalUsers.toLocaleString() : '0', growth: '15.7%' },
-      { label: 'Nhà tài trợ', value: statsData ? statsData.totalSponsors.toLocaleString() : '0', growth: '5.1%' },
+      { label: 'Bài viết tin tức', value: statsData ? statsData.totalPosts.toLocaleString() : '0', growth: '' },
+      { label: 'Lượt vote', value: totalVotes.toLocaleString(), growth: '' },
+      { label: 'Người dùng', value: statsData ? statsData.totalUsers.toLocaleString() : '0', growth: '' },
+      { label: 'Nhà tài trợ', value: statsData ? statsData.totalSponsors.toLocaleString() : '0', growth: '' },
     ],
     [statsData, totalVotes],
   );

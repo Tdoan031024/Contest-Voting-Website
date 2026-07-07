@@ -11,7 +11,32 @@ import VoteModal from '../../VoteModal';
 function getCandidateImageUrl(url?: string | null) {
   if (!url) return '/duan/anhmauduan.png';
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  if (url.startsWith('/uploads/')) return apiUrl(url);
   return url;
+}
+
+function getStoredUser(): WebUser | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem('huit_web_user');
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+
+function parseVN(dStr: string | undefined | null) {
+  if (!dStr) return new Date();
+  let val = dStr.trim();
+  if (!val.includes('Z') && !/\+\d{2}:?\d{2}$/.test(val) && !/-\d{2}:?\d{2}$/.test(val)) {
+    val = `${val}+07:00`;
+  }
+  return new Date(val);
+}
+
+function formatDateTime(dStr: string | undefined | null) {
+  if (!dStr) return '';
+  const date = parseVN(dStr);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const utc7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  return `${pad(utc7.getUTCHours())}:${pad(utc7.getUTCMinutes())} ngày ${pad(utc7.getUTCDate())}/${pad(utc7.getUTCMonth() + 1)}/${utc7.getUTCFullYear()}`;
 }
 
 export default function CandidateDetailPage() {
@@ -186,6 +211,7 @@ export default function CandidateDetailPage() {
 
   return (
     <main className="project-detail-page bg-[var(--site-bg)] pb-28">
+
       <section className="project-detail-hero px-4 py-8 text-white">
         <nav className="mx-auto mb-5 max-w-6xl text-sm text-white/70" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-white">Dự án</Link>
@@ -245,9 +271,14 @@ export default function CandidateDetailPage() {
                 ['Vòng hiện tại', candidate.currentRound || 'Vòng loại'],
                 ['Điểm bình chọn', candidate.votes.toLocaleString()],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <div key={label} className="rounded-xl border border-white/10 bg-white/5 p-3 relative overflow-hidden">
                   <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/45">{label}</p>
                   <p className="mt-1 text-sm font-black">{value}</p>
+                  {label === 'Điểm bình chọn' && settings?.activeVotingPromotion && (
+                    <span className="absolute top-2 right-2 inline-flex items-center rounded-full bg-amber-500/20 px-2 py-0.5 text-[9px] font-black text-amber-300 animate-pulse">
+                      x{settings.activeVotingPromotion.multiplier}
+                    </span>
+                  )}
                 </div>
               ))}
             </div>

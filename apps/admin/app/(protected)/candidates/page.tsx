@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState, useRef } from 'react';
 import Link from 'next/link';
 import { Candidate } from '@huitfest/shared';
 import { apiUrl, formatAssetUrl } from '../../api';
+import DateTimeInput from '../../components/DateTimeInput';
 
 type VotingPromotion = {
   id: string;
@@ -1104,6 +1105,17 @@ export default function CandidatesAdminPage() {
   const [isGateOpen, setIsGateOpen] = useState(true);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [showPromotionManager, setShowPromotionManager] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [currentTime, setCurrentTime] = useState(() => Date.now());
+
+  useEffect(() => {
+    const interval = setInterval(() => setCurrentTime(Date.now()), 30_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [search, tableFilter, roundFilter]);
 
   const [isTableFilterOpen, setIsTableFilterOpen] = useState(false);
   const [isRoundFilterOpen, setIsRoundFilterOpen] = useState(false);
@@ -1171,14 +1183,23 @@ export default function CandidatesAdminPage() {
 
   const missingInfo = projects.filter((project) => !project.teamName || !project.leaderName || !project.contestTable).length;
   const activePromotion = useMemo(() => {
-    const now = Date.now();
+    const now = currentTime;
+    const parseVN = (dStr: string) => {
+      if (!dStr) return NaN;
+      let val = dStr.trim();
+      if (!val.includes('Z') && !/\+\d{2}:?\d{2}$/.test(val) && !/-\d{2}:?\d{2}$/.test(val)) {
+        val = `${val}+07:00`;
+      }
+      return new Date(val).getTime();
+    };
+
     return votingPromotions.find((promotion) => {
       if (!promotion.isEnabled) return false;
-      const start = new Date(promotion.startAt).getTime();
-      const end = new Date(promotion.endAt).getTime();
+      const start = parseVN(promotion.startAt);
+      const end = parseVN(promotion.endAt);
       return Number.isFinite(start) && Number.isFinite(end) && start <= now && end >= now;
     }) || null;
-  }, [votingPromotions]);
+  }, [votingPromotions, currentTime]);
 
   const saveVotingSettings = async (
     nextPromotions = votingPromotions,
@@ -1275,6 +1296,36 @@ export default function CandidatesAdminPage() {
     if (!confirm('Xóa hồ sơ dự án này khỏi hệ thống?')) return;
     const res = await fetch(apiUrl(`/api/admin/candidates/${id}`), { method: 'DELETE' });
     if (res.ok) setProjects((prev) => prev.filter((project) => project.id !== id));
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} dự án đã chọn? Hành động này không thể hoàn tác.`)) return;
+
+    let successCount = 0;
+    let failCount = 0;
+
+    await Promise.all(
+      selectedIds.map(async (id) => {
+        try {
+          const res = await fetch(apiUrl(`/api/admin/candidates/${id}`), { method: 'DELETE' });
+          if (res.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (err) {
+          console.error(err);
+          failCount++;
+        }
+      })
+    );
+
+    alert(`Đã xóa thành công ${successCount} dự án.${failCount > 0 ? ` Thất bại ${failCount} dự án.` : ''}`);
+    if (successCount > 0) {
+      setProjects((prev) => prev.filter((project) => !selectedIds.includes(project.id)));
+    }
+    setSelectedIds([]);
   };
 
   const handleExportCandidates = () => {
@@ -1412,12 +1463,10 @@ export default function CandidatesAdminPage() {
             </div>
             <div className="space-y-1">
               <label className="block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Hạn đăng ký</label>
-              <input
-                type="datetime-local"
+              <DateTimeInput
                 value={registrationDeadline}
-                onChange={(event) => setRegistrationDeadline(event.target.value)}
-                onBlur={() => saveVotingSettings(votingPromotions, isRegistrationOpen, registrationDeadline)}
-                className="admin-input"
+                onChange={(val) => setRegistrationDeadline(val)}
+                className="admin-input-dti"
               />
             </div>
           </div>
@@ -1504,8 +1553,8 @@ export default function CandidatesAdminPage() {
                         </label>
                       </div>
                       <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">
-                        <input type="datetime-local" value={promotion.startAt} onChange={(event) => updatePromotion(promotion.id, 'startAt', event.target.value)} className="admin-input" />
-                        <input type="datetime-local" value={promotion.endAt} onChange={(event) => updatePromotion(promotion.id, 'endAt', event.target.value)} className="admin-input" />
+                        <DateTimeInput value={promotion.startAt} onChange={(val) => updatePromotion(promotion.id, 'startAt', val)} />
+                        <DateTimeInput value={promotion.endAt} onChange={(val) => updatePromotion(promotion.id, 'endAt', val)} />
                       </div>
                       <div className="flex items-center justify-between gap-3">
                         <label className="flex items-center gap-2 text-xs font-bold text-slate-600">
@@ -1658,10 +1707,43 @@ export default function CandidatesAdminPage() {
       </section>
 
       <section className="admin-card overflow-hidden p-0">
+        {selectedIds.length > 0 && (
+          <div className="flex items-center justify-between border-b border-rose-100 bg-rose-50/60 px-5 py-3 backdrop-blur-sm transition-all duration-300">
+            <span className="text-xs font-bold text-rose-700">
+              Đã chọn <b className="text-[14px]">{selectedIds.length}</b> dự án
+            </span>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              className="flex items-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition"
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18" />
+                <path d="M8 6V4h8v2" />
+                <path d="M19 6l-1 14H6L5 6" />
+              </svg>
+              Xóa các mục đã chọn
+            </button>
+          </div>
+        )}
         <div className="w-full overflow-x-auto">
           <table className="dashboard-table min-w-[860px] text-left">
             <thead>
               <tr className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
+                <th className="px-4 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={filteredProjects.length > 0 && selectedIds.length === filteredProjects.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(filteredProjects.map((p) => p.id));
+                      } else {
+                        setSelectedIds([]);
+                      }
+                    }}
+                    className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                  />
+                </th>
                 <th className="px-4 py-3">Dự án</th>
                 <th className="px-4 py-3">Bảng thi</th>
                 <th className="px-4 py-3">Đại diện</th>
@@ -1675,6 +1757,20 @@ export default function CandidatesAdminPage() {
  
                 return (
                   <tr key={project.id} className="align-middle transition hover:bg-slate-50/80">
+                    <td className="px-4 py-3 w-10">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(project.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedIds((prev) => [...prev, project.id]);
+                          } else {
+                            setSelectedIds((prev) => prev.filter((id) => id !== project.id));
+                          }
+                        }}
+                        className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex min-w-[220px] items-center gap-3">
                         <img src={formatAssetUrl(project.imageUrl)} alt={project.name} className="h-11 w-11 shrink-0 rounded-[14px] border border-slate-200 object-cover shadow-sm" />
@@ -1734,7 +1830,7 @@ export default function CandidatesAdminPage() {
 
               {filteredProjects.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-5 py-12 text-center text-sm font-semibold text-slate-500">
+                  <td colSpan={6} className="px-5 py-12 text-center text-sm font-semibold text-slate-500">
                     Không có dự án phù hợp bộ lọc hiện tại.
                   </td>
                 </tr>

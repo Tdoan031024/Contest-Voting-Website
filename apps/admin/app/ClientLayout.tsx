@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { apiUrl } from './api';
 
 const dashboardIcon = (
   <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -133,20 +134,173 @@ function getPageMeta(pathname: string) {
 }
 
 function BellButton() {
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [settings, setSettings] = React.useState<any>(null);
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    async function loadSettings() {
+      try {
+        const res = await fetch(apiUrl('/api/admin/settings'));
+        if (res.ok) {
+          const data = await res.json();
+          setSettings(data);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadSettings();
+    const interval = setInterval(loadSettings, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const alerts: Array<{ id: string; type: 'info' | 'warning' | 'success'; message: string }> = [];
+
+  if (settings) {
+    if (settings.isGateOpen) {
+      alerts.push({
+        id: 'gate-open',
+        type: 'success',
+        message: 'Cổng bình chọn đang mở và cho phép bỏ phiếu.',
+      });
+    } else {
+      alerts.push({
+        id: 'gate-closed',
+        type: 'warning',
+        message: 'Cổng bình chọn đang đóng. Vui lòng mở cổng để người dùng vote.',
+      });
+    }
+
+    if (settings.isRegistrationOpen) {
+      const deadlineStr = (() => {
+        if (!settings.registrationDeadline) return 'Chưa cài đặt';
+        let val = settings.registrationDeadline.trim();
+        if (!val.includes('Z') && !/\+\d{2}:?\d{2}$/.test(val) && !/-\d{2}:?\d{2}$/.test(val)) val = `${val}+07:00`;
+        const d = new Date(val);
+        try {
+          const parts = Object.fromEntries(
+            new Intl.DateTimeFormat('en-GB', {
+              timeZone: 'Asia/Ho_Chi_Minh',
+              year: 'numeric', month: '2-digit', day: '2-digit',
+              hour: '2-digit', minute: '2-digit', hour12: false,
+            }).formatToParts(d).map((p) => [p.type, p.value])
+          );
+          return `${parts.hour}:${parts.minute} ngày ${parts.day}/${parts.month}/${parts.year}`;
+        } catch { return val; }
+      })();
+      alerts.push({
+        id: 'reg-open',
+        type: 'info',
+        message: `Đang nhận hồ sơ đăng ký dự án. Hạn chót: ${deadlineStr}.`,
+      });
+    } else {
+      alerts.push({
+        id: 'reg-closed',
+        type: 'warning',
+        message: 'Hạn nhận hồ sơ đăng ký dự án đã kết thúc.',
+      });
+    }
+
+    const now = Date.now();
+    const activePromo = Array.isArray(settings.votingPromotions)
+      ? settings.votingPromotions.find((p: any) => {
+          if (!p.isEnabled) return false;
+          const start = new Date(p.startAt).getTime();
+          const end = new Date(p.endAt).getTime();
+          return start <= now && end >= now;
+        })
+      : null;
+
+    if (activePromo) {
+      alerts.push({
+        id: 'promo-active',
+        type: 'success',
+        message: `Đang diễn ra sự kiện nhân điểm (Hệ số x${activePromo.multiplier}).`,
+      });
+    }
+  }
+
+  const badgeCount = alerts.filter(a => a.type === 'warning').length;
+
   return (
-    <button
-      type="button"
-      className="relative grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[var(--primary)] hover:text-[var(--primary-strong)]"
-      aria-label="Thông báo"
-    >
-      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
-        <path d="M10 21a2 2 0 0 0 4 0" />
-      </svg>
-      <span className="absolute right-1.5 top-1.5 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
-        3
-      </span>
-    </button>
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`relative grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[var(--primary)] hover:text-[var(--primary-strong)] ${isOpen ? 'border-[var(--primary)] bg-slate-50' : ''}`}
+        aria-label="Thông báo"
+      >
+        <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
+          <path d="M10 21a2 2 0 0 0 4 0" />
+        </svg>
+        {badgeCount > 0 && (
+          <span className="absolute right-1.5 top-1.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white leading-none">
+            {badgeCount}
+          </span>
+        )}
+      </button>
+
+      {isOpen && (
+        <div className="absolute right-0 mt-2 w-[320px] rounded-xl border border-slate-200 bg-white p-2 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="border-b border-slate-100 px-3 py-2">
+            <h3 className="text-xs font-bold text-slate-900">Trạng thái hệ thống</h3>
+          </div>
+          <div className="mt-1 max-h-[280px] overflow-y-auto space-y-1">
+            {alerts.length === 0 ? (
+              <div className="px-3 py-6 text-center text-xs text-slate-400">
+                Đang tải dữ liệu cấu hình...
+              </div>
+            ) : (
+              alerts.map((alert) => {
+                let iconColor = 'bg-blue-500';
+                let iconSvg = (
+                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                );
+
+                if (alert.type === 'success') {
+                  iconColor = 'bg-emerald-500';
+                  iconSvg = (
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  );
+                } else if (alert.type === 'warning') {
+                  iconColor = 'bg-amber-500';
+                  iconSvg = (
+                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  );
+                }
+
+                return (
+                  <div key={alert.id} className="flex gap-2.5 rounded-lg p-2 hover:bg-slate-50 transition-colors">
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${iconColor}`}>
+                      {iconSvg}
+                    </span>
+                    <p className="text-[12px] font-semibold text-slate-700 leading-relaxed">{alert.message}</p>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 

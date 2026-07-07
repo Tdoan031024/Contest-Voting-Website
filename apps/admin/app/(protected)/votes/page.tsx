@@ -15,14 +15,14 @@ interface VoteLog {
 
 function formatDate(value?: string) {
   if (!value) return 'Chưa rõ';
-  return new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(new Date(value));
+  try {
+    const d = new Date(value);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const utc7 = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+    return `${pad(utc7.getUTCHours())}:${pad(utc7.getUTCMinutes())}:${pad(utc7.getUTCSeconds())} ngày ${pad(utc7.getUTCDate())}/${pad(utc7.getUTCMonth() + 1)}/${utc7.getUTCFullYear()}`;
+  } catch {
+    return value;
+  }
 }
 
 function escapeCSVValue(val: any): string {

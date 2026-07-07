@@ -12,13 +12,14 @@ const providerLabel: Record<string, string> = {
 
 function formatDate(value?: string) {
   if (!value) return 'Chưa có';
-  return new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(new Date(value));
+  try {
+    const d = new Date(value);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const utc7 = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+    return `${pad(utc7.getUTCHours())}:${pad(utc7.getUTCMinutes())} ngày ${pad(utc7.getUTCDate())}/${pad(utc7.getUTCMonth() + 1)}/${utc7.getUTCFullYear()}`;
+  } catch {
+    return value;
+  }
 }
 
 function UserModal({
@@ -235,6 +236,11 @@ export default function UsersAdminPage() {
   const [users, setUsers] = useState<WebUser[]>([]);
   const [search, setSearch] = useState('');
   const [provider, setProvider] = useState('ALL');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [search, provider]);
 
   // CRUD States
   const [modalMode, setModalMode] = useState<'add' | 'edit' | 'detail' | null>(null);
@@ -358,6 +364,36 @@ export default function UsersAdminPage() {
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Bạn có chắc chắn muốn xóa ${selectedIds.length} người dùng đã chọn? Hành động này không thể hoàn tác.`)) return;
+
+    let successCount = 0;
+    let failCount = 0;
+
+    await Promise.all(
+      selectedIds.map(async (id) => {
+        try {
+          const res = await fetch(apiUrl(`/api/admin/web-users/${id}`), { method: 'DELETE' });
+          if (res.ok) {
+            successCount++;
+          } else {
+            failCount++;
+          }
+        } catch (err) {
+          console.error(err);
+          failCount++;
+        }
+      })
+    );
+
+    alert(`Đã xóa thành công ${successCount} người dùng.${failCount > 0 ? ` Thất bại ${failCount} người dùng.` : ''}`);
+    if (successCount > 0) {
+      loadUsers();
+    }
+    setSelectedIds([]);
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     try {
@@ -471,9 +507,42 @@ export default function UsersAdminPage() {
         </div>
 
         <div className="overflow-x-auto">
+          {selectedIds.length > 0 && (
+            <div className="flex items-center justify-between border border-rose-100 bg-rose-50/60 px-5 py-3 rounded-t-xl backdrop-blur-sm transition-all duration-300">
+              <span className="text-xs font-bold text-rose-700">
+                Đã chọn <b className="text-[14px]">{selectedIds.length}</b> tài khoản người dùng
+              </span>
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                className="flex items-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition"
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+                Xóa các mục đã chọn
+              </button>
+            </div>
+          )}
           <table className="w-full min-w-[1100px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#edf2f0] bg-[#fbfdfc] text-[10px] font-black uppercase tracking-[0.12em] text-[#7a8b85]">
+                <th className="px-5 py-3 w-10">
+                  <input
+                    type="checkbox"
+                    checked={filteredUsers.length > 0 && selectedIds.length === filteredUsers.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(filteredUsers.map((u) => u.id));
+                      } else {
+                        setSelectedIds([]);
+                      }
+                    }}
+                    className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                  />
+                </th>
                 <th className="px-5 py-3 min-w-[220px]">Tên Người dùng</th>
                 <th className="px-5 py-3">Liên hệ</th>
                 <th className="px-5 py-3">Đơn vị / bảng</th>
@@ -486,6 +555,20 @@ export default function UsersAdminPage() {
             <tbody className="divide-y divide-[#edf2f0] text-xs">
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-[#edf4f1]/25">
+                  <td className="px-5 py-3 w-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(user.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds((prev) => [...prev, user.id]);
+                        } else {
+                          setSelectedIds((prev) => prev.filter((id) => id !== user.id));
+                        }
+                      }}
+                      className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-5 py-3">
                     <div>
                       <p className="font-black text-[#123c34] whitespace-nowrap">{user.fullName}</p>
@@ -550,7 +633,7 @@ export default function UsersAdminPage() {
               ))}
               {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="px-5 py-10 text-center text-sm font-semibold text-[#7a8b85]">
+                  <td colSpan={8} className="px-5 py-10 text-center text-sm font-semibold text-[#7a8b85]">
                     Chưa có người dùng web phù hợp bộ lọc.
                   </td>
                 </tr>

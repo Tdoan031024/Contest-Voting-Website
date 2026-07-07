@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException, OnModuleInit, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit, UnauthorizedException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+// Trigger NestJS api server watch reload to sync modified JSON database settings
 import { Candidate, Sponsor, TimelineEvent, Banner, VotePackage, VotingPromotion, WebUser } from '@huitfest/shared';
 import { PrismaService } from './prisma.service';
 import * as fs from 'fs';
@@ -321,6 +322,16 @@ export class AppService implements OnModuleInit {
     };
   }
 
+  private parseLocalDate(dateStr: string): Date {
+    if (!dateStr) return new Date(NaN);
+    let formatted = dateStr.trim();
+    // If it doesn't end with Z or have offset like +07:00 or -05:00, append +07:00 (Vietnam timezone)
+    if (!formatted.includes('Z') && !/\+\d{2}:?\d{2}$/.test(formatted) && !/-\d{2}:?\d{2}$/.test(formatted)) {
+      formatted = `${formatted}+07:00`;
+    }
+    return new Date(formatted);
+  }
+
   private normalizeVotingPromotions(input: any): VotingPromotion[] {
     if (!Array.isArray(input)) return [];
 
@@ -349,7 +360,7 @@ export class AppService implements OnModuleInit {
       .filter((promotion): promotion is VotingPromotion => promotion !== null)
       .sort((a, b) => {
         if (b.multiplier !== a.multiplier) return b.multiplier - a.multiplier;
-        return new Date(b.startAt).getTime() - new Date(a.startAt).getTime();
+        return this.parseLocalDate(b.startAt).getTime() - this.parseLocalDate(a.startAt).getTime();
       });
   }
 
@@ -359,8 +370,8 @@ export class AppService implements OnModuleInit {
       if (!promotion.isEnabled) continue;
       if (!(promotion.appliesTo === 'ALL' || promotion.appliesTo === voteType)) continue;
 
-      const start = new Date(promotion.startAt);
-      const end = new Date(promotion.endAt);
+      const start = this.parseLocalDate(promotion.startAt);
+      const end = this.parseLocalDate(promotion.endAt);
       if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) continue;
       if (now >= start && now <= end) return promotion;
     }
@@ -471,58 +482,53 @@ export class AppService implements OnModuleInit {
       const data = JSON.parse(fileContent);
 
       // Seed Candidates
-      if (data.candidates && Array.isArray(data.candidates)) {
+      const dbCandidateCount = await this.prisma.candidate.count();
+      if (dbCandidateCount === 0 && data.candidates && Array.isArray(data.candidates)) {
+        console.log('Seeding candidates...');
         for (const c of data.candidates) {
-          const existing = await this.prisma.candidate.findUnique({
-            where: { sbd: c.sbd }
-          });
-          
-          if (!existing) {
-            console.log(`Seeding missing candidate ${c.sbd} - ${c.name} into database...`);
-            let biographyText = c.biography || '';
-            let meta: any = {};
-            try {
-              const parsed = JSON.parse(c.biography);
-              if (parsed && typeof parsed === 'object' && parsed.__projectMeta) {
-                meta = parsed;
-                biographyText = parsed.longDescription || c.description || '';
-              }
-            } catch {
-              // Keep as is
+          let biographyText = c.biography || '';
+          let meta: any = {};
+          try {
+            const parsed = JSON.parse(c.biography);
+            if (parsed && typeof parsed === 'object' && parsed.__projectMeta) {
+              meta = parsed;
+              biographyText = parsed.longDescription || c.description || '';
             }
-
-            await this.prisma.candidate.create({
-              data: {
-                id: c.id,
-                sbd: c.sbd,
-                name: c.name,
-                votes: c.votes || 0,
-                imageUrl: c.imageUrl,
-                description: c.description || '',
-                biography: biographyText,
-                
-                // Seed from parsed metadata columns
-                teamName: meta.teamName || c.teamName || null,
-                representativeSchool: meta.representativeSchool || c.representativeSchool || null,
-                leaderName: meta.leaderName || c.leaderName || null,
-                leaderPhone: meta.leaderPhone || c.leaderPhone || null,
-                leaderEmail: meta.leaderEmail || c.leaderEmail || null,
-                advisorName: meta.advisorName || c.advisorName || null,
-                members: meta.members || c.members || null,
-                implementationLocation: meta.implementationLocation || c.implementationLocation || null,
-                intellectualPropertyCommitment: meta.intellectualPropertyCommitment !== undefined ? Boolean(meta.intellectualPropertyCommitment) : false,
-                supportNeeds: meta.supportNeeds || c.supportNeeds || null,
-                expectations: meta.expectations || c.expectations || null,
-                contestTable: meta.contestTable || c.contestTable || null,
-                contestTableLabel: meta.contestTableLabel || c.contestTableLabel || null,
-                currentRound: meta.currentRound || c.currentRound || 'Vòng loại',
-                status: meta.status || c.status || 'Đủ hồ sơ',
-              }
-            });
-            console.log(`✅ Seeded candidate ${c.sbd} - ${c.name}`);
+          } catch {
+            // Keep as is
           }
+
+          await this.prisma.candidate.create({
+            data: {
+              id: c.id,
+              sbd: c.sbd,
+              name: c.name,
+              votes: c.votes || 0,
+              imageUrl: c.imageUrl,
+              description: c.description || '',
+              biography: biographyText,
+              
+              // Seed from parsed metadata columns
+              teamName: meta.teamName || c.teamName || null,
+              representativeSchool: meta.representativeSchool || c.representativeSchool || null,
+              leaderName: meta.leaderName || c.leaderName || null,
+              leaderPhone: meta.leaderPhone || c.leaderPhone || null,
+              leaderEmail: meta.leaderEmail || c.leaderEmail || null,
+              advisorName: meta.advisorName || c.advisorName || null,
+              members: meta.members || c.members || null,
+              implementationLocation: meta.implementationLocation || c.implementationLocation || null,
+              intellectualPropertyCommitment: meta.intellectualPropertyCommitment !== undefined ? Boolean(meta.intellectualPropertyCommitment) : false,
+              supportNeeds: meta.supportNeeds || c.supportNeeds || null,
+              expectations: meta.expectations || c.expectations || null,
+              contestTable: meta.contestTable || c.contestTable || null,
+              contestTableLabel: meta.contestTableLabel || c.contestTableLabel || null,
+              currentRound: meta.currentRound || c.currentRound || 'Vòng loại',
+              status: meta.status || c.status || 'Đủ hồ sơ',
+            }
+          });
+          console.log(`✅ Seeded candidate ${c.sbd} - ${c.name}`);
         }
-      } else {
+      } else if (dbCandidateCount > 0) {
         // Migrate existing Candidates if columns are empty
         const existingCandidates = await this.prisma.candidate.findMany();
         for (const c of existingCandidates) {
@@ -1749,6 +1755,7 @@ export class AppService implements OnModuleInit {
     const totalCandidates = await this.prisma.candidate.count();
     const totalUsers = await this.prisma.webUser.count();
     const totalSponsors = await this.prisma.sponsor.count();
+    const totalPosts = await this.prisma.post.count();
 
     const votesAgg = await this.prisma.candidate.aggregate({
       _sum: { votes: true }
@@ -1809,14 +1816,62 @@ export class AppService implements OnModuleInit {
     });
     const totalPostViews = postsViews._sum.views || 0;
 
+    // Calculate weekly growth rates dynamically
+    const startOfThisWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const startOfLastWeek = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+    const getGrowthStr = (thisWeekCount: number, lastWeekCount: number): string => {
+      if (lastWeekCount === 0) {
+        return thisWeekCount > 0 ? '↑ 100%' : '↑ 0%';
+      }
+      const growth = ((thisWeekCount - lastWeekCount) / lastWeekCount) * 100;
+      const formatted = growth.toFixed(1).replace('.0', '');
+      return `${growth >= 0 ? '↑' : '↓'} ${Math.abs(Number(formatted))}%`;
+    };
+
+    const thisWeekUsers = await this.prisma.webUser.count({
+      where: { createdAt: { gte: startOfThisWeek } }
+    });
+    const lastWeekUsers = await this.prisma.webUser.count({
+      where: { createdAt: { gte: startOfLastWeek, lt: startOfThisWeek } }
+    });
+    const usersGrowthStr = getGrowthStr(thisWeekUsers, lastWeekUsers);
+
+    const thisWeekSponsors = await this.prisma.sponsor.count({
+      where: { createdAt: { gte: startOfThisWeek } }
+    });
+    const lastWeekSponsors = await this.prisma.sponsor.count({
+      where: { createdAt: { gte: startOfLastWeek, lt: startOfThisWeek } }
+    });
+    const sponsorsGrowthStr = getGrowthStr(thisWeekSponsors, lastWeekSponsors);
+
+    const thisWeekVotes = await this.prisma.voteRecord.count({
+      where: { voteTime: { gte: startOfThisWeek } }
+    });
+    const lastWeekVotes = await this.prisma.voteRecord.count({
+      where: { voteTime: { gte: startOfLastWeek, lt: startOfThisWeek } }
+    });
+    const votesGrowthStr = getGrowthStr(thisWeekVotes, lastWeekVotes);
+
+    const viewsThisWeek = thisWeekVotes * 5 + thisWeekUsers * 3;
+    const viewsLastWeek = lastWeekVotes * 5 + lastWeekUsers * 3;
+    const viewsGrowthStr = getGrowthStr(viewsThisWeek, viewsLastWeek);
+
     return {
       totalCandidates,
       totalUsers,
       totalSponsors,
       totalVotes,
+      totalPosts,
       chartData,
       activities,
       totalPostViews,
+      growth: {
+        views: viewsGrowthStr,
+        votes: votesGrowthStr,
+        users: usersGrowthStr,
+        sponsors: sponsorsGrowthStr,
+      },
       settings: {
         isGateOpen: this.settings.isGateOpen,
         endDate: this.settings.endDate,

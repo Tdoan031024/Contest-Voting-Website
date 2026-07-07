@@ -108,7 +108,7 @@
     }
   ],
   "settings": {
-    "isGateOpen": false,
+    "isGateOpen": true,
     "startDate": "2026-06-01T00:00",
     "endDate": "2026-12-31T23:59",
     "maxVotesPerPhone": 5,
@@ -181,7 +181,17 @@
         "label": "1 lượt bình chọn miễn phí"
       }
     ],
-    "votingPromotions": [],
+    "votingPromotions": [
+      {
+        "id": "promo-1783449479438-akqa6s",
+        "name": "Khung giờ nhân điểm",
+        "multiplier": 2,
+        "startAt": "2026-07-07T01:47",
+        "endAt": "2026-07-30T03:47",
+        "isEnabled": true,
+        "appliesTo": "FREE"
+      }
+    ],
     "votePackages": [
       {
         "id": "free-daily-vote",
@@ -195,7 +205,15 @@
         "isActive": true
       }
     ],
-    "activeVotingPromotion": null
+    "activeVotingPromotion": {
+      "id": "promo-1783449479438-akqa6s",
+      "name": "Khung giờ nhân điểm",
+      "multiplier": 2,
+      "startAt": "2026-07-07T01:47",
+      "endAt": "2026-07-30T03:47",
+      "isEnabled": true,
+      "appliesTo": "FREE"
+    }
   },
   "webUsers": [
     {
@@ -213,6 +231,72 @@
     }
   ],
   "voteHistory": [
+    {
+      "id": "vote-1783444866392",
+      "candidateId": "001",
+      "candidateSbd": "001",
+      "eventId": "thi-sinh-duoc-yeu-thich-nhat",
+      "packageId": "free-daily-vote",
+      "packageType": "FREE",
+      "points": 10,
+      "basePoints": 1,
+      "multiplierApplied": 10,
+      "promotionId": "promo-1783439326362-vwhcle",
+      "promotionName": "Khung giờ nhân điểm",
+      "amount": 0,
+      "userId": "wofed76992",
+      "voterPhone": "0888854212",
+      "createdAt": "2026-07-07T17:21:06.392Z"
+    },
+    {
+      "id": "vote-1783444855633",
+      "candidateId": "001",
+      "candidateSbd": "001",
+      "eventId": "thi-sinh-duoc-yeu-thich-nhat",
+      "packageId": "free-daily-vote",
+      "packageType": "FREE",
+      "points": 10,
+      "basePoints": 1,
+      "multiplierApplied": 10,
+      "promotionId": "promo-1783439326362-vwhcle",
+      "promotionName": "Khung giờ nhân điểm",
+      "amount": 0,
+      "userId": "wofed76992",
+      "voterPhone": "0888854212",
+      "createdAt": "2026-07-07T17:20:55.633Z"
+    },
+    {
+      "id": "vote-1783439912663",
+      "candidateId": "004",
+      "candidateSbd": "004",
+      "eventId": "thi-sinh-duoc-yeu-thich-nhat",
+      "packageId": "free-daily-vote",
+      "packageType": "FREE",
+      "points": 10,
+      "basePoints": 1,
+      "multiplierApplied": 10,
+      "promotionId": "promo-1783439326362-vwhcle",
+      "promotionName": "Khung giờ nhân điểm",
+      "amount": 0,
+      "userId": "wofed76992",
+      "voterPhone": "0888854212",
+      "createdAt": "2026-07-07T15:58:32.663Z"
+    },
+    {
+      "id": "vote-1783439445159",
+      "candidateId": "004",
+      "candidateSbd": "004",
+      "eventId": "thi-sinh-duoc-yeu-thich-nhat",
+      "packageId": "free-daily-vote",
+      "packageType": "FREE",
+      "points": 1,
+      "basePoints": 1,
+      "multiplierApplied": 1,
+      "amount": 0,
+      "userId": "wofed76992",
+      "voterPhone": "0888854212",
+      "createdAt": "2026-07-07T15:50:45.159Z"
+    },
     {
       "id": "vote-1781187260193",
       "candidateId": "002",

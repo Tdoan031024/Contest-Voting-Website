@@ -101,6 +101,7 @@ const PROJECT_FALLBACK_IMAGE = '/duan/anhmauduan.png';
 function getCandidateImageUrl(url?: string | null) {
   if (!url) return PROJECT_FALLBACK_IMAGE;
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  if (url.startsWith('/uploads/')) return apiUrl(url);
   return url;
 }
 
@@ -109,6 +110,29 @@ function getProjectRankTone(rank: number) {
   if (rank === 2) return 'silver';
   if (rank === 3) return 'bronze';
   return 'standard';
+}
+
+function parseVN(dStr: string | undefined | null) {
+  if (!dStr) return new Date();
+  let val = dStr.trim();
+  if (!val.includes('Z') && !/\+\d{2}:?\d{2}$/.test(val) && !/-\d{2}:?\d{2}$/.test(val)) {
+    val = `${val}+07:00`;
+  }
+  return new Date(val);
+}
+
+function formatDateTime(dStr: string | undefined | null) {
+  if (!dStr) return '';
+  const date = parseVN(dStr);
+  // Manually apply UTC+7 offset — avoids dependency on server locale/ICU data
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const utc7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  const hh = pad(utc7.getUTCHours());
+  const mm = pad(utc7.getUTCMinutes());
+  const dd = pad(utc7.getUTCDate());
+  const mo = pad(utc7.getUTCMonth() + 1);
+  const yyyy = utc7.getUTCFullYear();
+  return `${hh}:${mm} ngày ${dd}/${mo}/${yyyy}`;
 }
 
 export default function HomePage() {
@@ -155,9 +179,9 @@ export default function HomePage() {
   const [currentBannerIndex, setCurrentBannerIndex] = useState(0);
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [settings, setSettings] = useState<any>(null);
+  const [homepageNewsPosts, setHomepageNewsPosts] = useState<any[]>(SAMPLE_NEWS_POSTS.slice(0, 3));
   const totalVotes = useMemo(() => candidates.reduce((sum, c) => sum + c.votes, 0), [candidates]);
   const aboutTitleText = (settings?.aboutTitle || ABOUT_FALLBACK_TITLE).replace(/\s+NĂM\s+/i, ' ');
-  const homepageNewsPosts = SAMPLE_NEWS_POSTS.slice(0, 3);
 
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -190,10 +214,11 @@ export default function HomePage() {
     async function loadData() {
       setIsLoading(true);
       try {
-        const [candRes, banRes, sponRes] = await Promise.all([
+        const [candRes, banRes, sponRes, postRes] = await Promise.all([
           fetch(apiUrl('/api/candidates')),
           fetch(apiUrl('/api/banners')),
-          fetch(apiUrl('/api/sponsors'))
+          fetch(apiUrl('/api/sponsors')),
+          fetch(apiUrl('/api/posts'))
         ]);
 
         if (candRes.ok) {
@@ -230,12 +255,26 @@ export default function HomePage() {
           const sponData = await sponRes.json();
           setSponsors(sponData);
         }
+        if (postRes.ok) {
+          const postData = await postRes.json();
+          const activePosts = Array.isArray(postData) 
+            ? postData.filter((p: any) => p.isActive !== false) 
+            : [];
+          if (activePosts.length > 0) {
+            setHomepageNewsPosts(activePosts.slice(0, 3));
+          } else {
+            setHomepageNewsPosts(SAMPLE_NEWS_POSTS.slice(0, 3));
+          }
+        } else {
+          setHomepageNewsPosts(SAMPLE_NEWS_POSTS.slice(0, 3));
+        }
       } catch (err) {
         console.log('NestJS Backend API offline, using local mock/default data.', err);
         setSlides(defaultSlides);
         setBanners([]);
         setHasLoadedBanners(true);
         setCurrentBannerIndex(0);
+        setHomepageNewsPosts(SAMPLE_NEWS_POSTS.slice(0, 3));
       } finally {
         setIsLoading(false);
       }
@@ -454,6 +493,7 @@ export default function HomePage() {
       `}</style>
 
       <main className="sc-908a50-0 iUzfqH theme-page home-theme-page flex-1">
+
 
         {/* Banner Section with Slider & Video support */}
         {slides.length > 0 && (
@@ -797,11 +837,16 @@ export default function HomePage() {
                               </h4>
                             </div>
 
-                            <div className="project-vote-stat">
+                            <div className="project-vote-stat flex items-center justify-between">
                               <div>
                                 <p className="project-vote-stat-label">Lượt bình chọn</p>
                                 <p className="project-vote-stat-value">{c.votes.toLocaleString()}</p>
                               </div>
+                              {settings?.activeVotingPromotion && (
+                                <span className="inline-flex items-center rounded-lg bg-amber-500/10 border border-amber-500/25 px-2 py-1 text-xs font-black text-amber-600 dark:text-amber-400 animate-pulse">
+                                  x{settings.activeVotingPromotion.multiplier} Điểm 🔥
+                                </span>
+                              )}
                             </div>
 
                             <p className="project-card-description mt-2 line-clamp-2 min-h-[34px] text-[11px] leading-relaxed text-neutral-600 dark:text-white/68 text-left">
@@ -903,7 +948,7 @@ export default function HomePage() {
                   <div className="news-card-body">
                     <div className="news-meta">
                       <strong>{post.category}</strong>
-                      <time>{new Date(post.createdAt).toLocaleDateString('vi-VN')}</time>
+                      <time>{formatDateTime(post.createdAt)}</time>
                     </div>
                     <h3>{post.title}</h3>
                     <p>{post.summary}</p>

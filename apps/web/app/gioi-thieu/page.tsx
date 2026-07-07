@@ -91,6 +91,23 @@ function RichContent({ value, fallback, className }: { value?: string | null; fa
   return <div className={`${className} whitespace-pre-line`}>{content}</div>;
 }
 
+function parseVN(dStr: string | undefined | null) {
+  if (!dStr) return new Date();
+  let val = dStr.trim();
+  if (!val.includes('Z') && !/\+\d{2}:?\d{2}$/.test(val) && !/-\d{2}:?\d{2}$/.test(val)) {
+    val = `${val}+07:00`;
+  }
+  return new Date(val);
+}
+
+function formatDateTime(dStr: string | undefined | null) {
+  if (!dStr) return '';
+  const date = parseVN(dStr);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const utc7 = new Date(date.getTime() + 7 * 60 * 60 * 1000);
+  return `${pad(utc7.getUTCHours())}:${pad(utc7.getUTCMinutes())} ngày ${pad(utc7.getUTCDate())}/${pad(utc7.getUTCMonth() + 1)}/${utc7.getUTCFullYear()}`;
+}
+
 export default function GioiThieuPage() {
   const registerUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSdlRmaBRgPAl_rbLjDOY__ROcyZsCOnoxec2izDhRVJTcHBfA/viewform';
 
@@ -274,7 +291,7 @@ export default function GioiThieuPage() {
   ];
 
   const registrationDeadline = settings?.registrationDeadline
-    ? new Date(settings.registrationDeadline)
+    ? parseVN(settings.registrationDeadline)
     : null;
   const registrationOpen: boolean | null = settings
     ? settings.isRegistrationOpen !== false
@@ -293,6 +310,56 @@ export default function GioiThieuPage() {
 
   return (
     <>
+      {/* FAQ JSON-LD Schema for AEO (Answer Engine Optimization) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: [
+            {
+              '@type': 'Question',
+              name: 'HUIT Startup 2026 là gì?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'HUIT Startup 2026 là cuộc thi khởi nghiệp sáng tạo lớn nhất tại Trường Đại học Công nghiệp TP.HCM (HUIT), nơi các sinh viên, học sinh và cá nhân trình bày ý tưởng và dự án khởi nghiệp để được bình chọn và kết nối với nhà đầu tư.',
+              },
+            },
+            {
+              '@type': 'Question',
+              name: 'Ai có thể tham gia cuộc thi HUIT Startup 2026?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Cuộc thi mở cho học sinh THPT, sinh viên đại học/cao đẳng, cá nhân và tổ chức yêu thích khởi nghiệp, cũng như doanh nghiệp vừa và nhỏ tại TP.HCM và các tỉnh lân cận.',
+              },
+            },
+            {
+              '@type': 'Question',
+              name: 'Làm thế nào để bình chọn cho dự án tại HUIT Startup 2026?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Truy cập trang web HUIT Startup 2026, tìm dự án yêu thích tại mục Bảng xếp hạng hoặc Trang chủ, đăng nhập tài khoản và nhấn Bình chọn. Mỗi tài khoản có 2 lượt bình chọn miễn phí mỗi ngày.',
+              },
+            },
+            {
+              '@type': 'Question',
+              name: 'Giải thưởng của cuộc thi HUIT Startup 2026 là gì?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Các dự án xuất sắc sẽ nhận được giải thưởng tiền mặt, kết nối với nhà đầu tư, cơ hội ươm tạo khởi nghiệp và được hỗ trợ phát triển sản phẩm từ HUIT và các đối tác đồng hành.',
+              },
+            },
+            {
+              '@type': 'Question',
+              name: 'Cuộc thi HUIT Startup 2026 diễn ra khi nào?',
+              acceptedAnswer: {
+                '@type': 'Answer',
+                text: 'Cuộc thi HUIT Startup 2026 diễn ra trong năm 2026, bao gồm các giai đoạn: nhận hồ sơ, vòng loại, vòng bán kết và vòng chung kết. Chi tiết lịch trình xem tại mục Thời gian trên website.',
+              },
+            },
+          ],
+        })}}
+      />
       <style>{`
         :root {
           --about-primary: #0A2FFF;
@@ -654,7 +721,7 @@ export default function GioiThieuPage() {
                   {!isMounted || registrationOpen === null ? (
                     'Thông tin thời hạn đang được cập nhật từ hệ thống.'
                   ) : registrationDeadline ? (
-                    <>{registrationOpen ? 'Hạn chót nhận hồ sơ' : 'Thời hạn nhận hồ sơ đã kết thúc'}: <b className="text-[color:var(--about-text-primary)]">{registrationDeadline.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })}</b></>
+                    <>{registrationOpen ? 'Hạn chót nhận hồ sơ' : 'Thời hạn nhận hồ sơ đã kết thúc'}: <b className="text-[color:var(--about-text-primary)]">{formatDateTime(settings.registrationDeadline)}</b></>
                   ) : (
                     "Vui lòng theo dõi lịch trình chi tiết của các vòng thi bên dưới."
                   )}

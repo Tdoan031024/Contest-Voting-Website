@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { apiUrl, formatAssetUrl } from '../../api';
+import DateTimeInput from '../../components/DateTimeInput';
 
 type VotingPromotion = {
   id: string;
@@ -192,60 +193,6 @@ export default function SettingsAdminPage() {
 
       <form onSubmit={handleSaveSettings} className="space-y-4">
         
-        {/* Voting Gate Settings Block */}
-        <div className="bg-white border border-[#dce5e1] rounded-xl p-5 shadow-sm space-y-4">
-          <h3 className="text-sm font-bold text-[#123c34] border-b border-[#edf2f0] pb-2 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#0f766e]"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            Thời gian & Cổng bình chọn
-          </h3>
-          
-          <div className="flex items-center justify-between p-3 bg-[#fbfdfc] rounded-xl border border-[#dce5e1] shadow-sm">
-            <div>
-              <p className="font-bold text-xs text-[#123c34]">Trạng thái cổng bình chọn</p>
-              <p className="text-[10px] text-[#6b7773]">Cho phép hoặc tạm đóng cổng bình chọn đối với công chúng.</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsGateOpen(!isGateOpen)}
-              className={`w-12 h-6 rounded-full transition-colors duration-200 relative flex items-center ${isGateOpen ? 'bg-emerald-600' : 'bg-slate-200'}`}
-            >
-              <span className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 absolute ${isGateOpen ? 'translate-x-7' : 'translate-x-1'}`} />
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col space-y-1.5">
-              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Thời gian bắt đầu mở cổng</label>
-              <input 
-                type="datetime-local" 
-                className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
-                value={startDate} 
-                onChange={e => setStartDate(e.target.value)} 
-              />
-            </div>
-            <div className="flex flex-col space-y-1.5">
-              <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Thời gian đóng cổng bình chọn</label>
-              <input 
-                type="datetime-local" 
-                className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
-                value={endDate} 
-                onChange={e => setEndDate(e.target.value)} 
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-col space-y-1.5 w-full md:w-1/2">
-            <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Giới hạn số phiếu bầu / mỗi số điện thoại</label>
-            <input 
-              type="number" 
-              className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
-              value={maxVotesPerPhone} 
-              onChange={e => setMaxVotesPerPhone(Number(e.target.value))} 
-              min={1}
-            />
-            <p className="text-[10px] text-[#6b7773]">Số lượng bầu chọn tối đa mà một số điện thoại có thể thực hiện trong toàn sự kiện.</p>
-          </div>
-        </div>
 
         {/* General Settings Block */}
         <div className="bg-white border border-[#dce5e1] rounded-xl p-5 shadow-sm space-y-4">
@@ -377,7 +324,7 @@ export default function SettingsAdminPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col space-y-1.5">
               <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Hạn đăng ký hồ sơ</label>
-              <input type="datetime-local" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={registrationDeadline} onChange={e => setRegistrationDeadline(e.target.value)} />
+              <DateTimeInput value={registrationDeadline} onChange={val => setRegistrationDeadline(val)} />
             </div>
             <div className="flex flex-col space-y-1.5">
               <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Lượt miễn phí / tài khoản / ngày</label>
@@ -398,103 +345,7 @@ export default function SettingsAdminPage() {
           </div>
         </div>
 
-        <div className="bg-white border border-[#dce5e1] rounded-xl p-5 shadow-sm space-y-4">
-          <div className="flex flex-col gap-3 border-b border-[#edf2f0] pb-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h3 className="text-sm font-bold text-[#123c34]">Promotion nhân điểm bình chọn</h3>
-              <p className="mt-1 text-[11px] text-[#6b7773]">Tạo các khung giờ nhân `x2`, `x3` hoặc hệ số khác. Mỗi lượt vote vẫn chỉ tốn 1 quota miễn phí.</p>
-            </div>
-            <button
-              type="button"
-              onClick={addPromotion}
-              className="px-3 py-2 rounded-lg bg-[#123c34] text-white text-[11px] font-bold shadow hover:bg-[#0f766e] active:scale-[0.98]"
-            >
-              Thêm promotion
-            </button>
-          </div>
 
-          {votingPromotions.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-[#dce5e1] bg-[#fbfdfc] px-4 py-5 text-[11px] text-[#6b7773]">
-              Chưa có khung promotion nào. Bạn có thể thêm các đợt nhân điểm theo thời gian tại đây.
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {votingPromotions.map((promotion, index) => (
-                <div key={promotion.id} className="rounded-xl border border-[#dce5e1] bg-[#fbfdfc] p-4 shadow-sm space-y-4">
-                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Promotion {index + 1}</p>
-                      <p className="text-xs font-bold text-[#123c34]">{promotion.name || 'Khung giờ nhân điểm'}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => updatePromotion(promotion.id, 'isEnabled', !promotion.isEnabled)}
-                        className={`w-12 h-6 rounded-full transition-colors duration-200 relative flex items-center ${promotion.isEnabled ? 'bg-emerald-600' : 'bg-slate-200'}`}
-                      >
-                        <span className={`w-4 h-4 rounded-full bg-white shadow-sm transition-transform duration-200 absolute ${promotion.isEnabled ? 'translate-x-7' : 'translate-x-1'}`} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => removePromotion(promotion.id)}
-                        className="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 text-[10px] font-bold border border-red-200 hover:bg-red-100"
-                      >
-                        Xóa
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <div className="flex flex-col space-y-1.5">
-                      <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Tên promotion</label>
-                      <input
-                        className="h-9 px-3 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
-                        value={promotion.name}
-                        onChange={(e) => updatePromotion(promotion.id, 'name', e.target.value)}
-                      />
-                    </div>
-                    <div className="flex flex-col space-y-1.5">
-                      <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Hệ số nhân điểm</label>
-                      <input
-                        type="number"
-                        min={1}
-                        className="h-9 px-3 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
-                        value={promotion.multiplier}
-                        onChange={(e) => updatePromotion(promotion.id, 'multiplier', Math.max(1, Number(e.target.value) || 1))}
-                      />
-                    </div>
-                    <div className="flex flex-col space-y-1.5">
-                      <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Bắt đầu</label>
-                      <input
-                        type="datetime-local"
-                        className="h-9 px-3 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
-                        value={promotion.startAt}
-                        onChange={(e) => updatePromotion(promotion.id, 'startAt', e.target.value)}
-                      />
-                    </div>
-                    <div className="flex flex-col space-y-1.5">
-                      <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Kết thúc</label>
-                      <input
-                        type="datetime-local"
-                        className="h-9 px-3 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
-                        value={promotion.endAt}
-                        onChange={(e) => updatePromotion(promotion.id, 'endAt', e.target.value)}
-                      />
-                    </div>
-                    <div className="flex flex-col space-y-1.5 md:col-span-2">
-                      <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Ghi chú nội bộ</label>
-                      <input
-                        className="h-9 px-3 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
-                        value={promotion.note || ''}
-                        onChange={(e) => updatePromotion(promotion.id, 'note', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
 
 
 

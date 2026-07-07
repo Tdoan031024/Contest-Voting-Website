@@ -8,6 +8,9 @@ import { usePathname } from 'next/navigation';
 import { AlertProvider } from './AlertProvider';
 import { apiUrl } from './api';
 import { initDevToolsProtection } from '../src/utils/devtoolsProtection';
+import { AISearch } from '../src/components/AISearch';
+import { usePageViewTracker } from '../src/hooks/usePageViewTracker';
+import { AIChatbot } from '../src/components/AIChatbot';
 
 const inter = Inter({
   subsets: ['latin', 'vietnamese'],
@@ -40,6 +43,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [lang, setLang] = useState<'vi' | 'en'>('vi');
 
+  // Track GA4 page views on route change
+  usePageViewTracker();
+
+
   useEffect(() => {
     const savedLang = localStorage.getItem('huit_lang') as 'vi' | 'en' | null;
     if (savedLang) setLang(savedLang);
@@ -71,6 +78,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   useEffect(() => {
     const cleanup = initDevToolsProtection();
     return cleanup;
+  }, []);
+
+  // ─── Service Worker Registration (PWA) ────────────────────────────────
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch((err) => {
+          console.error('[SW] Registration failed:', err);
+        });
+      });
+    }
   }, []);
 
   useEffect(() => {
@@ -222,10 +240,97 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>{fullSiteTitle}</title>
-        <meta name="description" content={settings?.eventTitle ? `Bình chọn ${settings.eventTitle}` : 'Bình chọn HUIT STARTUP'} />
+        <meta name="description" content="Nền tảng cuộc thi khởi nghiệp sáng tạo HUIT Startup 2026, nơi các dự án tiềm năng được bình chọn và kết nối với nhà đầu tư, doanh nghiệp đồng hành." />
+        <meta name="keywords" content="HUIT Startup, khởi nghiệp, startup, đổi mới sáng tạo, cuộc thi khởi nghiệp, bình chọn dự án, HUIT, Đại học Công nghiệp TP.HCM" />
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="Trường Đại học Công nghiệp TP.HCM (HUIT)" />
+        <link rel="canonical" href={`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}`} />
+
+        {/* Open Graph */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="HUIT Startup 2026" />
+        <meta property="og:title" content={fullSiteTitle} />
+        <meta property="og:description" content="Nền tảng cuộc thi khởi nghiệp sáng tạo HUIT Startup 2026, nơi các dự án tiềm năng được bình chọn và kết nối với nhà đầu tư, doanh nghiệp đồng hành." />
+        <meta property="og:url" content={process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'} />
+        <meta property="og:image" content={`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/images/og-default.png`} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="HUIT Startup 2026" />
+        <meta property="og:locale" content="vi_VN" />
+
+        {/* Twitter Card */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={fullSiteTitle} />
+        <meta name="twitter:description" content="Nền tảng cuộc thi khởi nghiệp sáng tạo HUIT Startup 2026." />
+        <meta name="twitter:image" content={`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/images/og-default.png`} />
+
+        {/* PWA Manifest */}
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0f766e" />
+        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
         <link rel="icon" href="/favicon.png" type="image/png" />
 
+        {/* Organization + Website JSON-LD */}
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'Organization',
+              '@id': `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/#organization`,
+              name: 'Trường Đại học Công nghiệp TP.HCM (HUIT)',
+              url: 'https://www.huit.edu.vn',
+              logo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/images/logo-huit.png`,
+              sameAs: ['https://www.facebook.com/trungtamhotrokhoinghiep.huit'],
+              contactPoint: {
+                '@type': 'ContactPoint',
+                contactType: 'customer support',
+                email: 'startup@huit.edu.vn',
+              },
+            },
+            {
+              '@type': 'WebSite',
+              '@id': `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/#website`,
+              name: 'HUIT Startup 2026',
+              url: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
+              description: 'Nền tảng cuộc thi khởi nghiệp sáng tạo HUIT Startup 2026.',
+              inLanguage: 'vi-VN',
+              publisher: { '@id': `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/#organization` },
+              potentialAction: {
+                '@type': 'SearchAction',
+                target: {
+                  '@type': 'EntryPoint',
+                  urlTemplate: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/tin-tuc?search={search_term_string}`,
+                },
+                'query-input': 'required name=search_term_string',
+              },
+            },
+          ],
+        })}} />
 
+        {/* Google Analytics 4 */}
+        {process.env.NEXT_PUBLIC_GA4_ID && (
+          <>
+            <script async src={`https://www.googletagmanager.com/gtag/js?id=${process.env.NEXT_PUBLIC_GA4_ID}`} />
+            <script dangerouslySetInnerHTML={{ __html: `
+              window.dataLayer=window.dataLayer||[];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js',new Date());
+              gtag('config','${process.env.NEXT_PUBLIC_GA4_ID}',{anonymize_ip:true});
+              window.gtag=gtag;
+            `}} />
+          </>
+        )}
+
+        {/* Microsoft Clarity */}
+        {process.env.NEXT_PUBLIC_CLARITY_ID && (
+          <script dangerouslySetInnerHTML={{ __html: `
+            (function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+            })(window,document,"clarity","script","${process.env.NEXT_PUBLIC_CLARITY_ID}");
+          `}} />
+        )}
 
         {/* Original CSS */}
         <link rel="stylesheet" href="/css/82aef30d151230ac.css" />
@@ -337,6 +442,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                         </Link>
                       ))}
                     </nav>
+
+                    {/* Desktop Search Bar */}
+                    <div className="hidden sm-desktop:block mx-2" style={{ width: '220px' }}>
+                      <AISearch />
+                    </div>
 
                     {/* Right side actions */}
                     <div className="ml-2 flex items-center gap-2">
@@ -586,6 +696,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 </span>
               </div>
             </footer>
+
+            {/* AI Assistant Chatbot */}
+            <AIChatbot />
 
           </main>
         </AlertProvider>
