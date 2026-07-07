@@ -42,8 +42,9 @@ jobs:
 
             cd "$PROJECT_DIR"
             echo "[deploy] Fetch latest main"
-            git fetch --all
-            git reset --hard origin/main
+            git remote set-branches origin main
+            git fetch --prune --depth=1 origin main
+            git reset --hard FETCH_HEAD
 
             echo "[deploy] Install dependencies"
             env -u NODE_ENV -u NPM_CONFIG_PRODUCTION -u npm_config_production -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" ci --include=dev --no-audit --no-fund
