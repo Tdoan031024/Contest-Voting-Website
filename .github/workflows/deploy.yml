@@ -33,6 +33,8 @@ jobs:
             export NEXT_TELEMETRY_DISABLED=1
             export NEXT_PRIVATE_DISABLE_SOURCEMAPS=1
             export NEXT_DISABLE_ESLINT=1
+            LOG_DIR=/tmp/huit-deploy-logs
+            mkdir -p "$LOG_DIR"
 
             # Stop services to free up RAM before building
             echo "[deploy] Stopping services to free up memory..."
@@ -47,22 +49,46 @@ jobs:
             git reset --hard FETCH_HEAD
 
             echo "[deploy] Install dependencies"
-            env -u NODE_ENV -u NPM_CONFIG_PRODUCTION -u npm_config_production -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" ci --include=dev --no-audit --no-fund
+            if ! env -u NODE_ENV -u NPM_CONFIG_PRODUCTION -u npm_config_production -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" ci --include=dev --no-audit --no-fund > "$LOG_DIR/npm-ci.log" 2>&1; then
+              tail -n 200 "$LOG_DIR/npm-ci.log"
+              exit 1
+            fi
+            tail -n 20 "$LOG_DIR/npm-ci.log"
             
             echo "[deploy] Prisma generate"
-            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run prisma:generate --workspace=apps/api
+            if ! env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run prisma:generate --workspace=apps/api > "$LOG_DIR/prisma-generate.log" 2>&1; then
+              tail -n 200 "$LOG_DIR/prisma-generate.log"
+              exit 1
+            fi
+            tail -n 20 "$LOG_DIR/prisma-generate.log"
 
             echo "[deploy] Build shared"
-            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=packages/shared
+            if ! env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=packages/shared > "$LOG_DIR/build-shared.log" 2>&1; then
+              tail -n 200 "$LOG_DIR/build-shared.log"
+              exit 1
+            fi
+            tail -n 20 "$LOG_DIR/build-shared.log"
             
             echo "[deploy] Build api"
-            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/api
+            if ! env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/api > "$LOG_DIR/build-api.log" 2>&1; then
+              tail -n 200 "$LOG_DIR/build-api.log"
+              exit 1
+            fi
+            tail -n 20 "$LOG_DIR/build-api.log"
             
             echo "[deploy] Build web"
-            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/web
+            if ! env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/web > "$LOG_DIR/build-web.log" 2>&1; then
+              tail -n 200 "$LOG_DIR/build-web.log"
+              exit 1
+            fi
+            tail -n 60 "$LOG_DIR/build-web.log"
             
             echo "[deploy] Build admin"
-            env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/admin
+            if ! env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/admin > "$LOG_DIR/build-admin.log" 2>&1; then
+              tail -n 200 "$LOG_DIR/build-admin.log"
+              exit 1
+            fi
+            tail -n 60 "$LOG_DIR/build-admin.log"
 
             echo "[deploy] Starting services..."
             cloudlinux-selector start --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/admin || cloudlinux-selector restart --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/admin
