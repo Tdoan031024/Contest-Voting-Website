@@ -11,6 +11,46 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --include=dev --no-audit --no-fund
+
+      - name: Build artifacts
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+          NEXT_TELEMETRY_DISABLED: 1
+          NEXT_PRIVATE_DISABLE_SOURCEMAPS: 1
+          NEXT_DISABLE_ESLINT: 1
+        run: |
+          npm run prisma:generate --workspace=apps/api
+          npm run build --workspace=packages/shared
+          npm run build --workspace=apps/api
+          npm run build --workspace=apps/web
+          npm run build --workspace=apps/admin
+
+      - name: Package build artifacts
+        run: |
+          tar -czf deploy-artifacts.tgz \
+            apps/api/dist \
+            packages/shared/dist \
+            apps/web/.next \
+            apps/admin/.next
+
+      - name: Upload build artifacts to hosting
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.HOSTING_HOST }}
+          username: ${{ secrets.HOSTING_USER }}
+          key: ${{ secrets.HOSTING_SSH_KEY }}
+          port: ${{ secrets.HOSTING_PORT }}
+          source: deploy-artifacts.tgz
+          target: /tmp
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
@@ -34,6 +74,7 @@ jobs:
             export NEXT_PRIVATE_DISABLE_SOURCEMAPS=1
             export NEXT_DISABLE_ESLINT=1
             LOG_DIR=/tmp/huit-deploy-logs
+            ARTIFACT_PATH=/tmp/deploy-artifacts.tgz
             mkdir -p "$LOG_DIR"
 
             # Stop services to free up RAM before building
@@ -62,33 +103,13 @@ jobs:
             fi
             tail -n 20 "$LOG_DIR/prisma-generate.log"
 
-            echo "[deploy] Build shared"
-            if ! env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=packages/shared > "$LOG_DIR/build-shared.log" 2>&1; then
-              tail -n 200 "$LOG_DIR/build-shared.log"
+            echo "[deploy] Extract prebuilt artifacts"
+            if [ ! -f "$ARTIFACT_PATH" ]; then
+              echo "Missing artifact: $ARTIFACT_PATH"
               exit 1
             fi
-            tail -n 20 "$LOG_DIR/build-shared.log"
-            
-            echo "[deploy] Build api"
-            if ! env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/api > "$LOG_DIR/build-api.log" 2>&1; then
-              tail -n 200 "$LOG_DIR/build-api.log"
-              exit 1
-            fi
-            tail -n 20 "$LOG_DIR/build-api.log"
-            
-            echo "[deploy] Build web"
-            if ! env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/web > "$LOG_DIR/build-web.log" 2>&1; then
-              tail -n 200 "$LOG_DIR/build-web.log"
-              exit 1
-            fi
-            tail -n 60 "$LOG_DIR/build-web.log"
-            
-            echo "[deploy] Build admin"
-            if ! env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run build --workspace=apps/admin > "$LOG_DIR/build-admin.log" 2>&1; then
-              tail -n 200 "$LOG_DIR/build-admin.log"
-              exit 1
-            fi
-            tail -n 60 "$LOG_DIR/build-admin.log"
+            tar -xzf "$ARTIFACT_PATH" -C "$PROJECT_DIR"
+            rm -f "$ARTIFACT_PATH"
 
             echo "[deploy] Starting services..."
             cloudlinux-selector start --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/admin || cloudlinux-selector restart --json --interpreter nodejs --app-root public_html/startup.huitmedia.edu.vn/apps/admin
