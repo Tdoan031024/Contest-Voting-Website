@@ -50,6 +50,9 @@ jobs:
           port: ${{ secrets.HOSTING_PORT }}
           source: deploy-artifacts.tgz
           target: /tmp
+          timeout: 120s
+          command_timeout: 30m
+          overwrite: true
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
