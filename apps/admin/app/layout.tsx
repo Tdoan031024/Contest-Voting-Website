@@ -1,12 +1,18 @@
 import React from 'react';
-import { Inter } from 'next/font/google';
+import localFont from 'next/font/local';
 import './globals.css';
 import { AlertProvider } from './AlertProvider';
 import ClientShell from './ClientShell';
 
-const inter = Inter({
-  subsets: ['latin', 'vietnamese'],
-  weight: ['400', '500', '600', '700', '800', '900'],
+const inter = localFont({
+  src: [
+    { path: '../public/fonts/inter-v13-vietnamese-regular.woff2', weight: '400', style: 'normal' },
+    { path: '../public/fonts/inter-v13-vietnamese-500.woff2', weight: '500', style: 'normal' },
+    { path: '../public/fonts/inter-v13-vietnamese-600.woff2', weight: '600', style: 'normal' },
+    { path: '../public/fonts/inter-v13-vietnamese-700.woff2', weight: '700', style: 'normal' },
+    { path: '../public/fonts/inter-v13-vietnamese-800.woff2', weight: '800', style: 'normal' },
+    { path: '../public/fonts/inter-v13-vietnamese-900.woff2', weight: '900', style: 'normal' },
+  ],
   display: 'swap',
   preload: true,
   variable: '--font-sans',
