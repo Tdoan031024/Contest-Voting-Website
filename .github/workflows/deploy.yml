@@ -95,6 +95,13 @@ jobs:
               exit 1
             fi
             tail -n 20 "$LOG_DIR/npm-ci.log"
+
+            echo "[deploy] Sync database schema"
+            if ! env -u NPM_CONFIG_PREFIX -u npm_config_prefix npx prisma db push --schema apps/api/prisma/schema.prisma --skip-generate > "$LOG_DIR/prisma-db-push.log" 2>&1; then
+              tail -n 200 "$LOG_DIR/prisma-db-push.log"
+              exit 1
+            fi
+            tail -n 40 "$LOG_DIR/prisma-db-push.log"
             
             echo "[deploy] Prisma generate"
             if ! env -u NPM_CONFIG_PREFIX -u npm_config_prefix npm --prefix "$PROJECT_DIR" run prisma:generate --workspace=apps/api > "$LOG_DIR/prisma-generate.log" 2>&1; then
