@@ -3520,6 +3520,14 @@ button, a { -webkit-tap-highlight-color: transparent; }
     inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
 }
 
+/* Fix multiplier badge overlap in Điểm bình chọn card */
+.project-detail-hero .grid > div span {
+  top: auto !important;
+  bottom: 8px !important;
+  right: 8px !important;
+  font-size: 10px !important;
+}
+
 /* 5. Glass Body Cards & Translucent Dividers */
 .project-detail-page section.mx-auto > div > div, 
 .project-detail-page aside > div {
@@ -3552,7 +3560,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   background: rgba(255, 255, 255, 0.04) !important;
 }
 
-/* 6. Glowing Aside Vote Box & Active Button */
+/* 6. Glowing Aside Vote Box & Active/Disabled Buttons */
 .project-detail-page aside > div {
   position: relative;
   box-shadow: 0 12px 36px rgba(10, 47, 255, 0.04), var(--glass-shadow) !important;
@@ -3593,50 +3601,114 @@ button, a { -webkit-tap-highlight-color: transparent; }
   opacity: 1 !important;
 }
 
-/* 7. Floating Sidebar (Zalo, Phone, Email) Glass Bubbles */
-.site-floating-actions .float-action {
-  background: rgba(255, 255, 255, 0.6) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
+/* High contrast disabled voting button */
+.project-detail-page aside button:disabled {
+  background: #cbd5e1 !important; /* Rich solid gray */
+  color: #1e293b !important; /* Dark gray for high contrast visibility */
+  text-shadow: none !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 1 !important;
+}
+:root[data-theme='dark'] .project-detail-page aside button:disabled {
+  background: #334155 !important;
+  color: #f8fafc !important;
+}
+
+/* Optimizing voting instructions card padding */
+.project-detail-page aside .rounded-xl.bg-\[var\(--site-soft\)\] {
+  padding: 20px !important;
+}
+
+/* Header logo spacing */
+.header-brand-shell {
+  gap: 24px !important;
+}
+@media (max-width: 768px) {
+  .header-brand-shell {
+    gap: 12px !important;
+  }
+}
+
+/* 7. Floating Sidebar (Zalo, Phone, Email) Unified Glass Toolbelt */
+.site-floating-actions {
+  position: fixed !important;
+  z-index: 1000 !important;
+  right: 20px !important;
+  top: 50% !important;
+  bottom: auto !important;
+  transform: translateY(-50%) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 14px !important;
+  padding: 14px !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
   border: 1px solid rgba(255, 255, 255, 0.4) !important;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12) !important;
-  width: 50px !important;
-  height: 50px !important;
+  box-shadow: 0 16px 36px rgba(31, 38, 135, 0.12) !important;
+  border-radius: 24px !important;
+}
+
+:root[data-theme='dark'] .site-floating-actions {
+  background: rgba(10, 21, 38, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35) !important;
+}
+
+.site-floating-actions .float-action {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: 40px !important;
+  height: 40px !important;
+  margin: 0 !important;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
 }
 
-:root[data-theme='dark'] .site-floating-actions .float-action {
-  background: rgba(10, 21, 38, 0.55) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
-}
-
 .site-floating-actions .float-action:hover {
-  transform: translateY(-4px) scale(1.05) !important;
-  border-color: rgba(10, 47, 255, 0.3) !important;
-  box-shadow: 
-    0 12px 28px rgba(10, 47, 255, 0.15),
-    0 8px 32px 0 rgba(31, 38, 135, 0.12) !important;
+  transform: scale(1.15) !important;
 }
 
 .site-floating-actions .float-action img {
-  width: 54% !important;
-  height: 54% !important;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: contain !important;
-  filter: none !important;
+  filter: drop-shadow(0 4px 8px rgba(15, 23, 42, 0.08)) !important;
   transition: transform 0.3s ease !important;
 }
 
 .site-floating-actions .float-action:hover img {
-  transform: scale(1.12) !important;
+  transform: scale(1.1) !important;
+  filter: drop-shadow(0 6px 14px rgba(10, 47, 255, 0.2)) !important;
 }
 
+/* Floating scroll top outside the unified bar */
 .site-floating-actions .float-action.scroll-top {
+  position: absolute !important;
+  bottom: -56px !important;
+  right: 12px !important;
   background: linear-gradient(135deg, #0a2fff, #29abb7) !important;
   border: none !important;
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 50% !important;
+  box-shadow: 0 4px 12px rgba(10, 47, 255, 0.2) !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #ffffff !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
+
+.site-floating-actions .float-action.scroll-top.visible {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+}
+
 .site-floating-actions .float-action.scroll-top:hover {
-  box-shadow: 0 8px 24px rgba(10, 47, 255, 0.35) !important;
+  transform: translateY(-3px) scale(1.05) !important;
+  box-shadow: 0 6px 16px rgba(10, 47, 255, 0.35) !important;
 }
 
 /* 8. Glass Footer */

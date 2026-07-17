@@ -302,7 +302,7 @@ export default function CandidateDetailPage() {
                 ['Trạng thái', candidate.status || 'Đang cập nhật'],
                 ['Thành viên nhóm', candidate.members || 'Chưa cập nhật'],
               ].map(([label, value]) => (
-                <div key={label} className={`rounded-xl bg-[var(--site-soft)] p-3 ${label === 'Thành viên nhóm' ? 'sm:col-span-2' : ''}`}>
+                <div key={label} className={`rounded-xl bg-[var(--site-soft)] p-3 ${label === 'Thành viên nhóm' || label === 'Đơn vị / trường' ? 'sm:col-span-2' : ''}`}>
                   <p className="text-[13px] font-semibold text-[var(--site-muted)]">{label}</p>
                   <p className="mt-1 text-sm font-bold text-[var(--site-text)] whitespace-pre-line">{value}</p>
                 </div>
