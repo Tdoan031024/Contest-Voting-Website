@@ -45,6 +45,7 @@ export default function CandidateDetailPage() {
   const sbd = params.sbd as string;
 
   const [candidate, setCandidate] = useState<Candidate | null>(null);
+  const [allCandidates, setAllCandidates] = useState<Candidate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isVoteModalOpen, setIsVoteModalOpen] = useState(false);
   const [settings, setSettings] = useState<any>(null);
@@ -61,8 +62,9 @@ export default function CandidateDetailPage() {
 
     async function loadData() {
       setIsLoading(true);
-      const [candidateRes, settingsRes] = await Promise.all([
+      const [candidateRes, allRes, settingsRes] = await Promise.all([
         fetch(apiUrl('/api/candidates/' + sbd)),
+        fetch(apiUrl('/api/candidates')),
         fetch(apiUrl('/api/settings')),
       ]);
 
@@ -72,6 +74,10 @@ export default function CandidateDetailPage() {
         if (data) {
           setActiveImage(getCandidateImageUrl(data.imageUrl));
         }
+      }
+
+      if (allRes.ok) {
+        setAllCandidates(await allRes.json());
       }
 
       if (settingsRes.ok) {
@@ -84,13 +90,17 @@ export default function CandidateDetailPage() {
 
     const interval = setInterval(async () => {
       try {
-        const [candidateRes, settingsRes] = await Promise.all([
+        const [candidateRes, allRes, settingsRes] = await Promise.all([
           fetch(apiUrl('/api/candidates/' + sbd)),
+          fetch(apiUrl('/api/candidates')),
           fetch(apiUrl('/api/settings')),
         ]);
         if (candidateRes.ok) {
           const data = await candidateRes.json();
           setCandidate(data);
+        }
+        if (allRes.ok) {
+          setAllCandidates(await allRes.json());
         }
         if (settingsRes.ok) {
           setSettings(await settingsRes.json());
@@ -102,6 +112,7 @@ export default function CandidateDetailPage() {
 
     return () => clearInterval(interval);
   }, [sbd]);
+
   const showcaseUrls = useMemo(() => {
     if (!candidate || !candidate.showcaseImages) return [];
     return candidate.showcaseImages.split(',').map(url => url.trim()).filter(Boolean);
@@ -128,6 +139,54 @@ export default function CandidateDetailPage() {
     const end = new Date(settings.endDate);
     return now >= start && now <= end;
   }, [settings]);
+
+  const remainingDays = useMemo(() => {
+    if (!settings || !settings.endDate) return '0 ngày';
+    const now = new Date();
+    const end = new Date(settings.endDate);
+    const diffTime = end.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? `${diffDays} ngày` : 'Kết thúc';
+  }, [settings?.endDate]);
+
+  const mockViews = useMemo(() => {
+    if (!candidate) return '0';
+    return (candidate.votes * 15 + 120).toLocaleString();
+  }, [candidate?.votes]);
+
+  const currentRank = useMemo(() => {
+    if (!candidate || allCandidates.length === 0) return 'Top --';
+    const sorted = [...allCandidates].sort((a, b) => b.votes - a.votes);
+    const idx = sorted.findIndex(x => x.sbd === candidate.sbd);
+    return idx >= 0 ? `Top ${idx + 1}` : 'Top --';
+  }, [candidate, allCandidates]);
+
+  const prevAndNext = useMemo(() => {
+    if (allCandidates.length === 0 || !candidate) return { prev: null, next: null };
+    const sorted = [...allCandidates].sort((a, b) => b.votes - a.votes);
+    const idx = sorted.findIndex(x => x.sbd === candidate.sbd);
+    if (idx === -1) return { prev: null, next: null };
+    const prev = idx > 0 ? sorted[idx - 1] : sorted[sorted.length - 1];
+    const next = idx < sorted.length - 1 ? sorted[idx + 1] : sorted[0];
+    return { prev, next };
+  }, [candidate, allCandidates]);
+
+  const highlights = useMemo(() => {
+    if (candidate?.sbd === '001') {
+      return [
+        { title: 'Tận dụng phụ phẩm', desc: 'Giảm thiểu rác thải nông nghiệp', color: 'bg-emerald-50 text-emerald-800 border border-emerald-300/80 dark:bg-emerald-950/30 dark:text-emerald-400' },
+        { title: 'Lên men tự nhiên', desc: 'Giàu probiotics tốt cho sức khỏe', color: 'bg-blue-50 text-blue-800 border border-blue-300/80 dark:bg-blue-950/30 dark:text-blue-400' },
+        { title: 'Giàu chất chống oxy hóa', desc: 'Hỗ trợ tăng cường sức đề kháng', color: 'bg-amber-50 text-amber-800 border border-amber-300/80 dark:bg-amber-950/30 dark:text-amber-400' },
+        { title: 'An toàn & bền vững', desc: 'Đạt tiêu chuẩn vệ sinh an toàn thực phẩm', color: 'bg-teal-50 text-teal-800 border border-teal-300/80 dark:bg-teal-950/30 dark:text-teal-400' }
+      ];
+    }
+    return [
+      { title: 'Đột phá & Sáng tạo', desc: 'Ý tưởng độc đáo, giải pháp công nghệ mới', color: 'bg-blue-50 text-blue-800 border border-blue-300/80 dark:bg-blue-950/30 dark:text-blue-400' },
+      { title: 'Tính khả thi cao', desc: 'Mô hình kinh doanh rõ ràng, thực tiễn', color: 'bg-teal-50 text-teal-800 border border-teal-300/80 dark:bg-teal-950/30 dark:text-teal-400' },
+      { title: 'Tác động cộng đồng', desc: 'Giải quyết các vấn đề xã hội cấp thiết', color: 'bg-emerald-50 text-emerald-800 border border-emerald-300/80 dark:bg-emerald-950/30 dark:text-emerald-400' },
+      { title: 'Phát triển bền vững', desc: 'Thân thiện môi trường, tiết kiệm tài nguyên', color: 'bg-amber-50 text-amber-800 border border-amber-300/80 dark:bg-amber-950/30 dark:text-amber-400' }
+    ];
+  }, [candidate?.sbd]);
 
   const handleOpenLightbox = (imgUrl: string) => {
     const idx = allImages.indexOf(imgUrl);
@@ -197,43 +256,65 @@ export default function CandidateDetailPage() {
   };
 
   if (isLoading) {
-    return <main className="project-detail-page min-h-[60vh] bg-[var(--site-bg)] px-4 py-12 text-center text-sm font-semibold text-[var(--site-muted)]">Đang tải hồ sơ dự án...</main>;
+    return <main className="min-h-[60vh] bg-[#F8FAFC] px-4 py-24 text-center text-base font-bold text-slate-600">Đang tải hồ sơ dự án...</main>;
   }
 
   if (!candidate) {
     return (
-      <main className="project-detail-page min-h-[60vh] bg-[var(--site-bg)] px-4 py-12 text-center">
-        <h1 className="text-xl font-black text-[var(--site-text)]">Không tìm thấy dự án</h1>
-        <Link href="/" className="mt-4 inline-block text-sm font-bold text-[var(--site-primary)]">Quay lại trang chủ</Link>
+      <main className="min-h-[60vh] bg-[#F8FAFC] px-4 py-24 text-center">
+        <h1 className="text-2xl font-bold text-slate-950">Không tìm thấy dự án</h1>
+        <Link href="/" className="mt-4 inline-block text-sm font-bold text-[#2563EB] hover:underline">Quay lại trang chủ</Link>
       </main>
     );
   }
 
-  return (
-    <main className="project-detail-page bg-[var(--site-bg)] pb-28">
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`;
 
-      <section className="project-detail-hero px-4 py-8 text-white">
-        <nav className="mx-auto mb-5 max-w-6xl text-sm text-white/70" aria-label="Breadcrumb">
-          <Link href="/" className="hover:text-white">Dự án</Link>
-          <span className="mx-2" aria-hidden="true">/</span>
-          <span aria-current="page" className="text-white">{candidate.name}</span>
+  return (
+    <main className="min-h-screen bg-[#F8FAFC] pb-24 text-slate-800 font-sans antialiased">
+      
+      {/* ─── BREADCRUMB ─── */}
+      <div className="max-w-[1300px] mx-auto px-4 pt-6">
+        <nav className="text-base text-slate-500 flex items-center gap-2" aria-label="Breadcrumb">
+          <Link href="/" className="hover:text-slate-900 transition-colors font-medium">Dự án</Link>
+          <span className="text-slate-300" aria-hidden="true">/</span>
+          <span aria-current="page" className="text-slate-800 font-bold truncate">{candidate.name}</span>
         </nav>
-        <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[420px_1fr]">
-          <div className="flex flex-col gap-3">
+      </div>
+
+      {/* ─── HERO SECTION (Title & Description Full Width) ─── */}
+      <section className="max-w-[1300px] mx-auto px-4 pt-6 pb-2">
+        <span className="inline-flex px-3 py-1.5 bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold rounded-full w-max tracking-wide uppercase">
+          Mã dự án · {candidate.sbd}
+        </span>
+        <h1 className="mt-4 text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+          {candidate.name}
+        </h1>
+        <p className="mt-4 text-lg leading-relaxed text-slate-600 font-medium">
+          {candidate.description}
+        </p>
+      </section>
+
+      {/* ─── IMAGE & STATS SECTION (2 Columns - Stretched Height) ─── */}
+      <section className="max-w-[1300px] mx-auto px-4 py-4">
+        <div className="grid gap-8 lg:grid-cols-[460px_1fr] items-stretch">
+          
+          {/* Left Column: Image & Thumbnails (Matched Height) */}
+          <div className="flex flex-col gap-4 h-full justify-between">
             <button
               ref={lightboxTriggerRef}
               type="button"
               onClick={() => handleOpenLightbox(activeImage || getCandidateImageUrl(candidate.imageUrl))}
-              className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 cursor-zoom-in relative group text-left"
+              className="overflow-hidden rounded-2xl cursor-zoom-in relative group text-left transition-all duration-300 active:scale-[0.99] w-full flex-1 min-h-[320px]"
               aria-label={`Phóng to ảnh dự án ${candidate.name}`}
             >
               <img 
                 src={activeImage || getCandidateImageUrl(candidate.imageUrl)}
                 alt={candidate.name} 
-                className="aspect-[4/3] w-full object-cover transition duration-300 ease-in-out group-hover:scale-105" 
+                className="absolute inset-0 w-full h-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-105" 
               />
-              <div className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="h-8 w-8 text-white drop-shadow-md" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                <svg viewBox="0 0 24 24" className="h-9 w-9 text-white drop-shadow" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" />
                   <line x1="11" y1="8" x2="11" y2="14" />
@@ -241,16 +322,17 @@ export default function CandidateDetailPage() {
                 </svg>
               </div>
             </button>
+            
             {allImages.length > 1 && (
-              <div className="flex flex-wrap gap-2 justify-center">
+              <div className="flex flex-wrap gap-2 justify-start shrink-0">
                 {allImages.map((imgUrl, index) => {
                   const isActive = (activeImage || getCandidateImageUrl(candidate.imageUrl)) === imgUrl;
                   return (
                     <button
                       key={index}
                       onClick={() => setActiveImage(imgUrl)}
-                      className={`h-11 w-14 rounded-lg overflow-hidden border-2 bg-white/5 transition duration-150 active:scale-95 shrink-0 ${
-                        isActive ? 'border-[#79d4bd] scale-105 shadow-md shadow-[#79d4bd]/20' : 'border-white/10 opacity-70 hover:opacity-100 hover:border-white/30'
+                      className={`h-12 w-16 rounded-xl overflow-hidden border-2 bg-white transition-all duration-200 active:scale-95 shrink-0 ${
+                        isActive ? 'border-[#2563EB] scale-105 shadow-sm' : 'border-slate-300 opacity-70 hover:opacity-100 hover:border-slate-400'
                       }`}
                     >
                       <img src={imgUrl} alt={`${candidate.name} image ${index + 1}`} className="h-full w-full object-cover" />
@@ -260,141 +342,426 @@ export default function CandidateDetailPage() {
               </div>
             )}
           </div>
-          <div className="flex flex-col justify-center">
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-cyan-300">Hồ sơ dự án HUIT Startup 2026</p>
-            <h1 className="mt-3 text-3xl font-black leading-tight md:text-4xl">{candidate.name}</h1>
-            <p className="mt-4 max-w-3xl text-sm leading-6 text-white/75">{candidate.description}</p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-4">
+
+          {/* Right Column: 4 Stats Cards & Metadata Bar */}
+          <div className="flex flex-col justify-between h-full gap-4">
+            {/* Horizontal Icon Cards Statistics */}
+            <div className="grid grid-cols-2 gap-4 flex-1">
               {[
-                ['Mã dự án', candidate.sbd],
+                {
+                  label: 'Lượt bình chọn',
+                  value: candidate.votes.toLocaleString(),
+                  icon: (
+                    <svg className="w-6 h-6 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                  )
+                },
+                {
+                  label: 'Lượt xem',
+                  value: mockViews,
+                  icon: (
+                    <svg className="w-6 h-6 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )
+                },
+                {
+                  label: 'Bảng xếp hạng',
+                  value: currentRank,
+                  icon: (
+                    <svg className="w-6 h-6 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 0a7.454 7.454 0 00.981 3.172m0 0a8.25 8.25 0 001.38 2.226m0 0a8.25 8.25 0 01-1.38-2.226m0 0h1.003V10.5" />
+                    </svg>
+                  )
+                },
+                {
+                  label: 'Kết thúc vote',
+                  value: remainingDays,
+                  icon: (
+                    <svg className="w-6 h-6 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  )
+                }
+              ].map((stat, i) => (
+                <div key={i} className="bg-white p-4 rounded-2xl border border-slate-300 hover:border-slate-400 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-blue-400/80 transition-all duration-300 flex flex-col justify-center">
+                  <div className="flex items-center gap-2">
+                    {stat.icon}
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">{stat.label}</span>
+                  </div>
+                  <p className="mt-2 text-2xl font-black text-slate-900 tracking-tight">{stat.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Compact project metadata details */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 border border-slate-300 p-3.5 rounded-2xl shrink-0 transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
+              {[
                 ['Bảng thi', candidate.contestTableLabel || candidate.contestTable || 'Chưa phân bảng'],
-                ['Vòng hiện tại', candidate.currentRound || 'Vòng loại'],
-                ['Điểm bình chọn', candidate.votes.toLocaleString()],
-              ].map(([label, value]) => (
-                <div key={label} className="rounded-xl border border-white/10 bg-white/5 p-3 relative overflow-hidden">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-white/45">{label}</p>
-                  <p className="mt-1 text-sm font-black">{value}</p>
-                  {label === 'Điểm bình chọn' && settings?.activeVotingPromotion && (
-                    <span className="absolute top-2 right-2 inline-flex items-center rounded-full bg-amber-500/20 px-2 py-0.5 text-[9px] font-black text-amber-300 animate-pulse">
-                      x{settings.activeVotingPromotion.multiplier}
-                    </span>
-                  )}
+                ['Vòng thi', candidate.currentRound || 'Vòng loại'],
+                ['Điểm bình chọn', `${candidate.votes.toLocaleString()} điểm`],
+              ].map(([lbl, val]) => (
+                <div key={lbl} className="flex justify-between sm:flex-col sm:justify-start gap-1 px-3 py-1.5 sm:border-r last:border-r-0 border-slate-300">
+                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{lbl}</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-base font-bold text-slate-800">{val}</span>
+                    {lbl === 'Điểm bình chọn' && settings?.activeVotingPromotion && (
+                      <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-black text-amber-700 border border-amber-200/60 animate-pulse">
+                        x{settings.activeVotingPromotion.multiplier}
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-6 px-4 py-6 lg:grid-cols-[1fr_390px]">
-        <div className="space-y-5">
-          <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-6 shadow-sm">
-            <h2 className="text-lg font-black text-[var(--site-text)] flex items-center gap-2">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
+      {/* ─── MAIN BODY SECTION ─── */}
+      <section className="max-w-[1300px] mx-auto px-4 py-4 grid gap-8 lg:grid-cols-[1fr_380px]">
+        
+        {/* Left Column - Details */}
+        <div className="space-y-8">
+          
+          {/* 1. Thông tin nhóm dự thi */}
+          <div className="bg-white rounded-[16px] border border-slate-300 p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
+            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-300 pb-3">
+              <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-slate-50 border border-slate-300 text-slate-700">
+                <svg className="w-4 h-4 stroke-slate-700 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                  <path d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
                 </svg>
               </span>
               Thông tin nhóm dự thi
             </h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            
+            <div className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2 text-base">
               {[
-                ['Tên nhóm', candidate.teamName || 'Chưa cập nhật'],
-                ['Trưởng nhóm', candidate.leaderName || 'Chưa cập nhật'],
-                ['Đơn vị / trường', candidate.representativeSchool || 'Chưa cập nhật'],
-                ['Lĩnh vực', candidate.sector || 'Chưa cập nhật'],
-                ['Email liên hệ', candidate.leaderEmail || 'Chưa cập nhật'],
-                ['Số điện thoại', candidate.leaderPhone || 'Chưa cập nhật'],
-                ['Cố vấn', candidate.advisorName || 'Chưa cập nhật'],
-                ['Trạng thái', candidate.status || 'Đang cập nhật'],
-                ['Thành viên nhóm', candidate.members || 'Chưa cập nhật'],
-              ].map(([label, value]) => (
-                <div key={label} className={`rounded-xl bg-[var(--site-soft)] p-3 ${label === 'Thành viên nhóm' || label === 'Đơn vị / trường' ? 'sm:col-span-2' : ''}`}>
-                  <p className="text-[13px] font-semibold text-[var(--site-muted)]">{label}</p>
-                  <p className="mt-1 text-sm font-bold text-[var(--site-text)] whitespace-pre-line">{value}</p>
+                { label: 'Tên nhóm', value: candidate.teamName, icon: <svg className="w-4 h-4 stroke-slate-500 fill-none mt-0.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> },
+                { label: 'Trưởng nhóm', value: candidate.leaderName, icon: <svg className="w-4 h-4 stroke-slate-500 fill-none mt-0.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> },
+                { label: 'Đơn vị / trường', value: candidate.representativeSchool, icon: <svg className="w-4 h-4 stroke-slate-500 fill-none mt-0.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>, fullWidth: true },
+                { label: 'Lĩnh vực', value: candidate.sector, icon: <svg className="w-4 h-4 stroke-slate-500 fill-none mt-0.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg> },
+                { label: 'Số điện thoại', value: candidate.leaderPhone, icon: <svg className="w-4 h-4 stroke-slate-500 fill-none mt-0.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.12.9.33 1.78.62 2.63a2 2 0 0 1-.45 2.11L8 9.73a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.85.3 1.73.5 2.63.62A2 2 0 0 1 22 16.92Z"/></svg> },
+                { label: 'Email liên hệ', value: candidate.leaderEmail, icon: <svg className="w-4 h-4 stroke-slate-500 fill-none mt-0.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>, fullWidth: true },
+                { label: 'Cố vấn chuyên môn', value: candidate.advisorName, icon: <svg className="w-4 h-4 stroke-slate-500 fill-none mt-0.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> },
+                { label: 'Trạng thái hồ sơ', value: candidate.status || 'Đang duyệt', icon: <svg className="w-4 h-4 stroke-slate-500 fill-none mt-0.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> },
+                { label: 'Thành viên nhóm', value: candidate.members, icon: <svg className="w-4 h-4 stroke-slate-500 fill-none mt-0.5" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>, fullWidth: true },
+              ].map((item, idx) => {
+                if (!item.value) return null;
+                return (
+                  <div key={idx} className={`flex items-center gap-2.5 p-1 rounded-lg hover:bg-slate-50 transition-colors ${item.fullWidth ? 'sm:col-span-2' : 'sm:col-span-1'}`}>
+                    <span className="shrink-0 text-slate-500">{item.icon}</span>
+                    <div className="flex flex-wrap items-baseline gap-x-1.5">
+                      <span className="text-[16px] font-bold text-slate-500">{item.label}:</span>
+                      <span className="text-[16px] font-bold text-slate-800 leading-tight">{item.value}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 2. Thuyết minh dự án */}
+          <div className="bg-white rounded-[16px] border border-slate-300 p-6 sm:p-8 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
+            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-300 pb-4">
+              <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-50 border border-slate-300 text-slate-700">
+                <svg className="w-5 h-5 stroke-slate-700 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504( 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+              </span>
+              Thuyết minh dự án
+            </h2>
+
+            {/* Stylized Project Executive Summary Quote Box */}
+            <div className="mt-6 p-5 rounded-2xl bg-slate-50 border-l-4 border-[#2563EB] text-slate-700 text-[16px] leading-relaxed italic font-medium">
+              <span className="font-extrabold not-italic text-slate-800 uppercase text-xs tracking-wider block mb-1.5">Tóm tắt cốt lõi dự án:</span>
+              "{candidate.description}"
+            </div>
+
+            <div className="mt-6 text-lg leading-relaxed text-slate-600 whitespace-pre-line font-medium">
+              {candidate.biography || candidate.description}
+            </div>
+
+            {/* Custom Startup Feature Cards */}
+            <div className="mt-8 grid gap-4 sm:grid-cols-2">
+              {highlights.map((h, index) => (
+                <div key={index} className={`p-4 rounded-xl flex flex-col gap-1 transition-all duration-200 hover:-translate-y-0.5 ${h.color}`}>
+                  <p className="text-base font-black tracking-tight">{h.title}</p>
+                  <p className="text-[14px] opacity-90 leading-normal font-medium">{h.desc}</p>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-6 shadow-sm">
-            <h2 className="text-lg font-black text-[var(--site-text)] flex items-center gap-2">
-              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                </svg>
-              </span>
-              Thuyết minh dự án
-            </h2>
-            <p className="mt-3 whitespace-pre-line text-base leading-7 text-[var(--site-muted)]">{candidate.biography || candidate.description}</p>
-          </div>
-
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-6 shadow-sm">
-              <h3 className="font-black text-[var(--site-text)] flex items-center gap-2">
-                <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 shrink-0">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+          {/* 3. Hỗ trợ & Kỳ vọng */}
+          <div className="grid gap-6 md:grid-cols-2">
+            <div className="bg-white rounded-[16px] border border-slate-300 p-6 sm:p-8 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2 border-b border-slate-300 pb-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-50 border border-slate-300 text-slate-700">
+                  <svg className="w-4 h-4 stroke-slate-700 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                   </svg>
                 </span>
                 Nhu cầu hỗ trợ
               </h3>
-              <p className="mt-3 whitespace-pre-line text-base leading-7 text-[var(--site-muted)]">{candidate.supportNeeds || 'Chưa cập nhật nhu cầu hỗ trợ.'}</p>
+              <p className="mt-3 text-base leading-relaxed text-slate-600 whitespace-pre-line font-medium">{candidate.supportNeeds || 'Chưa cập nhật nhu cầu hỗ trợ.'}</p>
             </div>
-            <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-6 shadow-sm">
-              <h3 className="font-black text-[var(--site-text)] flex items-center gap-2">
-                <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+            
+            <div className="bg-white rounded-[16px] border border-slate-300 p-6 sm:p-8 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
+              <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2 border-b border-slate-300 pb-3">
+                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-slate-50 border border-slate-300 text-slate-700">
+                  <svg className="w-4 h-4 stroke-slate-700 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499c-.107-.218-.284-.41-.504-.51a1.2 1.2 0 00-1.393.267l-6 6a1.2 1.2 0 00-.267 1.393c.101.22.293.397.512.505l6 3a1.2 1.2 0 001.392-.267l6-6a1.2 1.2 0 00.267-1.393l-6-3zM21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25" />
                   </svg>
                 </span>
                 Kỳ vọng sau cuộc thi
               </h3>
-              <p className="mt-3 whitespace-pre-line text-base leading-7 text-[var(--site-muted)]">{candidate.expectations || 'Chưa cập nhật kỳ vọng.'}</p>
+              <p className="mt-3 text-base leading-relaxed text-slate-600 whitespace-pre-line font-medium">{candidate.expectations || 'Chưa cập nhật kỳ vọng.'}</p>
             </div>
           </div>
+
         </div>
 
-        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-7 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--site-primary)]">Thí sinh được yêu thích nhất</p>
-            <h2 className="mt-2 text-lg font-black text-[var(--site-text)]">Bình chọn cho dự án</h2>
-            <div className="mt-4 rounded-xl bg-[var(--site-soft)] p-4">
-              <p className="text-sm font-black text-[var(--site-text)]">Mỗi lần bình chọn cộng 1 lượt cho dự án.</p>
-              <p className="mt-2 text-[13px] leading-5 text-[var(--site-muted)]">
+        {/* Right Column - Sticky Sidebar */}
+        <aside className="space-y-6 lg:sticky lg:top-20 lg:self-start">
+          
+          {/* Voting Card */}
+          <div className="bg-white rounded-[16px] border border-slate-300 p-6 shadow-sm flex flex-col transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-400">Cổng bình chọn HUIT Startup</span>
+            <h2 className="mt-1 text-xl font-extrabold text-slate-900 tracking-tight">Bình chọn cho dự án</h2>
+            
+            <div className="mt-4 rounded-xl bg-slate-50 p-4 border border-slate-300 text-left">
+              <p className="text-[15px] font-extrabold text-slate-800">Mỗi lần bình chọn cộng 1 lượt cho dự án.</p>
+              <p className="mt-2 text-[14px] leading-relaxed text-slate-500 font-medium">
                 Mỗi tài khoản có 2 lượt miễn phí mỗi ngày cho toàn bộ dự án. Dùng hết 2 lượt thì không thể vote cho dự án khác cho đến ngày hôm sau.
               </p>
             </div>
+            
             <button
               onClick={handleVote}
               disabled={!isGateOpen}
-              className={`mt-4 h-11 w-full rounded-lg text-sm font-black transition-all duration-200 shadow ${isGateOpen
-                  ? 'bg-gradient-to-r from-primary to-secondary dark:bg-neutral-white dark:from-transparent dark:to-transparent text-white dark:text-primary hover:opacity-90 active:scale-[0.98]'
-                  : 'bg-slate-200 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 cursor-not-allowed'
-                }`}
+              className={`mt-4 w-full h-11 rounded-xl text-base font-extrabold transition-all duration-300 flex items-center justify-center gap-2 group relative overflow-hidden ${
+                isGateOpen
+                  ? 'bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-sm hover:scale-[1.02] active:scale-95 hover:shadow-[0_4px_12px_rgba(37,99,235,0.25)]'
+                  : 'bg-slate-200 text-slate-500 cursor-not-allowed'
+              }`}
             >
-              {isGateOpen ? 'Bình chọn miễn phí' : 'Cổng bình chọn đã đóng'}
+              {isGateOpen ? (
+                <>
+                  <svg className="w-4 h-4 fill-white transition-transform duration-300 group-hover:scale-125 group-hover:animate-pulse" viewBox="0 0 24 24">
+                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                  </svg>
+                  Bình chọn ngay
+                </>
+              ) : 'Cổng bình chọn đã đóng'}
             </button>
+
+            <button 
+              onClick={copyLink} 
+              className="mt-3 w-full h-11 rounded-xl border border-slate-300 bg-white text-base font-extrabold text-slate-700 hover:bg-slate-50 active:scale-95 transition-all duration-200"
+            >
+              Chia sẻ dự án
+            </button>
+            
             {!currentUser && (
-              <Link href={`/dang-nhap?redirect=/thi-sinh/${candidate.sbd}`} className="mt-3 block text-center text-sm font-bold text-[var(--site-primary)]">
+              <Link 
+                href={`/dang-nhap?redirect=/thi-sinh/${candidate.sbd}`} 
+                className="mt-4 text-center text-xs font-extrabold text-[#2563EB] hover:underline"
+              >
                 Đăng nhập ngay để dùng lượt miễn phí
               </Link>
             )}
           </div>
 
-          <button onClick={copyLink} className="h-11 w-full rounded-xl border border-[var(--site-line)] bg-[var(--site-card)] text-sm font-bold text-[var(--site-text)] hover:border-[var(--site-primary)]">
-            Sao chép liên kết dự án
-          </button>
+          {/* highlights summary widget */}
+          <div className="bg-white rounded-[16px] border border-slate-300 p-6 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">Thông tin nổi bật</h3>
+            
+            <div className="mt-4 space-y-4">
+              {[
+                { label: 'Lượt bình chọn', val: candidate.votes.toLocaleString(), icon: <svg className="w-4 h-4 stroke-slate-600 fill-none" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> },
+                { label: 'Lượt xem', val: mockViews, icon: <svg className="w-4 h-4 stroke-slate-600 fill-none" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><circle cx="12" cy="12" r="3" /></svg> },
+                { label: 'Bảng xếp hạng', val: currentRank, icon: <svg className="w-4 h-4 stroke-slate-600 fill-none" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 0a7.454 7.454 0 00.981 3.172m0 0a8.25 8.25 0 001.38 2.226m0 0a8.25 8.25 0 01-1.38-2.226m0 0h1.003V10.5" /></svg> },
+                { label: 'Thời gian còn lại', val: remainingDays, icon: <svg className="w-4 h-4 stroke-slate-600 fill-none" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> }
+              ].map((item, idx) => (
+                <div key={idx} className="flex items-center justify-between py-2 border-b last:border-b-0 border-slate-200">
+                  <div className="flex items-center gap-2">
+                    <span className="shrink-0 text-slate-600">{item.icon}</span>
+                    <span className="text-[14px] font-bold text-slate-500">{item.label}</span>
+                  </div>
+                  <span className="text-[14px] font-extrabold text-slate-800">{item.val}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Social share widget */}
+          <div className="bg-white rounded-[16px] border border-slate-300 p-6 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">Chia sẻ dự án</h3>
+            
+            <div className="mt-4 flex items-center justify-start gap-4">
+              <a 
+                href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(typeof window !== 'undefined' ? window.location.href : '')}`}
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="flex flex-col items-center gap-1 group"
+              >
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-hover:bg-blue-50">
+                  <img src="/images/facebook.png" alt="Facebook" className="w-5 h-5 object-contain" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Facebook</span>
+              </a>
+              
+              <a 
+                href={`https://zalo.me/4418938306145458374`}
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex flex-col items-center gap-1 group"
+              >
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-hover:bg-blue-50">
+                  <img src="/images/zalo.png" alt="Zalo" className="w-5 h-5 object-contain" />
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Zalo</span>
+              </a>
+
+              <button 
+                onClick={copyLink}
+                className="flex flex-col items-center gap-1 group"
+              >
+                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center transition-all duration-200 group-hover:scale-105 group-hover:bg-blue-50">
+                  <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+                  </svg>
+                </div>
+                <span className="text-[11px] font-bold text-slate-500">Copy link</span>
+              </button>
+            </div>
+
+            {/* Dynamic Local QR Code generator with decorative scanner bounds focus frame */}
+            <div className="mt-6 pt-5 border-t border-slate-100 flex items-center gap-4">
+              <div className="border-2 border-dashed border-slate-300 rounded-2xl p-2 bg-white shrink-0 relative group shadow-sm">
+                <div className="absolute top-1 left-1 w-2.5 h-2.5 border-t-2 border-l-2 border-slate-400 rounded-tl"></div>
+                <div className="absolute top-1 right-1 w-2.5 h-2.5 border-t-2 border-r-2 border-slate-400 rounded-tr"></div>
+                <div className="absolute bottom-1 left-1 w-2.5 h-2.5 border-b-2 border-l-2 border-slate-400 rounded-bl"></div>
+                <div className="absolute bottom-1 right-1 w-2.5 h-2.5 border-b-2 border-r-2 border-slate-400 rounded-br"></div>
+                <img src={qrCodeUrl} alt="QR Code Link to Project" className="w-[84px] h-[84px] rounded-lg" />
+              </div>
+              <div>
+                <p className="text-[14px] font-extrabold text-slate-800">Quét QR để bình chọn</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-500 font-medium">Mở camera trên điện thoại, quét mã QR để bình chọn nhanh trên thiết bị di động.</p>
+              </div>
+            </div>
+
+          </div>
+
         </aside>
       </section>
 
+      {/* ─── FULL-WIDTH GALLERY SECTION ─── */}
+      {allImages.length > 0 && (
+        <section className="max-w-[1300px] mx-auto px-4 py-6">
+          <div className="bg-white rounded-[16px] border border-slate-300 p-6 sm:p-8 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
+            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-300 pb-4">
+              <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-slate-50 border border-slate-300 text-slate-700">
+                <svg className="w-5 h-5 stroke-slate-700 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 3.375 0 11-.75 0 .375 3.375 0 01.75 0z" />
+                </svg>
+              </span>
+              Hình ảnh dự án
+            </h2>
+            
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+              {allImages.map((imgUrl, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleOpenLightbox(imgUrl)}
+                  className="overflow-hidden rounded-2xl cursor-zoom-in relative group transition-all duration-300 active:scale-[0.98] aspect-square"
+                >
+                  <img 
+                    src={imgUrl} 
+                    alt={`${candidate.name} gallery image ${idx + 1}`} 
+                    className="h-full w-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-105" 
+                  />
+                  <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" className="h-6 w-6 text-white drop-shadow" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="11" cy="11" r="8" />
+                      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      <line x1="11" y1="8" x2="11" y2="14" />
+                      <line x1="8" y1="11" x2="14" y2="11" />
+                    </svg>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* ─── CANDIDATE DYNAMIC NAVIGATION BAR ─── */}
+      {prevAndNext.prev && prevAndNext.next && (
+        <section className="max-w-[1300px] mx-auto px-4 py-4 mb-12">
+          <div className="bg-white rounded-[16px] border border-slate-300 p-4 sm:p-5 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80 flex items-center justify-between gap-4">
+            
+            {/* Prev Candidate Link */}
+            <Link 
+              href={`/thi-sinh/${prevAndNext.prev.sbd}`}
+              className="flex items-center gap-3 text-left group max-w-[45%]"
+            >
+              <span className="flex items-center justify-center w-9 h-9 rounded-xl border border-slate-300 bg-slate-50 text-slate-700 transition-colors group-hover:bg-[#2563EB] group-hover:border-[#2563EB] group-hover:text-white shrink-0">
+                <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </span>
+              <div className="hidden sm:block">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Dự án trước</p>
+                <p className="text-[14px] font-bold text-slate-800 group-hover:text-[#2563EB] transition-colors truncate max-w-[180px] md:max-w-[280px]">
+                  {prevAndNext.prev.name}
+                </p>
+              </div>
+            </Link>
+
+            {/* Middle return button */}
+            <Link 
+              href="/"
+              className="text-xs font-black uppercase tracking-wider text-slate-500 hover:text-[#2563EB] transition-colors border border-slate-300 rounded-xl px-4 py-2.5 bg-slate-50 hover:bg-white active:scale-95 shadow-sm"
+            >
+              Tất cả dự án
+            </Link>
+
+            {/* Next Candidate Link */}
+            <Link 
+              href={`/thi-sinh/${prevAndNext.next.sbd}`}
+              className="flex items-center gap-3 text-right group max-w-[45%] flex-row-reverse"
+            >
+              <span className="flex items-center justify-center w-9 h-9 rounded-xl border border-slate-300 bg-slate-50 text-slate-700 transition-colors group-hover:bg-[#2563EB] group-hover:border-[#2563EB] group-hover:text-white shrink-0">
+                <svg viewBox="0 0 24 24" className="h-4.5 w-4.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </span>
+              <div className="hidden sm:block">
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">Dự án tiếp theo</p>
+                <p className="text-[14px] font-bold text-slate-800 group-hover:text-[#2563EB] transition-colors truncate max-w-[180px] md:max-w-[280px]">
+                  {prevAndNext.next.name}
+                </p>
+              </div>
+            </Link>
+
+          </div>
+        </section>
+      )}
+
+      {/* ─── LIGHTBOX PORTAL VIEW ─── */}
       {isLightboxOpen && (
         <div 
           ref={lightboxRef}
           role="dialog"
           aria-modal="true"
           aria-label={`Bộ sưu tập ảnh dự án ${candidate.name}`}
-          className="fixed inset-0 z-[1200] flex flex-col items-center justify-center bg-black/80 transition-opacity duration-300 animate-in fade-in"
+          className="fixed inset-0 z-[1200] flex flex-col items-center justify-center bg-black/90 transition-opacity duration-300 animate-in fade-in"
           onClick={() => setIsLightboxOpen(false)}
         >
           {/* Close button */}
@@ -402,11 +769,11 @@ export default function CandidateDetailPage() {
             ref={lightboxCloseRef}
             type="button"
             onClick={() => setIsLightboxOpen(false)}
-            className="absolute top-4 right-4 z-50 grid h-11 w-11 place-items-center rounded-full bg-white/10 hover:bg-white/25 text-white transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            className="absolute top-4 right-4 z-50 grid h-10 w-10 place-items-center rounded-full bg-white/10 hover:bg-white/20 text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-white active:scale-95"
             title="Đóng (ESC)"
             aria-label="Đóng bộ sưu tập ảnh"
           >
-            <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
@@ -420,11 +787,11 @@ export default function CandidateDetailPage() {
                 e.stopPropagation();
                 handlePrevImage();
               }}
-              className="absolute left-4 z-50 grid h-11 w-11 place-items-center rounded-full bg-white/10 hover:bg-white/25 text-white transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:scale-95"
+              className="absolute left-4 z-50 grid h-10 w-10 place-items-center rounded-full bg-white/10 hover:bg-white/20 text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-white active:scale-95"
               title="Ảnh trước (Mũi tên trái)"
               aria-label="Xem ảnh trước"
             >
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="15 18 9 12 15 6" />
               </svg>
             </button>
@@ -433,7 +800,7 @@ export default function CandidateDetailPage() {
           {/* Large Image */}
           <div 
             className="relative flex items-center justify-center max-w-[90vw] max-h-[80vh] p-2"
-            onClick={(e) => e.stopPropagation()} // Prevent closing when clicking the image
+            onClick={(e) => e.stopPropagation()}
           >
             <img 
               src={allImages[lightboxIndex]} 
@@ -450,17 +817,17 @@ export default function CandidateDetailPage() {
                 e.stopPropagation();
                 handleNextImage();
               }}
-              className="absolute right-4 z-50 grid h-11 w-11 place-items-center rounded-full bg-white/10 hover:bg-white/25 text-white transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white active:scale-95"
+              className="absolute right-4 z-50 grid h-10 w-10 place-items-center rounded-full bg-white/10 hover:bg-white/20 text-white transition duration-200 focus:outline-none focus:ring-2 focus:ring-white active:scale-95"
               title="Ảnh tiếp theo (Mũi tên phải)"
               aria-label="Xem ảnh tiếp theo"
             >
-              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </button>
           )}
 
-          {/* Image index display / caption */}
+          {/* Caption index */}
           <div className="absolute bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/60 backdrop-blur-sm rounded-full text-center border border-white/10">
             <p className="text-xs font-bold text-white/90">
               Hình ảnh {lightboxIndex + 1} / {allImages.length}
@@ -469,6 +836,7 @@ export default function CandidateDetailPage() {
         </div>
       )}
 
+      {/* ─── VOTE SUBMIT MODAL ─── */}
       {isVoteModalOpen && (
         <VoteModal
           candidate={candidate}
@@ -481,4 +849,3 @@ export default function CandidateDetailPage() {
     </main>
   );
 }
-

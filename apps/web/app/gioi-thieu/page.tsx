@@ -860,7 +860,7 @@ export default function GioiThieuPage() {
                       return (
                         <div 
                           key={idx} 
-                          className="flex items-start gap-3 bg-[color:var(--about-surface-sec)]/30 hover:bg-[color:var(--about-surface-sec)]/75 border border-[color:var(--about-border)] rounded-xl p-3.5 transition-all duration-300"
+                          className="flex items-center gap-3 bg-[color:var(--about-surface-sec)]/30 hover:bg-[color:var(--about-surface-sec)]/75 border border-[color:var(--about-border)] rounded-xl p-3.5 transition-all duration-300"
                         >
                           <span className="text-[12px] font-bold text-[color:var(--about-warning)] bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md shrink-0">
                             {numberLabel}
@@ -931,7 +931,7 @@ export default function GioiThieuPage() {
                     <div className="bg-gradient-to-br from-rose-500/15 via-[#79BCC2]/5 to-transparent border border-rose-500/20 rounded-2xl p-4 text-center shadow-lg relative overflow-hidden">
                       <div className="absolute inset-0 bg-white/[0.01] pointer-events-none" />
                       <p className="text-[12px] sm:text-[13px] font-black uppercase tracking-[0.2em] text-[color:var(--about-prize)]">Tổng giải thưởng lên tới</p>
-                      <h4 className="about-prize-value text-[30px] sm:text-[36px] font-black mt-1.5">
+                      <h4 className="about-prize-value text-[30px] sm:text-[36px] font-black mt-1.5 leading-normal py-1.5">
                         {(() => {
                           const match = prize.match(/\d+\s*[T|t]ỷ\s*[Đ|đ]ồng/i);
                           return match ? match[0].toUpperCase() : "05 TỶ ĐỒNG";
