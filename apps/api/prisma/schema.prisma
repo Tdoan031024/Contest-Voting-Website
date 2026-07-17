@@ -17,7 +17,7 @@ model AdminUser {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @default(now()) @updatedAt
 
-  @@map("AdminUser")
+  @@map("adminuser")
 }
 
 model banner {
@@ -29,7 +29,7 @@ model banner {
   updatedAt DateTime @default(now()) @updatedAt
   isActive  Boolean  @default(true)
 
-  @@map("Banner")
+  @@map("banner")
 }
 
 model candidate {
@@ -60,7 +60,7 @@ model candidate {
   sector                         String?
   showcaseImages                 String?  @db.Text
 
-  @@map("Candidate")
+  @@map("candidate")
 }
 
 model post {
@@ -90,7 +90,7 @@ model sponsor {
   phone         String?
   websiteUrl    String?
 
-  @@map("Sponsor")
+  @@map("sponsor")
 }
 
 model TimelineEvent {
@@ -104,7 +104,7 @@ model TimelineEvent {
   isImportant Boolean  @default(false)
   round       String   @default("Vòng loại")
 
-  @@map("TimelineEvent")
+  @@map("timelineevent")
 }
 
 model VoteRecord {
@@ -114,7 +114,7 @@ model VoteRecord {
   voteTime      DateTime @default(now())
   transactionId String?
 
-  @@map("VoteRecord")
+  @@map("voterecord")
 }
 
 model WebUser {
@@ -133,7 +133,7 @@ model WebUser {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
 
-  @@map("WebUser")
+  @@map("webuser")
 }
 
 enum sponsor_tier {
