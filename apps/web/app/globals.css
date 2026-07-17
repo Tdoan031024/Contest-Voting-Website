@@ -3315,7 +3315,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
   background: 
     radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.15) 0%, transparent 40%),
     radial-gradient(circle at 85% 85%, rgba(255, 255, 255, 0.1) 0%, transparent 40%),
-    linear-gradient(135deg, #2b56f5 0%, #513be6 50%, #853be6 100%);
+    linear-gradient(135deg, #092196 0%, #0a2fff 50%, #29abb7 100%);
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
