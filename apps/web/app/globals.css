@@ -3424,3 +3424,227 @@ button, a { -webkit-tap-highlight-color: transparent; }
   .hero-carousel-controls { left: 14px; bottom: 12px; gap: 6px; }
   .hero-carousel-controls > button { width: 28px; height: 28px; }
 }
+
+/* ─── 8. ANTI-GRAVITY GLASSMORPHISM THEME ─── */
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-shadow: 0 16px 36px 0 rgba(9, 33, 150, 0.04);
+  --glass-sub-bg: rgba(255, 255, 255, 0.35);
+  --glass-sub-border: rgba(255, 255, 255, 0.45);
+  --glass-glow: rgba(10, 47, 255, 0.06);
+}
+
+:root[data-theme='dark'] {
+  --glass-bg: rgba(10, 21, 38, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 16px 36px 0 rgba(0, 0, 0, 0.35);
+  --glass-sub-bg: rgba(255, 255, 255, 0.02);
+  --glass-sub-border: rgba(255, 255, 255, 0.04);
+  --glass-glow: rgba(41, 171, 183, 0.03);
+}
+
+/* 1. Page Background */
+.project-detail-page {
+  background: 
+    radial-gradient(circle at 85% 15%, rgba(53, 184, 196, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 15% 85%, rgba(10, 47, 255, 0.08) 0%, transparent 45%),
+    linear-gradient(to bottom, #f0f4ff, #f7f9fd);
+  position: relative;
+  transition: background 0.3s ease;
+}
+:root[data-theme='dark'] .project-detail-page {
+  background: 
+    radial-gradient(circle at 85% 15%, rgba(53, 184, 196, 0.05) 0%, transparent 50%),
+    radial-gradient(circle at 15% 85%, rgba(10, 47, 255, 0.03) 0%, transparent 50%),
+    #050b14;
+}
+
+/* 2. Glassmorphism Header */
+.header-glass {
+  background: rgba(255, 255, 255, 0.55) !important;
+  backdrop-filter: blur(24px) saturate(1.4) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.4) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4) !important;
+}
+:root[data-theme='dark'] .header-glass {
+  background: rgba(8, 17, 32, 0.55) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+/* 3. Hero Section Cards */
+.project-detail-hero {
+  background: 
+    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(53, 184, 196, 0.15) 0%, transparent 45%),
+    linear-gradient(135deg, #071f7a 0%, #0a2fff 50%, #29abb7 100%) !important;
+  box-shadow: inset 0 -20px 40px rgba(0, 0, 0, 0.05) !important;
+}
+
+.project-detail-hero button.overflow-hidden {
+  background: rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  transform: translateZ(0);
+  transition: all 0.3s ease !important;
+}
+.project-detail-hero button.overflow-hidden:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 
+    0 20px 40px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+}
+
+/* 4. Crystal Info Cards (Hero Blocks) */
+.project-detail-hero .grid > div {
+  background: rgba(255, 255, 255, 0.07) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 
+    0 8px 24px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+.project-detail-hero .grid > div:hover {
+  transform: translateY(-3px) scale(1.02);
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18) !important;
+}
+
+/* 5. Glass Body Cards & Translucent Dividers */
+.project-detail-page section.mx-auto > div > div, 
+.project-detail-page aside > div {
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(18px) saturate(110%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(110%) !important;
+  border: 1px solid var(--glass-border) !important;
+  box-shadow: var(--glass-shadow) !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+.project-detail-page section.mx-auto > div > div:hover {
+  transform: translateY(-3px);
+  box-shadow: 
+    0 20px 48px rgba(10, 47, 255, 0.05),
+    var(--glass-shadow) !important;
+  border-color: rgba(10, 47, 255, 0.2) !important;
+}
+
+.project-detail-page .grid.sm\:grid-cols-2 > div {
+  background: var(--glass-sub-bg) !important;
+  border: 1px solid var(--glass-sub-border) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+  transition: all 0.2s ease;
+}
+.project-detail-page .grid.sm\:grid-cols-2 > div:hover {
+  background: rgba(255, 255, 255, 0.45) !important;
+  border-color: rgba(10, 47, 255, 0.15) !important;
+}
+:root[data-theme='dark'] .project-detail-page .grid.sm\:grid-cols-2 > div:hover {
+  background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* 6. Glowing Aside Vote Box & Active Button */
+.project-detail-page aside > div {
+  position: relative;
+  box-shadow: 0 12px 36px rgba(10, 47, 255, 0.04), var(--glass-shadow) !important;
+}
+.project-detail-page aside > div::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, rgba(10, 47, 255, 0.2) 0%, rgba(41, 171, 183, 0.2) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.project-detail-page aside > div:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 20px 48px rgba(10, 47, 255, 0.1), var(--glass-shadow) !important;
+}
+.project-detail-page aside > div:hover::after {
+  background: linear-gradient(135deg, rgba(10, 47, 255, 0.45) 0%, rgba(41, 171, 183, 0.45) 100%);
+}
+
+.project-detail-page aside button.bg-gradient-to-r {
+  background: linear-gradient(135deg, #0a2fff 0%, #29abb7 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  border: none !important;
+  box-shadow: 0 4px 18px rgba(10, 47, 255, 0.3) !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+.project-detail-page aside button.bg-gradient-to-r:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(10, 47, 255, 0.5) !important;
+  opacity: 1 !important;
+}
+
+/* 7. Floating Sidebar (Zalo, Phone, Email) Glass Bubbles */
+.site-floating-actions .float-action {
+  background: rgba(255, 255, 255, 0.6) !important;
+  backdrop-filter: blur(10px) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12) !important;
+  width: 50px !important;
+  height: 50px !important;
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1) !important;
+}
+
+:root[data-theme='dark'] .site-floating-actions .float-action {
+  background: rgba(10, 21, 38, 0.55) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+.site-floating-actions .float-action:hover {
+  transform: translateY(-4px) scale(1.05) !important;
+  border-color: rgba(10, 47, 255, 0.3) !important;
+  box-shadow: 
+    0 12px 28px rgba(10, 47, 255, 0.15),
+    0 8px 32px 0 rgba(31, 38, 135, 0.12) !important;
+}
+
+.site-floating-actions .float-action img {
+  width: 54% !important;
+  height: 54% !important;
+  object-fit: contain !important;
+  filter: none !important;
+  transition: transform 0.3s ease !important;
+}
+
+.site-floating-actions .float-action:hover img {
+  transform: scale(1.12) !important;
+}
+
+.site-floating-actions .float-action.scroll-top {
+  background: linear-gradient(135deg, #0a2fff, #29abb7) !important;
+  border: none !important;
+}
+.site-floating-actions .float-action.scroll-top:hover {
+  box-shadow: 0 8px 24px rgba(10, 47, 255, 0.35) !important;
+}
+
+/* 8. Glass Footer */
+.site-footer-modern {
+  border-top: 1px solid var(--glass-border) !important;
+  background: var(--glass-bg) !important;
+  backdrop-filter: blur(18px) saturate(110%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(110%) !important;
+  box-shadow: 0 -8px 32px rgba(31, 38, 135, 0.02) !important;
+}
+
