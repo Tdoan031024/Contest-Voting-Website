@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import localFont from 'next/font/local';
+import { Be_Vietnam_Pro } from 'next/font/google';
 import './globals.css';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -12,17 +12,10 @@ import { AISearch } from '../src/components/AISearch';
 import { usePageViewTracker } from '../src/hooks/usePageViewTracker';
 import { AIChatbot } from '../src/components/AIChatbot';
 
-const inter = localFont({
-  src: [
-    { path: '../public/fonts/inter-v13-vietnamese-regular.woff2', weight: '400', style: 'normal' },
-    { path: '../public/fonts/inter-v13-vietnamese-500.woff2', weight: '500', style: 'normal' },
-    { path: '../public/fonts/inter-v13-vietnamese-600.woff2', weight: '600', style: 'normal' },
-    { path: '../public/fonts/inter-v13-vietnamese-700.woff2', weight: '700', style: 'normal' },
-    { path: '../public/fonts/inter-v13-vietnamese-800.woff2', weight: '800', style: 'normal' },
-    { path: '../public/fonts/inter-v13-vietnamese-900.woff2', weight: '900', style: 'normal' },
-  ],
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ['vietnamese'],
+  weight: ['400', '500', '600', '700', '800', '900'],
   display: 'swap',
-  preload: true,
   variable: '--font-sans',
 });
 
@@ -168,7 +161,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // ─── Maintenance Mode ─────────────────────────────────
   if (settings?.isMaintenanceMode) {
     return (
-      <html lang="vi" className={inter.variable}>
+      <html lang="vi" className={beVietnamPro.variable}>
         <head>
           <meta charSet="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -176,9 +169,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <link rel="stylesheet" href="/css/82aef30d151230ac.css" />
           <link rel="stylesheet" href="/css/be16ba848ed13f21.css" />
           <link rel="stylesheet" href="/css/431944509084d071.css" />
-          <style>{`body { background-color: #030612 !important; color: #ffffff; font-family: var(--font-sans), Inter, sans-serif; margin: 0; }`}</style>
+          <style>{`body { background-color: #030612 !important; color: #ffffff; font-family: var(--font-sans), sans-serif; margin: 0; }`}</style>
         </head>
-        <body className={`${inter.className} dark bg-[#030612] flex items-center justify-center min-h-screen p-4 overflow-hidden relative`}>
+        <body className={`${beVietnamPro.className} dark bg-[#030612] flex items-center justify-center min-h-screen p-4 overflow-hidden relative`}>
           <div className="absolute top-1/4 left-1/4 w-[300px] h-[300px] rounded-full bg-blue-600/10 blur-[120px] pointer-events-none" />
           <div className="absolute bottom-1/4 right-1/4 w-[300px] h-[300px] rounded-full bg-cyan-600/10 blur-[120px] pointer-events-none" />
           <div className="max-w-md w-full text-center z-10 bg-white/[0.02] backdrop-blur-xl border border-white/5 p-8 rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col items-center">
@@ -240,7 +233,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
   // ─── Main Layout ─────────────────────────────────────
   return (
-    <html lang="vi" suppressHydrationWarning className={inter.variable}>
+    <html lang="vi" suppressHydrationWarning className={beVietnamPro.variable}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: `(function(){try{var t=localStorage.getItem('huit_theme_v2');document.documentElement.dataset.theme=t||'light'}catch(e){document.documentElement.dataset.theme='light'}})()` }} />
         <meta charSet="utf-8" />
@@ -373,7 +366,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}</style>
       </head>
 
-      <body className={inter.className}>
+      <body className={beVietnamPro.className}>
         <AlertProvider>
           <main suppressHydrationWarning>
 

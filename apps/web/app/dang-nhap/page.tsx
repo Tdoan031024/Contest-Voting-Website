@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useAlert } from '../AlertProvider';
@@ -41,8 +41,27 @@ function loadGoogleIdentityScript(): Promise<void> {
 
     const existingScript = document.querySelector<HTMLScriptElement>('script[src="https://accounts.google.com/gsi/client"]');
     if (existingScript) {
-      existingScript.addEventListener('load', () => resolve(), { once: true });
-      existingScript.addEventListener('error', () => reject(new Error('Không thể tải Google Identity Services.')), { once: true });
+      if (window.google?.accounts?.oauth2) {
+        resolve();
+      } else {
+        existingScript.addEventListener('load', () => {
+          if (window.google?.accounts?.oauth2) {
+            resolve();
+          } else {
+            const interval = setInterval(() => {
+              if (window.google?.accounts?.oauth2) {
+                clearInterval(interval);
+                resolve();
+              }
+            }, 50);
+            setTimeout(() => {
+              clearInterval(interval);
+              reject(new Error('Không thể khởi tạo Google Identity Services.'));
+            }, 5000);
+          }
+        }, { once: true });
+        existingScript.addEventListener('error', () => reject(new Error('Không thể tải Google Identity Services.')), { once: true });
+      }
       return;
     }
 
@@ -50,8 +69,23 @@ function loadGoogleIdentityScript(): Promise<void> {
     script.src = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
-      script.onerror = () => reject(new Error('Không thể tải Google Identity Services.'));
+    script.onload = () => {
+      if (window.google?.accounts?.oauth2) {
+        resolve();
+      } else {
+        const interval = setInterval(() => {
+          if (window.google?.accounts?.oauth2) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 50);
+        setTimeout(() => {
+          clearInterval(interval);
+          reject(new Error('Không thể khởi tạo Google Identity Services.'));
+        }, 5000);
+      }
+    };
+    script.onerror = () => reject(new Error('Không thể tải Google Identity Services.'));
     document.head.appendChild(script);
   });
 }
@@ -646,7 +680,7 @@ export default function LoginPage() {
                       onClick={() => setRegisterOpen(false)}
                       className="h-[46px] rounded-[14px] border border-white/10 px-5 text-[13px] font-bold text-white/65 transition hover:border-white/25 hover:text-white"
                     >
-                      Há»§y
+                      Hủy
                     </button>
                     <button
                       type="submit"

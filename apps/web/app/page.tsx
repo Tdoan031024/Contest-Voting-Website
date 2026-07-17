@@ -607,7 +607,6 @@ export default function HomePage() {
                     fontSize: 'clamp(18px, 2.2vw, 24px)',
                     fontWeight: 800,
                     color: 'var(--site-primary)',
-                    fontFamily: 'Inter, Arial, Helvetica, sans-serif',
                     textShadow: '0 1px 10px rgba(121,188,194,0.18)',
                     display: 'inline-block',
                     textTransform: 'none'

@@ -1,20 +1,13 @@
 import React from 'react';
-import localFont from 'next/font/local';
+import { Be_Vietnam_Pro } from 'next/font/google';
 import './globals.css';
 import { AlertProvider } from './AlertProvider';
 import ClientShell from './ClientShell';
 
-const inter = localFont({
-  src: [
-    { path: '../public/fonts/inter-v13-vietnamese-regular.woff2', weight: '400', style: 'normal' },
-    { path: '../public/fonts/inter-v13-vietnamese-500.woff2', weight: '500', style: 'normal' },
-    { path: '../public/fonts/inter-v13-vietnamese-600.woff2', weight: '600', style: 'normal' },
-    { path: '../public/fonts/inter-v13-vietnamese-700.woff2', weight: '700', style: 'normal' },
-    { path: '../public/fonts/inter-v13-vietnamese-800.woff2', weight: '800', style: 'normal' },
-    { path: '../public/fonts/inter-v13-vietnamese-900.woff2', weight: '900', style: 'normal' },
-  ],
+const beVietnamPro = Be_Vietnam_Pro({
+  subsets: ['vietnamese'],
+  weight: ['400', '500', '600', '700', '800', '900'],
   display: 'swap',
-  preload: true,
   variable: '--font-sans',
 });
 
@@ -32,11 +25,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" className={inter.variable}>
+    <html lang="vi" className={beVietnamPro.variable}>
       <head>
         <link rel="icon" href="/admin/favicon.png" type="image/png" />
       </head>
-      <body className={`${inter.className} h-screen overflow-hidden`}>
+      <body className={`${beVietnamPro.className} h-screen overflow-hidden`}>
         <AlertProvider>
           <ClientShell>{children}</ClientShell>
         </AlertProvider>

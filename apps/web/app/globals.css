@@ -3312,9 +3312,13 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 /* Project detail uses the same blue/cyan product language as the app shell. */
 .project-detail-hero {
-  background:
-    radial-gradient(circle at 15% 20%, rgba(53,184,196,.26), transparent 32%),
-    linear-gradient(135deg, #071b55 0%, #0a2fff 58%, #087f9b 100%);
+  background: 
+    radial-gradient(circle at 15% 15%, rgba(255, 255, 255, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(255, 255, 255, 0.1) 0%, transparent 40%),
+    linear-gradient(135deg, #2b56f5 0%, #513be6 50%, #853be6 100%);
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .hero-carousel-controls {

@@ -329,12 +329,12 @@ export default function CandidateDetailPage() {
 
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
           <div className="rounded-[18px] border border-[var(--site-line)] bg-[var(--site-card)] p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--site-primary)]">Th?? sinh ???????c y??u th??ch nh???t</p>
-            <h2 className="mt-2 text-lg font-black text-[var(--site-text)]">B??nh ch???n cho d??? ??n</h2>
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--site-primary)]">Thí sinh được yêu thích nhất</p>
+            <h2 className="mt-2 text-lg font-black text-[var(--site-text)]">Bình chọn cho dự án</h2>
             <div className="mt-4 rounded-xl bg-[var(--site-soft)] p-4">
-              <p className="text-sm font-black text-[var(--site-text)]">M???i l???n b??nh ch???n c???ng 1 l?????t cho d??? ??n.</p>
+              <p className="text-sm font-black text-[var(--site-text)]">Mỗi lần bình chọn cộng 1 lượt cho dự án.</p>
               <p className="mt-2 text-[13px] leading-5 text-[var(--site-muted)]">
-                M???i t??i kho???n c?? 2 l?????t mi???n ph?? m???i ng??y cho to??n b??? d??? ??n. D??ng h???t 2 l?????t th?? kh??ng th??? vote cho d??? ??n kh??c cho ?????n ng??y h??m sau.
+                Mỗi tài khoản có 2 lượt miễn phí mỗi ngày cho toàn bộ dự án. Dùng hết 2 lượt thì không thể vote cho dự án khác cho đến ngày hôm sau.
               </p>
             </div>
             <button
@@ -345,11 +345,11 @@ export default function CandidateDetailPage() {
                   : 'bg-slate-200 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 cursor-not-allowed'
                 }`}
             >
-              {isGateOpen ? 'B??nh ch???n mi???n ph??' : 'C???ng b??nh ch???n ???? ????ng'}
+              {isGateOpen ? 'Bình chọn miễn phí' : 'Cổng bình chọn đã đóng'}
             </button>
             {!currentUser && (
               <Link href={`/dang-nhap?redirect=/thi-sinh/${candidate.sbd}`} className="mt-3 block text-center text-sm font-bold text-[var(--site-primary)]">
-                ????ng nh???p ngay ????? d??ng l?????t mi???n ph??
+                Đăng nhập ngay để dùng lượt miễn phí
               </Link>
             )}
           </div>
