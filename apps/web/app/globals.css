@@ -3562,4 +3562,26 @@ button, a { -webkit-tap-highlight-color: transparent; }
   transform: none !important;
 }
 
+/* Golden Hour Promotion Banner */
+.promotion-gold-banner {
+  border-radius: 16px;
+  margin-top: 16px;
+  margin-bottom: 24px;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.2);
+  animation: shine-gold-home 8s ease infinite;
+}
+.promotion-glow-badge {
+  background: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+.promotion-name-glow {
+  text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+}
+@keyframes shine-gold-home {
+  0%, 100% { background: linear-gradient(135deg, #f59e0b, #ea580c, #f59e0b); }
+  50% { background: linear-gradient(135deg, #ea580c, #f59e0b, #ea580c); }
+}
+
 
