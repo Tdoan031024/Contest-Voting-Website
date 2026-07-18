@@ -53,6 +53,7 @@ export default function CandidateDetailPage() {
   const [activeImage, setActiveImage] = useState<string>('');
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [recentVotes, setRecentVotes] = useState<any[]>([]);
   const lightboxRef = useRef<HTMLDivElement>(null);
   const lightboxCloseRef = useRef<HTMLButtonElement>(null);
   const lightboxTriggerRef = useRef<HTMLButtonElement>(null);
@@ -62,10 +63,11 @@ export default function CandidateDetailPage() {
 
     async function loadData() {
       setIsLoading(true);
-      const [candidateRes, allRes, settingsRes] = await Promise.all([
+      const [candidateRes, allRes, settingsRes, votesRes] = await Promise.all([
         fetch(apiUrl('/api/candidates/' + sbd)),
         fetch(apiUrl('/api/candidates')),
         fetch(apiUrl('/api/settings')),
+        fetch(apiUrl('/api/candidates/' + sbd + '/votes')),
       ]);
 
       if (candidateRes.ok) {
@@ -83,6 +85,10 @@ export default function CandidateDetailPage() {
       if (settingsRes.ok) {
         setSettings(await settingsRes.json());
       }
+
+      if (votesRes.ok) {
+        setRecentVotes(await votesRes.json());
+      }
       setIsLoading(false);
     }
 
@@ -90,10 +96,11 @@ export default function CandidateDetailPage() {
 
     const interval = setInterval(async () => {
       try {
-        const [candidateRes, allRes, settingsRes] = await Promise.all([
+        const [candidateRes, allRes, settingsRes, votesRes] = await Promise.all([
           fetch(apiUrl('/api/candidates/' + sbd)),
           fetch(apiUrl('/api/candidates')),
           fetch(apiUrl('/api/settings')),
+          fetch(apiUrl('/api/candidates/' + sbd + '/votes')),
         ]);
         if (candidateRes.ok) {
           const data = await candidateRes.json();
@@ -104,6 +111,9 @@ export default function CandidateDetailPage() {
         }
         if (settingsRes.ok) {
           setSettings(await settingsRes.json());
+        }
+        if (votesRes.ok) {
+          setRecentVotes(await votesRes.json());
         }
       } catch (err) {
         console.error('Polling details failed', err);
@@ -274,8 +284,8 @@ export default function CandidateDetailPage() {
     <main className="min-h-screen bg-[#F8FAFC] pb-24 text-slate-800 font-sans antialiased">
       
       {/* ─── BREADCRUMB ─── */}
-      <div className="max-w-[1300px] mx-auto px-4 pt-6">
-        <nav className="text-base text-slate-500 flex items-center gap-2" aria-label="Breadcrumb">
+      <div className="max-w-[1300px] mx-auto px-4 pt-3">
+        <nav className="text-sm text-slate-500 flex items-center gap-2" aria-label="Breadcrumb">
           <Link href="/" className="hover:text-slate-900 transition-colors font-medium">Dự án</Link>
           <span className="text-slate-300" aria-hidden="true">/</span>
           <span aria-current="page" className="text-slate-800 font-bold truncate">{candidate.name}</span>
@@ -283,29 +293,29 @@ export default function CandidateDetailPage() {
       </div>
 
       {/* ─── HERO SECTION (Title & Description Full Width) ─── */}
-      <section className="max-w-[1300px] mx-auto px-4 pt-6 pb-2">
-        <span className="inline-flex px-3 py-1.5 bg-slate-100 border border-slate-300 text-slate-700 text-xs font-bold rounded-full w-max tracking-wide uppercase">
+      <section className="max-w-[1300px] mx-auto px-4 pt-3 pb-1">
+        <span className="inline-flex px-2 py-1 bg-slate-100 border border-slate-300 text-slate-700 text-[10px] font-bold rounded-full w-max tracking-wide uppercase">
           Mã dự án · {candidate.sbd}
         </span>
-        <h1 className="mt-4 text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight">
+        <h1 className="mt-2 text-2xl md:text-[32px] font-black text-slate-900 tracking-tight leading-snug">
           {candidate.name}
         </h1>
-        <p className="mt-4 text-lg leading-relaxed text-slate-600 font-medium">
+        <p className="mt-2 text-sm sm:text-[15px] leading-relaxed text-slate-600 font-medium line-clamp-2 sm:line-clamp-none">
           {candidate.description}
         </p>
       </section>
 
       {/* ─── IMAGE & STATS SECTION (2 Columns - Stretched Height) ─── */}
-      <section className="max-w-[1300px] mx-auto px-4 py-4">
-        <div className="grid gap-8 lg:grid-cols-[460px_1fr] items-stretch">
+      <section className="max-w-[1300px] mx-auto px-4 py-2">
+        <div className="grid gap-4 lg:grid-cols-[380px_1fr] items-stretch">
           
           {/* Left Column: Image & Thumbnails (Matched Height) */}
-          <div className="flex flex-col gap-4 h-full justify-between">
+          <div className="flex flex-col gap-3 h-full justify-between">
             <button
               ref={lightboxTriggerRef}
               type="button"
               onClick={() => handleOpenLightbox(activeImage || getCandidateImageUrl(candidate.imageUrl))}
-              className="overflow-hidden rounded-2xl cursor-zoom-in relative group text-left transition-all duration-300 active:scale-[0.99] w-full flex-1 min-h-[320px]"
+              className="overflow-hidden rounded-2xl cursor-zoom-in relative group text-left transition-all duration-300 active:scale-[0.99] w-full flex-1 h-[260px] md:h-[280px]"
               aria-label={`Phóng to ảnh dự án ${candidate.name}`}
             >
               <img 
@@ -314,7 +324,7 @@ export default function CandidateDetailPage() {
                 className="absolute inset-0 w-full h-full object-cover rounded-2xl transition-transform duration-500 group-hover:scale-105" 
               />
               <div className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                <svg viewBox="0 0 24 24" className="h-9 w-9 text-white drop-shadow" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <svg viewBox="0 0 24 24" className="h-8 w-8 text-white drop-shadow" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="11" cy="11" r="8" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" />
                   <line x1="11" y1="8" x2="11" y2="14" />
@@ -324,14 +334,14 @@ export default function CandidateDetailPage() {
             </button>
             
             {allImages.length > 1 && (
-              <div className="flex flex-wrap gap-2 justify-start shrink-0">
+              <div className="flex flex-wrap gap-1.5 justify-start shrink-0">
                 {allImages.map((imgUrl, index) => {
                   const isActive = (activeImage || getCandidateImageUrl(candidate.imageUrl)) === imgUrl;
                   return (
                     <button
                       key={index}
                       onClick={() => setActiveImage(imgUrl)}
-                      className={`h-12 w-16 rounded-xl overflow-hidden border-2 bg-white transition-all duration-200 active:scale-95 shrink-0 ${
+                      className={`h-10 w-14 rounded-xl overflow-hidden border-2 bg-white transition-all duration-200 active:scale-95 shrink-0 ${
                         isActive ? 'border-[#2563EB] scale-105 shadow-sm' : 'border-slate-300 opacity-70 hover:opacity-100 hover:border-slate-400'
                       }`}
                     >
@@ -344,15 +354,15 @@ export default function CandidateDetailPage() {
           </div>
 
           {/* Right Column: 4 Stats Cards & Metadata Bar */}
-          <div className="flex flex-col justify-between h-full gap-4">
+          <div className="flex flex-col justify-between h-full gap-3">
             {/* Horizontal Icon Cards Statistics */}
-            <div className="grid grid-cols-2 gap-4 flex-1">
+            <div className="grid grid-cols-2 gap-3 flex-1">
               {[
                 {
                   label: 'Lượt bình chọn',
                   value: candidate.votes.toLocaleString(),
                   icon: (
-                    <svg className="w-6 h-6 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
                       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                     </svg>
                   )
@@ -361,7 +371,7 @@ export default function CandidateDetailPage() {
                   label: 'Lượt xem',
                   value: mockViews,
                   icon: (
-                    <svg className="w-6 h-6 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                       <circle cx="12" cy="12" r="3" />
                     </svg>
@@ -371,7 +381,7 @@ export default function CandidateDetailPage() {
                   label: 'Bảng xếp hạng',
                   value: currentRank,
                   icon: (
-                    <svg className="w-6 h-6 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 0a7.454 7.454 0 00.981 3.172m0 0a8.25 8.25 0 001.38 2.226m0 0a8.25 8.25 0 01-1.38-2.226m0 0h1.003V10.5" />
                     </svg>
                   )
@@ -380,35 +390,35 @@ export default function CandidateDetailPage() {
                   label: 'Kết thúc vote',
                   value: remainingDays,
                   icon: (
-                    <svg className="w-6 h-6 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )
                 }
               ].map((stat, i) => (
-                <div key={i} className="bg-white p-4 rounded-2xl border border-slate-300 hover:border-slate-400 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-blue-400/80 transition-all duration-300 flex flex-col justify-center">
+                <div key={i} className="bg-white p-3 rounded-xl border border-slate-300 hover:border-slate-400 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-blue-400/80 transition-all duration-300 flex flex-col justify-center">
                   <div className="flex items-center gap-2">
                     {stat.icon}
-                    <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">{stat.label}</span>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">{stat.label}</span>
                   </div>
-                  <p className="mt-2 text-2xl font-black text-slate-900 tracking-tight">{stat.value}</p>
+                  <p className="mt-1.5 text-xl font-black text-slate-900 tracking-tight">{stat.value}</p>
                 </div>
               ))}
             </div>
-
+ 
             {/* Compact project metadata details */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-slate-50 border border-slate-300 p-3.5 rounded-2xl shrink-0 transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 border border-slate-300 p-2.5 rounded-xl shrink-0 transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
               {[
                 ['Bảng thi', candidate.contestTableLabel || candidate.contestTable || 'Chưa phân bảng'],
                 ['Vòng thi', candidate.currentRound || 'Vòng loại'],
                 ['Điểm bình chọn', `${candidate.votes.toLocaleString()} điểm`],
               ].map(([lbl, val]) => (
-                <div key={lbl} className="flex justify-between sm:flex-col sm:justify-start gap-1 px-3 py-1.5 sm:border-r last:border-r-0 border-slate-300">
-                  <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">{lbl}</span>
+                <div key={lbl} className="flex justify-between sm:flex-col sm:justify-start gap-0.5 px-2 py-1 sm:border-r last:border-r-0 border-slate-300">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{lbl}</span>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-base font-bold text-slate-800">{val}</span>
+                    <span className="text-sm font-bold text-slate-800">{val}</span>
                     {lbl === 'Điểm bình chọn' && settings?.activeVotingPromotion && (
-                      <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[10px] font-black text-amber-700 border border-amber-200/60 animate-pulse">
+                      <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-black text-amber-700 border border-amber-200/60 animate-pulse">
                         x{settings.activeVotingPromotion.multiplier}
                       </span>
                     )}
@@ -417,7 +427,7 @@ export default function CandidateDetailPage() {
               ))}
             </div>
           </div>
-
+ 
         </div>
       </section>
 
@@ -576,25 +586,39 @@ export default function CandidateDetailPage() {
             )}
           </div>
 
-          {/* highlights summary widget */}
+          {/* Lịch sử bình chọn widget */}
           <div className="bg-white rounded-[16px] border border-slate-300 p-6 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400">Thông tin nổi bật</h3>
+            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
+              <span>Lịch sử bình chọn</span>
+              <span className="animate-pulse flex h-2 w-2 rounded-full bg-emerald-500" />
+            </h3>
             
-            <div className="mt-4 space-y-4">
-              {[
-                { label: 'Lượt bình chọn', val: candidate.votes.toLocaleString(), icon: <svg className="w-4 h-4 stroke-slate-600 fill-none" strokeWidth="2.2" viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg> },
-                { label: 'Lượt xem', val: mockViews, icon: <svg className="w-4 h-4 stroke-slate-600 fill-none" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" /><circle cx="12" cy="12" r="3" /></svg> },
-                { label: 'Bảng xếp hạng', val: currentRank, icon: <svg className="w-4 h-4 stroke-slate-600 fill-none" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 0a7.454 7.454 0 00.981 3.172m0 0a8.25 8.25 0 001.38 2.226m0 0a8.25 8.25 0 01-1.38-2.226m0 0h1.003V10.5" /></svg> },
-                { label: 'Thời gian còn lại', val: remainingDays, icon: <svg className="w-4 h-4 stroke-slate-600 fill-none" strokeWidth="2.2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> }
-              ].map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between py-2 border-b last:border-b-0 border-slate-200">
-                  <div className="flex items-center gap-2">
-                    <span className="shrink-0 text-slate-600">{item.icon}</span>
-                    <span className="text-[14px] font-bold text-slate-500">{item.label}</span>
+            <div className="mt-4 divide-y divide-slate-100 max-h-[300px] overflow-y-auto pr-1">
+              {recentVotes.length === 0 ? (
+                <p className="text-xs text-slate-400 text-center py-8 font-semibold">Chưa có lượt bình chọn nào.</p>
+              ) : (
+                recentVotes.map((v, idx) => (
+                  <div key={v.id || idx} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                    <div className="flex flex-col gap-0.5">
+                      <span className="text-[13px] font-extrabold text-slate-800 truncate max-w-[170px]">{v.voterName}</span>
+                      <span className="text-[11px] text-slate-500 font-mono font-semibold">SĐT: {v.voterPhone}</span>
+                    </div>
+                    <div className="text-right flex flex-col items-end gap-0.5 shrink-0">
+                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200/50">
+                        +1 lượt
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-medium">
+                        {(() => {
+                          const d = new Date(v.voteTime);
+                          const pad = (n: number) => String(n).padStart(2, '0');
+                          const utc7 = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+                          return `${pad(utc7.getUTCHours())}:${pad(utc7.getUTCMinutes())} - ${pad(utc7.getUTCDate())}/${pad(utc7.getUTCMonth() + 1)}`;
+                        })()}
+                      </span>
+                    </div>
                   </div>
-                  <span className="text-[14px] font-extrabold text-slate-800">{item.val}</span>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 

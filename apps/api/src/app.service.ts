@@ -799,6 +799,48 @@ export class AppService implements OnModuleInit {
     return candidates.map((candidate: any) => this.mergeCandidate(candidate));
   }
 
+  async getCandidateVotes(sbd: string) {
+    const candidate = await this.prisma.candidate.findUnique({
+      where: { sbd },
+    });
+    if (!candidate) {
+      throw new NotFoundException(`Không tìm thấy thí sinh với SBD ${sbd}`);
+    }
+
+    const votes = await this.prisma.voteRecord.findMany({
+      where: { candidateId: candidate.id },
+      orderBy: { voteTime: 'desc' },
+      take: 8,
+    });
+
+    const webUsers = await this.prisma.webUser.findMany();
+    const userMap = new Map<string, any>();
+    for (const u of webUsers) {
+      if (u.id) userMap.set(u.id, u);
+      if (u.email) userMap.set(u.email.toLowerCase(), u);
+      if (u.phone) userMap.set(u.phone, u);
+    }
+
+    return votes.map((v: any) => {
+      const voterKey = String(v.voterPhone || '').trim().toLowerCase();
+      const user = userMap.get(voterKey) || userMap.get(v.voterPhone);
+      
+      let maskedPhone = v.voterPhone || 'Người dùng ẩn';
+      if (maskedPhone && maskedPhone.length >= 7) {
+        maskedPhone = maskedPhone.substring(0, 3) + '***' + maskedPhone.substring(maskedPhone.length - 4);
+      } else if (maskedPhone !== 'Người dùng ẩn') {
+        maskedPhone = '***' + maskedPhone.slice(-3);
+      }
+
+      return {
+        id: v.id,
+        voterPhone: maskedPhone,
+        voterName: user ? user.fullName : 'Cử tri ẩn danh',
+        voteTime: v.voteTime,
+      };
+    });
+  }
+
   async getCandidateBySbd(sbd: string): Promise<Candidate> {
     const candidate = await this.prisma.candidate.findUnique({
       where: { sbd },

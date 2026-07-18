@@ -585,25 +585,6 @@ export default function RankingPage() {
       `}</style>
 
       <main className="sc-908a50-0 iUzfqH theme-page ranking-page-modern flex-1">
-        {settings?.activeVotingPromotion && (
-          <div className="promotion-gold-banner relative overflow-hidden py-3 px-4 text-center text-white z-[100]">
-            <div className="absolute inset-0 bg-white/5 pointer-events-none" />
-            <div className="relative flex items-center justify-center gap-2 flex-wrap text-xs sm:text-sm font-bold">
-              <span className="promotion-glow-badge inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-200 backdrop-blur-md">
-                <span>⚡</span> Khung giờ vàng <span>🔥</span>
-              </span>
-              <span className="text-white/95">
-                Đang nhân <span className="text-amber-300 font-extrabold text-base px-0.5">{settings.activeVotingPromotion.multiplier}</span> lần điểm bình chọn:
-              </span>
-              <span className="promotion-name-glow text-amber-200 font-black tracking-wide bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
-                "{settings.activeVotingPromotion.name}"
-              </span>
-              <span className="text-amber-100/80 font-medium text-[11px] sm:text-xs">
-                (Áp dụng từ {formatDateTime(settings.activeVotingPromotion.startAt)} đến {formatDateTime(settings.activeVotingPromotion.endAt)})
-              </span>
-            </div>
-          </div>
-        )}
         <div className="orb-pulse fixed top-20 -left-20 w-[350px] h-[350px] rounded-full bg-[#0A2FFF]/8 blur-[120px] pointer-events-none z-0" />
         <div className="orb-pulse fixed -bottom-10 -right-10 w-[400px] h-[400px] rounded-full bg-[#79BCC2]/6 blur-[130px] pointer-events-none z-0" style={{ animationDelay: '5s' }} />
 

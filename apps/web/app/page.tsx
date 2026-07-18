@@ -490,6 +490,26 @@ export default function HomePage() {
             background: transparent;
           }
         }
+        .promotion-gold-banner {
+          border-radius: 16px;
+          margin-top: 16px;
+          margin-bottom: 24px;
+          border: 1px solid rgba(251, 191, 36, 0.3);
+          box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.2);
+          animation: shine-gold-home 8s ease infinite;
+        }
+        .promotion-glow-badge {
+          background: rgba(255, 255, 255, 0.15);
+          box-shadow: 0 0 15px rgba(251, 191, 36, 0.35);
+          border: 1px solid rgba(255, 255, 255, 0.25);
+        }
+        .promotion-name-glow {
+          text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+        }
+        @keyframes shine-gold-home {
+          0%, 100% { background: linear-gradient(135deg, #f59e0b, #ea580c, #f59e0b); }
+          50% { background: linear-gradient(135deg, #ea580c, #f59e0b, #ea580c); }
+        }
       `}</style>
 
       <main className="sc-908a50-0 iUzfqH theme-page home-theme-page flex-1">
@@ -747,6 +767,25 @@ export default function HomePage() {
                   Khám phá các ý tưởng khởi nghiệp sáng tạo, theo dõi lượt bình chọn và ủng hộ dự án bạn yêu thích.
                 </p>
               </div>
+
+              {settings?.activeVotingPromotion && (
+                <div className="promotion-gold-banner relative overflow-hidden py-3 px-4 text-center text-white z-10 w-full max-w-[615px] mx-auto">
+                  <div className="relative flex items-center justify-center gap-2 flex-wrap text-xs sm:text-sm font-bold">
+                    <span className="promotion-glow-badge inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-200 backdrop-blur-md">
+                      <span>⚡</span> Khung giờ vàng <span>🔥</span>
+                    </span>
+                    <span className="text-white/95">
+                      Đang nhân <span className="text-amber-300 font-extrabold text-base px-0.5">{settings.activeVotingPromotion.multiplier}</span> lần điểm:
+                    </span>
+                    <span className="promotion-name-glow text-amber-200 font-black tracking-wide bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
+                      "{settings.activeVotingPromotion.name}"
+                    </span>
+                    <span className="text-amber-100/80 font-medium text-[11px] sm:text-xs">
+                      (Từ {formatDateTime(settings.activeVotingPromotion.startAt)} đến {formatDateTime(settings.activeVotingPromotion.endAt)})
+                    </span>
+                  </div>
+                </div>
+              )}
 
               {/* Search Bar matching sample web */}
               <div

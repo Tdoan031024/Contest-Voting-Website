@@ -87,13 +87,20 @@ const settingsIcon = (
   </svg>
 );
 
+const guidesIcon = (
+  <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
+
 const navGroups = [
   {
     title: 'Quản lý',
     items: [
       { href: '/', label: 'Tổng quan', icon: dashboardIcon },
       { href: '/candidates', label: 'Dự án', icon: candidatesIcon },
-      { href: '/votes', label: 'Lịch sử vote', icon: votesIcon },
+      { href: '/votes', label: 'Lịch sử các lượt vote', icon: votesIcon },
       { href: '/users', label: 'Người dùng', icon: usersIcon },
       { href: '/sponsors', label: 'Nhà tài trợ', icon: sponsorsIcon },
       { href: '/news', label: 'Tin tức', icon: newsIcon },
@@ -105,6 +112,7 @@ const navGroups = [
       { href: '/banners', label: 'Banner', icon: bannerIcon },
       { href: '/introduction', label: 'Thông tin cuộc thi', icon: introIcon },
       { href: '/timeline', label: 'Mốc thời gian', icon: timelineIcon },
+      { href: '/guides', label: 'Hướng dẫn', icon: guidesIcon },
       { href: '/settings', label: 'Cài đặt', icon: settingsIcon },
     ],
   },
@@ -123,6 +131,7 @@ const pageMeta: Record<string, { title: string; description: string }> = {
   '/banners': { title: 'Banner', description: 'Điều chỉnh hình ảnh chiến dịch và điểm chạm chính.' },
   '/introduction': { title: 'Thông tin cuộc thi', description: 'Quản lý phần giới thiệu và nội dung landing page.' },
   '/timeline': { title: 'Mốc thời gian', description: 'Cập nhật lịch trình và trạng thái các vòng thi.' },
+  '/guides': { title: 'Hướng dẫn', description: 'Cấu hình nội dung hướng dẫn bình chọn và bảng quy đổi điểm.' },
   '/settings': { title: 'Cài đặt', description: 'Thiết lập hệ thống, promotion và trạng thái hoạt động.' },
 };
 

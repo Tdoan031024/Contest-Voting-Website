@@ -175,6 +175,11 @@ export class AppController {
     return this.appService.getCandidates();
   }
 
+  @Get('candidates/:sbd/votes')
+  async getCandidateVotes(@Param('sbd') sbd: string) {
+    return this.appService.getCandidateVotes(sbd);
+  }
+
   @Get('candidates/:sbd')
   async getCandidateBySbd(@Param('sbd') sbd: string): Promise<Candidate> {
     return this.appService.getCandidateBySbd(sbd);
