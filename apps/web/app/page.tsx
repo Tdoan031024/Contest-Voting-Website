@@ -868,38 +868,20 @@ export default function HomePage() {
 
           {/* ── Sponsor Marquee Banner (NEW POSITION: Direct child of candidates-section, stretching full-width) ── */}
           {(() => {
-            const displaySponsors = sponsors && sponsors.length > 0 ? sponsors : MOCK_ONLINE_SPONSORS;
+            const displaySponsors = sponsors || [];
             if (displaySponsors.length === 0) return null;
-            const onlineFallbacks = [
-              'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
-              'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg',
-              'https://cdn.worldvectorlogo.com/logos/next-js.svg',
-              'https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg',
-              'https://cdn.worldvectorlogo.com/logos/prisma-3.svg',
-              'https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg',
-              'https://huit.edu.vn/menu/images/logo.png'
-            ];
             return (
               <div className="sponsor-marquee-container w-full mt-6 mb-4 overflow-hidden bg-slate-50/50 dark:bg-white/[0.02] py-4 border-y border-neutral-200/40 dark:border-white/5">
                 <div className="sponsor-marquee-track">
                   {/* Quadruple the list for seamless loop */}
                   {[...displaySponsors, ...displaySponsors, ...displaySponsors, ...displaySponsors].map((sp, idx) => {
-                    const initialSrc = sp.logoUrl
-                      ? (sp.logoUrl.startsWith('http') ? sp.logoUrl : getCandidateImageUrl(sp.logoUrl))
-                      : onlineFallbacks[idx % onlineFallbacks.length];
+                    const initialSrc = sp.logoUrl.startsWith('http') ? sp.logoUrl : (typeof getCandidateImageUrl === 'function' ? getCandidateImageUrl(sp.logoUrl) : sp.logoUrl);
                     return (
                       <div key={`sp-marquee-${idx}`} className="sponsor-marquee-item">
                         <img
                           src={initialSrc}
                           alt={sp.name}
                           className="sponsor-marquee-logo animate-fade-in"
-                          onError={(e) => {
-                            const t = e.currentTarget;
-                            const fallbackUrl = onlineFallbacks[idx % onlineFallbacks.length];
-                            if (t.src !== fallbackUrl) {
-                              t.src = fallbackUrl;
-                            }
-                          }}
                         />
                       </div>
                     );
@@ -1190,8 +1172,6 @@ export default function HomePage() {
 
         {/* Sponsor Section matching sample web */}
         <div className="relative w-full max-w-[1180px] mx-auto pb-8 sm:pb-12" id="sponsor-section" ref={sponsorsRef}>
-          {/* Ambient glowing orb for Sponsor Section */}
-          <div className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[350px] h-[350px] rounded-full bg-gradient-to-tr from-[#0A2FFF]/5 to-[#79BCC2]/5 blur-[100px] pointer-events-none transition-opacity duration-[2800ms] ${sponsorsVisible ? 'opacity-100' : 'opacity-0'}`} />
 
           <div className="pt-8 sm:pt-12 flex flex-col space-y-5 items-center relative z-10">
             <div className={`flex flex-col space-y-1.5 text-center transform transition-all duration-700 ease-out ${sponsorsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
@@ -1218,7 +1198,6 @@ export default function HomePage() {
                 }`}
             >
               <div className="relative group hover-shine-effect rounded-2xl overflow-hidden">
-                <div className="absolute -inset-1 bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] rounded-2xl opacity-10 blur-sm pointer-events-none group-hover:opacity-20 transition-opacity duration-500" />
                 <img alt="Sponsors Logo" className="w-full h-auto object-contain rounded-xl relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]" src={formatSponsorBannerUrl(settings?.sponsorBannerUrl, theme)} />
               </div>
             </div>
