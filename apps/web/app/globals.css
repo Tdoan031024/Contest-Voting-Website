@@ -302,11 +302,12 @@ select option {
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.2) 50%,
+    rgba(255, 255, 255, 0.35) 50%,
     rgba(255, 255, 255, 0) 100%
   );
   transform: skewX(-25deg);
   pointer-events: none;
+  z-index: 20;
 }
 
 .hover-shine-effect:hover::after {
