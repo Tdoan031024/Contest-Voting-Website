@@ -54,16 +54,16 @@ const defaultExchangeRates: ExchangeRate[] = [
 
 const faqItems = [
   {
-    q: 'Bình chọn miễn phí có giới hạn không?',
-    a: 'Có. Mỗi tài khoản được 2 lượt bình chọn miễn phí mỗi ngày cho toàn bộ dự án trong hệ thống. Dùng hết 2 lượt thì cần chờ sang ngày hôm sau.',
+    question: 'Bình chọn miễn phí có giới hạn không?',
+    answer: 'Có. Mỗi tài khoản được 2 lượt bình chọn miễn phí mỗi ngày cho toàn bộ dự án trong hệ thống. Dùng hết 2 lượt thì cần chờ sang ngày hôm sau.',
   },
   {
-    q: 'Tôi có thể bình chọn cho nhiều dự án không?',
-    a: 'Có, nhưng tổng số lượt miễn phí mỗi ngày vẫn chỉ là 2. Bạn có thể dùng cả 2 lượt cho một dự án hoặc chia ra cho các dự án khác nhau.',
+    question: 'Tôi có thể bình chọn cho nhiều dự án không?',
+    answer: 'Có, nhưng tổng số lượt miễn phí mỗi ngày vẫn chỉ là 2. Bạn có thể dùng cả 2 lượt cho một dự án hoặc chia ra cho các dự án khác nhau.',
   },
   {
-    q: 'Tôi quên mật khẩu thì phải làm gì?',
-    a: 'Bạn có thể đăng nhập bằng Google hoặc liên hệ ban tổ chức qua email iec@huit.edu.vn để được hỗ trợ khôi phục tài khoản.',
+    question: 'Tôi quên mật khẩu thì phải làm gì?',
+    answer: 'Bạn có thể đăng nhập bằng Google hoặc liên hệ ban tổ chức qua email iec@huit.edu.vn để được hỗ trợ khôi phục tài khoản.',
   },
 ];
 
@@ -169,11 +169,12 @@ const sectionColors = [
 export default function TheLePage() {
   const [sections, setSections] = useState<SectionConfig[]>(defaultSections);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>(defaultExchangeRates);
+  const [faqList, setFaqList] = useState<any[]>(faqItems);
   const [activeTab, setActiveTab] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const heroSection = useInView(0.2);
   const stepsSection = useInView(0.1);
-  const tableSection = useInView(0.1);
+  const notesSection = useInView(0.1);
   const faqSection = useInView(0.1);
 
   useEffect(() => {
@@ -188,6 +189,9 @@ export default function TheLePage() {
         }
         if (Array.isArray(data.exchangeRates) && data.exchangeRates.length > 0) {
           setExchangeRates(normalizeRates(data.exchangeRates));
+        }
+        if (Array.isArray(data.faq) && data.faq.length > 0) {
+          setFaqList(data.faq);
         }
       } catch {}
     }
@@ -352,50 +356,6 @@ export default function TheLePage() {
             </div>
           ))}
 
-          <div id="bang-diem" ref={tableSection.ref} className="mt-20">
-            <div className="flex items-center gap-3 mb-8">
-              <div className="step-num-circle" style={{ background: 'linear-gradient(135deg, #eab308, #f97316)', fontSize: 20 }}>💰</div>
-              <div>
-                <div
-                  style={{
-                    fontSize: 11,
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.12em',
-                    color: 'var(--site-primary)',
-                  }}
-                >
-                  Bảng quy đổi
-                </div>
-                <h2 style={{ fontSize: 'clamp(18px, 2.5vw, 26px)', fontWeight: 900, color: 'var(--site-text)', margin: 0 }}>
-                  Lượt bình chọn hiện có
-                </h2>
-              </div>
-            </div>
-
-            <p className={`text-sm mb-6 ${tableSection.visible ? 'fade-up' : 'opacity-0'}`} style={{ color: 'var(--site-muted)' }}>
-              Hệ thống hiện chỉ sử dụng bình chọn miễn phí. Mỗi tài khoản đăng nhập có 2 lượt mỗi ngày cho toàn bộ dự án.
-            </p>
-
-            <div className={`exchange-table-wrap ${tableSection.visible ? 'fade-up fade-up-d1' : 'opacity-0'}`}>
-              <div className="exchange-table-head">
-                <span>Gói bình chọn</span>
-                <span>Giá trị</span>
-              </div>
-              {exchangeRates.map((rate, index) => {
-                const isFree = rate.price.toLowerCase().includes('miễn phí') || rate.price === '0';
-                return (
-                  <div key={index} className={`exchange-row ${isFree ? 'free-row' : ''}`}>
-                    <span className="exchange-points">
-                      {isFree && <span style={{ marginRight: 6 }}>🆓</span>}
-                      {rate.points}
-                    </span>
-                    <span className="exchange-price">{rate.price}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
 
           <div id="faq" ref={faqSection.ref} className="mt-20">
             <div className="flex items-center gap-3 mb-8">
@@ -419,7 +379,7 @@ export default function TheLePage() {
             </div>
 
             <div className={`flex flex-col gap-3 ${faqSection.visible ? 'fade-up' : 'opacity-0'}`}>
-              {faqItems.map((item, index) => (
+              {faqList.map((item, index) => (
                 <div key={index} className={`faq-item ${openFaq === index ? 'open' : ''}`}>
                   <button
                     className="faq-question"
@@ -427,7 +387,7 @@ export default function TheLePage() {
                     aria-expanded={openFaq === index}
                     aria-controls={`faq-answer-${index}`}
                   >
-                    <span>{item.q}</span>
+                    <span>{item.question}</span>
                     <span className="faq-icon" aria-hidden="true">
                       <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
                         <line x1="12" y1="5" x2="12" y2="19" />
@@ -436,7 +396,7 @@ export default function TheLePage() {
                     </span>
                   </button>
                   <div id={`faq-answer-${index}`} className="faq-answer" aria-hidden={openFaq !== index}>
-                    {item.a}
+                    {item.answer}
                   </div>
                 </div>
               ))}

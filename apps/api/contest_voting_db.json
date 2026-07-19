@@ -205,6 +205,20 @@
         "isActive": true
       }
     ],
+    "faq": [
+      {
+        "question": "Bình chọn miễn phí có giới hạn không?",
+        "answer": "Có. Mỗi tài khoản được 2 lượt bình chọn miễn phí mỗi ngày cho toàn bộ dự án trong hệ thống. Dùng hết 2 lượt thì cần chờ sang ngày hôm sau."
+      },
+      {
+        "question": "Tôi có thể bình chọn cho nhiều dự án không?",
+        "answer": "Có, nhưng tổng số lượt miễn phí mỗi ngày vẫn chỉ là 2. Bạn có thể dùng cả 2 lượt cho một dự án hoặc chia ra cho các dự án khác nhau."
+      },
+      {
+        "question": "Tôi quên mật khẩu thì phải làm gì?",
+        "answer": "Bạn có thể đăng nhập bằng Google hoặc liên hệ ban tổ chức qua email iec@huit.edu.vn để được hỗ trợ khôi phục tài khoản."
+      }
+    ],
     "activeVotingPromotion": {
       "id": "promo-1783449479438-akqa6s",
       "name": "Khung giờ nhân điểm",

@@ -19,6 +19,22 @@ const AlertContext = createContext<AlertContextType | undefined>(undefined);
 
 export function AlertProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    message: string;
+    title: string;
+    type: AlertType;
+    resolve: (val: boolean) => void;
+  } | null>(null);
+
+  const showConfirm = useCallback((
+    message: string,
+    title = 'Xác nhận',
+    type: AlertType = 'warning'
+  ): Promise<boolean> => {
+    return new Promise<boolean>((resolve) => {
+      setConfirmConfig({ message, title, type, resolve });
+    });
+  }, []);
 
   const showAlert = useCallback((message: string, type: AlertType = 'info', title?: string): Promise<boolean> => {
     const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
@@ -73,7 +89,7 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
   }, [showAlert]);
 
   return (
-    <AlertContext.Provider value={{ showAlert }}>
+    <AlertContext.Provider value={{ showAlert, showConfirm }}>
       {children}
       
       {/* Toast List Container */}
@@ -151,6 +167,78 @@ export function AlertProvider({ children }: { children: React.ReactNode }) {
           </div>
         ))}
       </div>
+
+      {confirmConfig && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black/60 p-4 backdrop-blur-[4px] transition-all duration-300">
+          <style dangerouslySetInnerHTML={{ __html: `
+            @keyframes scaleUpConfirmWeb {
+              from { transform: scale(0.95); opacity: 0; }
+              to { transform: scale(1); opacity: 1; }
+            }
+            .confirm-modal-web {
+              animation: scaleUpConfirmWeb 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+          `}} />
+          <div className="confirm-modal-web w-full max-w-md rounded-3xl border border-white/10 bg-[#0c101d]/95 backdrop-blur-md p-6 shadow-2xl relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#0A2FFF]/5 to-[#79BCC2]/5 opacity-35 pointer-events-none" />
+            <div className="flex items-start gap-4 relative">
+              <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border ${
+                confirmConfig.type === 'error' ? 'border-rose-500/20 bg-rose-500/10 text-rose-400' :
+                confirmConfig.type === 'success' ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' :
+                confirmConfig.type === 'warning' ? 'border-amber-500/20 bg-amber-500/10 text-amber-400' :
+                'border-[#79BCC2]/20 bg-[#79BCC2]/10 text-[#79BCC2]'
+              }`}>
+                {confirmConfig.type === 'success' && (
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                )}
+                {confirmConfig.type === 'error' && (
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+                  </svg>
+                )}
+                {(confirmConfig.type === 'warning' || confirmConfig.type === 'info') && (
+                  <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.008v.008H12v-.008Z" />
+                  </svg>
+                )}
+              </div>
+              <div className="flex-1">
+                <h3 className="text-base font-bold text-white tracking-wide">{confirmConfig.title}</h3>
+                <p className="mt-2 text-[13px] leading-relaxed text-slate-300 font-medium whitespace-pre-line">{confirmConfig.message}</p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3 relative">
+              <button
+                type="button"
+                onClick={() => {
+                  confirmConfig.resolve(false);
+                  setConfirmConfig(null);
+                }}
+                className="rounded-xl border border-white/10 bg-white/[0.02] hover:bg-white/10 px-4 py-2 text-xs font-bold text-slate-300 transition active:scale-[0.98]"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmConfig.resolve(true);
+                  setConfirmConfig(null);
+                }}
+                className={`rounded-xl px-4 py-2 text-xs font-bold text-white shadow transition active:scale-[0.98] ${
+                  confirmConfig.type === 'error' ? 'bg-rose-600 hover:bg-rose-700' :
+                  confirmConfig.type === 'success' ? 'bg-emerald-600 hover:bg-emerald-700' :
+                  confirmConfig.type === 'warning' ? 'bg-gradient-to-r from-[#ea580c] to-[#f59e0b] hover:brightness-110' :
+                  'bg-gradient-to-r from-[#0a2fff] to-[#79bcc2] hover:brightness-110'
+                }`}
+              >
+                Xác nhận
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AlertContext.Provider>
   );
 }

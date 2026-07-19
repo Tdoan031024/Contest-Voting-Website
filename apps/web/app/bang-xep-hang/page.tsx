@@ -71,6 +71,106 @@ function getStoredUser() {
   try { return JSON.parse(raw); } catch { return null; }
 }
 
+// ── Vote Toast Notification ──────────────────────────────────────────────────
+interface VoteToastItem {
+  id: string;
+  userName: string;
+  candidateName: string;
+  score: number;
+  createdAt: string;
+}
+
+function VoteToastNotification({ toast, onClose }: { toast: VoteToastItem; onClose: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5500);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="vote-toast-item">
+      <div className="vote-toast-avatar">
+        {toast.userName ? toast.userName.charAt(0).toUpperCase() : '?'}
+      </div>
+      <div className="vote-toast-body">
+        <p className="vote-toast-text">
+          <strong>{toast.userName || 'Ai đó'}</strong> vừa bình chọn cho{' '}
+          <strong>{toast.candidateName}</strong>
+        </p>
+        <span className="vote-toast-badge">+{toast.score} điểm 🔥</span>
+      </div>
+      <button onClick={onClose} className="vote-toast-close" aria-label="Đóng">×</button>
+    </div>
+  );
+}
+
+function VoteToastContainer() {
+  const [toasts, setToasts] = useState<VoteToastItem[]>([]);
+  const lastVoteIdRef = useRef<string | null>(null);
+  const isFirstPoll = useRef(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function pollLatestVote() {
+      try {
+        const res = await fetch(apiUrl('/api/admin/votes?limit=1'));
+        if (!res.ok) return;
+        const data = await res.json();
+        const latestVote = Array.isArray(data) && data.length > 0 ? data[0] : null;
+
+        if (!latestVote) return;
+
+        if (isFirstPoll.current) {
+          lastVoteIdRef.current = latestVote.id;
+          isFirstPoll.current = false;
+          return;
+        }
+
+        if (latestVote.id !== lastVoteIdRef.current) {
+          lastVoteIdRef.current = latestVote.id;
+          if (isMounted) {
+            const newToast: VoteToastItem = {
+              id: `${latestVote.id}-${Date.now()}`,
+              userName: latestVote.userName || 'Người dùng',
+              candidateName: latestVote.candidateName || 'Dự án',
+              score: latestVote.score || 1,
+              createdAt: latestVote.createdAt,
+            };
+            setToasts((prev) => [...prev.slice(-2), newToast]);
+          }
+        }
+      } catch {
+        // Silently fail
+      }
+    }
+
+    const interval = setInterval(pollLatestVote, 8000);
+    pollLatestVote();
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  if (toasts.length === 0) return null;
+
+  return (
+    <div className="vote-toast-container">
+      {toasts.map((toast) => (
+        <VoteToastNotification
+          key={toast.id}
+          toast={toast}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
 // Skeleton Card component
 function SkeletonCard() {
   return (
@@ -455,72 +555,120 @@ export default function RankingPage() {
           z-index: 50;
           max-width: 980px;
           margin-inline: auto;
-          padding-top: 14px;
-          padding-bottom: 12px;
-          border: 1px solid var(--site-line);
-          border-radius: 22px;
-          background: color-mix(in srgb, var(--site-card) 90%, transparent);
-          box-shadow: 0 16px 42px rgba(15,23,42,.10);
-          backdrop-filter: blur(18px) saturate(1.25);
+          padding: 20px;
+          border: 1px solid rgba(226, 232, 240, 0.8);
+          border-radius: 24px;
+          background: rgba(255, 255, 255, 0.85);
+          box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.02);
+          backdrop-filter: blur(24px) saturate(170%);
+          transition: all 0.3s ease;
+        }
+        :root[data-theme='dark'] .ranking-control-panel {
+          background: rgba(30, 41, 59, 0.8);
+          border-color: rgba(255, 255, 255, 0.08);
+          box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.35);
+        }
+        .ranking-page-modern .search-enhanced {
+          max-width: 100%;
+          width: 100%;
+          margin-bottom: 16px;
+        }
+        .ranking-page-modern .search-enhanced input {
+          height: 50px;
+          border-radius: 14px;
+          border: 1.5px solid var(--site-line) !important;
+          background: var(--site-card) !important;
+          padding-left: 48px;
+          font-size: 14.5px;
+          transition: all 0.3s ease;
+        }
+        .ranking-page-modern .search-enhanced input:focus {
+          border-color: var(--site-primary) !important;
+          box-shadow: 0 0 0 4px color-mix(in srgb, var(--site-primary) 12%, transparent) !important;
+          background: var(--site-card) !important;
         }
         .ranking-filter-toolbar {
-          max-width: 860px;
-          margin: 12px auto 0;
+          max-width: 100%;
+          margin: 0;
           display: flex;
           align-items: center;
           justify-content: space-between;
-          gap: 14px;
+          gap: 16px;
+          border-top: 1px dashed var(--site-line);
+          padding-top: 16px;
         }
-        .ranking-filter-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+        .ranking-filter-pills { display: flex; flex-wrap: wrap; gap: 8px; }
         .ranking-filter-pill {
-          min-height: 38px;
-          padding: 0 14px;
+          min-height: 40px;
+          padding: 0 18px;
           border: 1px solid var(--site-line);
-          border-radius: 999px;
-          background: var(--site-soft);
+          border-radius: 12px;
+          background: var(--site-card);
           color: var(--site-muted);
-          font-size: 12px;
-          font-weight: 750;
-          transition: .2s ease;
+          font-size: 13px;
+          font-weight: 600;
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          cursor: pointer;
         }
-        .ranking-filter-pill:hover { border-color: var(--site-primary); color: var(--site-primary); }
+        .ranking-filter-pill:hover {
+          border-color: var(--site-primary);
+          color: var(--site-primary);
+          transform: translateY(-1px);
+          background: color-mix(in srgb, var(--site-primary) 4%, var(--site-card));
+        }
         .ranking-filter-pill.active {
           border-color: transparent;
-          background: linear-gradient(135deg, #0A2FFF, #2870df);
+          background: linear-gradient(135deg, #0A2FFF, #79BCC2);
           color: #fff;
-          box-shadow: 0 7px 18px rgba(10,47,255,.22);
+          box-shadow: 0 6px 16px -2px rgba(10, 47, 255, 0.25);
+          font-weight: 700;
         }
         .ranking-sort-label {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 10px;
           color: var(--site-muted);
-          font-size: 12px;
-          font-weight: 700;
+          font-size: 13px;
+          font-weight: 600;
           white-space: nowrap;
         }
         .ranking-sort-label select {
-          height: 38px;
-          padding: 0 32px 0 12px !important;
+          height: 40px;
+          padding: 0 36px 0 14px !important;
           border: 1px solid var(--site-line);
-          border-radius: 11px;
+          border-radius: 12px;
           background: var(--site-card);
           color: var(--site-text);
-          font-size: 12px;
-          font-weight: 700;
+          font-size: 13px;
+          font-weight: 600;
           outline: none;
           cursor: pointer;
-          transition: border-color .15s ease, box-shadow .15s ease;
+          transition: all 0.25s ease;
+        }
+        .ranking-sort-label select:hover {
+          border-color: var(--site-primary);
         }
         .ranking-sort-label select:focus {
           border-color: var(--site-primary);
           box-shadow: 0 0 0 3px color-mix(in srgb, var(--site-primary) 15%, transparent);
         }
-        .ranking-result-count {
-          margin: 8px 0 0;
-          color: var(--site-muted);
-          text-align: center;
-          font-size: 12px;
+        .ranking-result-badge {
+          display: inline-flex;
+          align-items: center;
+          height: 40px;
+          padding: 0 14px;
+          border-radius: 12px;
+          background: var(--site-soft);
+          color: var(--site-primary);
+          font-size: 13px;
+          font-weight: 700;
+          border: 1px solid var(--site-line);
+          white-space: nowrap;
+        }
+        :root[data-theme='dark'] .ranking-result-badge {
+          background: rgba(255, 255, 255, 0.05);
+          color: #79BCC2;
+          border-color: rgba(255, 255, 255, 0.08);
         }
         .ranking-page-modern .empty-state h3 { color: var(--site-text) !important; }
         .ranking-page-modern .empty-state p { color: var(--site-muted) !important; }
@@ -592,21 +740,28 @@ export default function RankingPage() {
           <div className="sc-1a037b37-0 hfAPBN relative">
             <div className="flex flex-col items-center py-3 sm:py-[40px]">
 
-              {/* Title section with Live Badge */}
-              <div ref={titleSection.ref} className="flex flex-col items-center space-y-[24px] text-center w-full">
-                <div className="flex flex-col items-center space-y-1.5">
-
-                  <h1 className={`ranking-title text-[26px] sm:text-[44px] tracking-[-1px] leading-[32px] sm:leading-[54px] font-extrabold uppercase ${titleSection.visible ? 'anim-up anim-d100' : ''}`}>
-                    Bảng xếp hạng dự án
-                  </h1>
-                  <p className={`text-[16px] sm:text-[28px] py-1 leading-[24px] uppercase font-semibold text-[#79BCC2] ${titleSection.visible ? 'anim-up anim-d200' : ''}`}>
-                    HUIT STARTUP LẦN THỨ VII 2026
-                  </p>
-                  <div
-                    className="h-[3px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-2 transition-all duration-[1200ms] ease-out"
-                    style={{ width: titleSection.visible ? '60px' : '0px' }}
-                  />
+              {/* Title section matching standard subpage header layout */}
+              <div ref={titleSection.ref} className={`flex flex-col items-center text-center w-full ${titleSection.visible ? 'anim-up' : 'opacity-0'}`}>
+                {/* Breadcrumb */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 18, fontSize: 12, color: 'var(--site-muted)' }}>
+                  <Link href="/" style={{ color: 'var(--site-primary)', textDecoration: 'none' }}>Trang chủ</Link>
+                  <span>›</span>
+                  <span>Bảng xếp hạng</span>
                 </div>
+
+                <span className="inline-flex rounded-full border border-blue-500/25 bg-blue-500/10 px-4 py-2 text-[11px] font-extrabold uppercase tracking-[0.28em] text-blue-600 dark:text-blue-400">
+                  {settings?.aboutTitle || "HUIT STARTUP LẦN THỨ VII 2026"}
+                </span>
+
+                <h1 className="mx-auto mt-5 max-w-[900px] text-[32px] sm:text-[54px] font-black uppercase leading-[1.05] text-neutral-900 dark:text-white">
+                  Bảng xếp hạng dự án
+                </h1>
+
+                <p className="mx-auto mt-5 max-w-[780px] text-[15px] sm:text-[17px] leading-relaxed text-neutral-700 dark:text-white/72 font-light">
+                  Cập nhật liên tục thứ hạng các dự án khởi nghiệp, tổng số lượt xem và tổng điểm bình chọn thực tế từ Hội đồng và Công chúng.
+                </p>
+
+                <div className="mx-auto mt-6 h-[3.5px] w-[82px] rounded-full bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2]" />
               </div>
 
               {/* Enhanced Search Bar */}
@@ -652,17 +807,19 @@ export default function RankingPage() {
                       </button>
                     ))}
                   </div>
-                  <label className="ranking-sort-label">
-                    <span>Sắp xếp</span>
-                    <select value={sortBy} onChange={event => setSortBy(event.target.value as typeof sortBy)}>
-                      <option value="votes">Nhiều phiếu nhất</option>
-                      <option value="sbd">Mã dự án tăng dần</option>
-                    </select>
-                  </label>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
+                    <div className="ranking-result-badge" aria-live="polite">
+                      {filteredCandidates.length > 0 ? `${filteredCandidates.length} dự án` : '0 dự án'}
+                    </div>
+                    <label className="ranking-sort-label">
+                      <span>Sắp xếp</span>
+                      <select value={sortBy} onChange={event => setSortBy(event.target.value as typeof sortBy)}>
+                        <option value="votes">Nhiều phiếu nhất</option>
+                        <option value="sbd">Mã dự án tăng dần</option>
+                      </select>
+                    </label>
+                  </div>
                 </div>
-                <p className="ranking-result-count" aria-live="polite">
-                  {filteredCandidates.length > 0 ? `${filteredCandidates.length} dự án phù hợp` : 'Không tìm thấy dự án phù hợp'}
-                </p>
               </div>
 
               {/* Loading State */}
@@ -770,6 +927,9 @@ export default function RankingPage() {
           }}
         />
       )}
+
+      {/* Vote Toast Notifications */}
+      <VoteToastContainer />
     </>
   );
 }

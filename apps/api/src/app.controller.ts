@@ -400,6 +400,12 @@ export class AppController {
     return this.appService.deleteVoteLog(id);
   }
 
+  @Post('admin/votes/delete-bulk')
+  @UseGuards(AdminSessionGuard)
+  async deleteVoteLogsBulk(@Body('ids') ids: string[]) {
+    return this.appService.deleteVoteLogsBulk(ids || []);
+  }
+
   // --- SYSTEM SETTINGS ---
   @Get('settings')
   getSettings(): Partial<SystemSettings> {

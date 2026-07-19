@@ -19,6 +19,11 @@ type ExchangeRate = {
   price: string;
 };
 
+type FaqItem = {
+  question: string;
+  answer: string;
+};
+
 const defaultSections: GuideSection[] = [
   {
     title: 'Hướng dẫn bình chọn miễn phí',
@@ -85,6 +90,9 @@ export default function GuidesAdminPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [sections, setSections] = useState<GuideSection[]>(defaultSections);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRate[]>(defaultExchangeRates);
+  const [faqItems, setFaqItems] = useState<FaqItem[]>([]);
+  const [faqOpenIdx, setFaqOpenIdx] = useState<number | null>(null);
+  const [isSavingFaq, setIsSavingFaq] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -107,11 +115,14 @@ export default function GuidesAdminPage() {
         if (Array.isArray(data.exchangeRates) && data.exchangeRates.length > 0) {
           setExchangeRates(normalizeRates(data.exchangeRates));
         }
+
+        if (Array.isArray(data.faq)) {
+          setFaqItems(data.faq);
+        }
       } catch (err) {
         console.error('Failed to load guide settings', err);
       }
     }
-
     loadSettings();
   }, []);
 
@@ -191,6 +202,40 @@ export default function GuidesAdminPage() {
       console.error('Failed to save guide settings', err);
     }
     alert('Không thể lưu cấu hình Hướng dẫn & Thể lệ.');
+  };
+
+  const handleFaqChange = (index: number, field: 'question' | 'answer', value: string) => {
+    setFaqItems((prev) => prev.map((item, idx) => idx === index ? { ...item, [field]: value } : item));
+  };
+
+  const handleAddFaq = () => {
+    setFaqItems((prev) => [...prev, { question: '', answer: '' }]);
+    setFaqOpenIdx(faqItems.length);
+  };
+
+  const handleDeleteFaq = (index: number) => {
+    setFaqItems((prev) => prev.filter((_, idx) => idx !== index));
+    setFaqOpenIdx(null);
+  };
+
+  const handleSaveFaq = async () => {
+    setIsSavingFaq(true);
+    try {
+      const res = await fetch(apiUrl('/api/admin/settings'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ faq: faqItems }),
+      });
+      if (res.ok) {
+        alert('Lưu FAQ thành công!');
+        return;
+      }
+    } catch (err) {
+      console.error('Failed to save FAQ', err);
+    } finally {
+      setIsSavingFaq(false);
+    }
+    alert('Không thể lưu FAQ.');
   };
 
   const isRateTab = activeTab === sections.length;
@@ -354,6 +399,108 @@ export default function GuidesAdminPage() {
             </div>
           )}
         </div>
+      </section>
+
+      {/* ─── FAQ Section ─── */}
+      <section className="admin-card p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-[18px] font-bold text-slate-900 flex items-center gap-2">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                  <circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </span>
+              Câu hỏi thường gặp (FAQ)
+            </h2>
+            <p className="mt-1 text-xs text-slate-500">Hiển thị trên trang Hướng dẫn công khai của website.</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleAddFaq}
+              className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-emerald-700"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="h-3.5 w-3.5">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Thêm câu hỏi
+            </button>
+            <button
+              type="button"
+              onClick={handleSaveFaq}
+              disabled={isSavingFaq}
+              className="flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-bold text-white transition hover:bg-blue-700 disabled:opacity-60"
+            >
+              {isSavingFaq ? 'Đang lưu...' : 'Lưu FAQ'}
+            </button>
+          </div>
+        </div>
+
+        {faqItems.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-slate-300 py-10 text-center">
+            <p className="text-sm text-slate-400">Chưa có câu hỏi nào. Nhấn "Thêm câu hỏi" để bắt đầu.</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {faqItems.map((item, index) => (
+              <div key={index} className="overflow-hidden rounded-2xl border border-slate-200">
+                {/* Accordion header */}
+                <button
+                  type="button"
+                  onClick={() => setFaqOpenIdx(faqOpenIdx === index ? null : index)}
+                  className="flex w-full items-center justify-between gap-3 bg-slate-50 px-4 py-3 text-left transition hover:bg-slate-100"
+                >
+                  <span className="flex-1 text-[13px] font-semibold text-slate-800 truncate">
+                    {item.question || `Câu hỏi #${index + 1}`}
+                  </span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleDeleteFaq(index); }}
+                      className="rounded-lg p-1 text-red-400 transition hover:bg-red-50 hover:text-red-600"
+                      title="Xóa câu hỏi"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-4 w-4">
+                        <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                      </svg>
+                    </button>
+                    <svg
+                      viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                      className={`h-4 w-4 text-slate-500 transition-transform duration-200 ${faqOpenIdx === index ? 'rotate-180' : ''}`}
+                    >
+                      <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                  </div>
+                </button>
+                {/* Accordion body */}
+                {faqOpenIdx === index && (
+                  <div className="space-y-3 border-t border-slate-200 bg-white px-4 py-4">
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Câu hỏi</label>
+                      <input
+                        value={item.question}
+                        onChange={(e) => handleFaqChange(index, 'question', e.target.value)}
+                        className="mt-1.5 h-9 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        placeholder="Nhập nội dung câu hỏi..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Câu trả lời</label>
+                      <textarea
+                        value={item.answer}
+                        onChange={(e) => handleFaqChange(index, 'answer', e.target.value)}
+                        rows={3}
+                        className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 resize-none"
+                        placeholder="Nhập câu trả lời..."
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );

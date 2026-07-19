@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { apiUrl, formatAssetUrl } from '../../api';
 
 function parseMarkdownToHtml(markdown: string): string {
@@ -141,6 +141,17 @@ export default function NewsAdminPage() {
     val2: ''
   });
   const [showPreviewPane, setShowPreviewPane] = useState(false);
+  const [editorMode, setEditorMode] = useState<'wysiwyg' | 'raw'>('wysiwyg');
+  const editorRef = useRef<HTMLDivElement>(null);
+
+  // Sync content state to editable div when mounting/switching
+  useEffect(() => {
+    if (editorMode === 'wysiwyg' && editorRef.current) {
+      if (editorRef.current.innerHTML !== formContent) {
+        editorRef.current.innerHTML = formContent;
+      }
+    }
+  }, [editorMode, modalMode, formContent]);
 
   const loadPosts = async () => {
     try {
@@ -155,6 +166,12 @@ export default function NewsAdminPage() {
       setPosts([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleWysiwygInput = () => {
+    if (editorRef.current) {
+      setFormContent(editorRef.current.innerHTML);
     }
   };
 
@@ -201,7 +218,7 @@ export default function NewsAdminPage() {
       category: formCategory,
       thumbnailUrl: formThumbnailUrl || undefined,
       summary: formSummary || undefined,
-      content: parseMarkdownToHtml(formContent),
+      content: editorMode === 'wysiwyg' ? formContent : parseMarkdownToHtml(formContent),
       isActive: formIsActive,
     };
 
@@ -233,7 +250,7 @@ export default function NewsAdminPage() {
       category: formCategory,
       thumbnailUrl: formThumbnailUrl,
       summary: formSummary,
-      content: parseMarkdownToHtml(formContent),
+      content: editorMode === 'wysiwyg' ? formContent : parseMarkdownToHtml(formContent),
       isActive: formIsActive,
     };
 
@@ -632,126 +649,277 @@ export default function NewsAdminPage() {
                 {activeEditorTab === 'edit' ? (
                   <>
                     <div className="flex flex-col space-y-1.5">
-                      <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Mô tả tóm tắt ngắn *</label>
+                      <div className="flex justify-between items-center">
+                        <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Mô tả tóm tắt ngắn *</label>
+                        <div className="flex items-center gap-1.5 bg-slate-100 p-0.5 rounded-lg border border-slate-200 text-[10px] font-bold">
+                          <button
+                            type="button"
+                            onClick={() => setEditorMode('wysiwyg')}
+                            className={`px-2 py-1 rounded transition-colors ${editorMode === 'wysiwyg' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                          >
+                            🎨 Trực quan (WYSIWYG)
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditorMode('raw')}
+                            className={`px-2 py-1 rounded transition-colors ${editorMode === 'raw' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
+                          >
+                            💻 Mã nguồn / Markdown
+                          </button>
+                        </div>
+                      </div>
                       <textarea rows={2} className="px-3 py-2 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold resize-none" value={formSummary} onChange={e => setFormSummary(e.target.value)} required placeholder="Giới thiệu tóm tắt khoảng 2-3 câu..." />
                     </div>
 
                     <div className="flex flex-col flex-1 min-h-[350px]">
-                      <div className="flex justify-between items-center bg-[#f8fafc] border border-[#dce5e1] border-b-0 rounded-t-lg px-3 py-1.5 flex-wrap gap-2">
-                        {/* Formatting Toolbar */}
-                        <div className="flex items-center gap-1.5 flex-wrap text-slate-500">
-                          {/* Typography group */}
-                          <div className="flex items-center gap-1">
-                            <button type="button" onClick={() => insertTag('# ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 font-black border border-transparent text-[#123c34] text-xs transition cursor-pointer" title="Tiêu đề H1 (Thêm # ở đầu dòng)">H1</button>
-                            <button type="button" onClick={() => insertTag('## ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 font-extrabold border border-transparent text-[#123c34] text-xs transition cursor-pointer" title="Tiêu đề H2 (Thêm ## ở đầu dòng)">H2</button>
-                            <button type="button" onClick={() => insertTag('### ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 font-bold border border-transparent text-[#123c34] text-xs transition cursor-pointer" title="Tiêu đề H3 (Thêm ### ở đầu dòng)">H3</button>
-                          </div>
+                      {editorMode === 'wysiwyg' ? (
+                        /* ─── Visual WYSIWYG Editor Toolbar ─── */
+                        <div className="flex justify-between items-center bg-[#f8fafc] border border-[#dce5e1] border-b-0 rounded-t-lg px-3 py-1.5 flex-wrap gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap text-slate-500">
+                            {/* Block Styles */}
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  document.execCommand('formatBlock', false, e.target.value);
+                                  e.target.value = ''; // Reset select
+                                }
+                              }}
+                              className="h-7 px-1.5 rounded border border-[#dce5e1] text-[11px] bg-white font-bold text-slate-700 outline-none"
+                            >
+                              <option value="">Định dạng chữ...</option>
+                              <option value="p">Đoạn văn (Paragraph)</option>
+                              <option value="h1">Tiêu đề lớn 1</option>
+                              <option value="h2">Tiêu đề vừa 2</option>
+                              <option value="h3">Tiêu đề nhỏ 3</option>
+                              <option value="blockquote">Trích dẫn (Quote)</option>
+                            </select>
 
-                          <span className="w-[1px] h-4 bg-slate-200" />
+                            <span className="w-[1px] h-4 bg-slate-200" />
 
-                          {/* Bold/Italic/Strike group */}
-                          <div className="flex items-center gap-1">
-                            <button type="button" onClick={() => insertTag('**', '**')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 font-bold text-xs transition cursor-pointer" title="In đậm (Bọc bằng **)">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg>
-                            </button>
-                            <button type="button" onClick={() => insertTag('*', '*')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 italic text-xs transition cursor-pointer" title="In nghiêng (Bọc bằng *)">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg>
-                            </button>
-                            <button type="button" onClick={() => insertTag('~~', '~~')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 line-through text-xs transition cursor-pointer" title="Gạch ngang (Bọc bằng ~~)">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><path d="M16 4H9a4 4 0 0 0-4 4 4 4 0 0 0 4 4m6 0a4 4 0 0 1 4 4 4 4 0 0 1-4 4H7"/></svg>
-                            </button>
-                          </div>
+                            {/* Inline Format Actions */}
+                            <div className="flex items-center gap-0.5">
+                              <button
+                                type="button"
+                                onClick={() => document.execCommand('bold', false)}
+                                className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 font-bold text-xs"
+                                title="In đậm (Bold)"
+                              >
+                                <strong>B</strong>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => document.execCommand('italic', false)}
+                                className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 italic text-xs"
+                                title="In nghiêng (Italic)"
+                              >
+                                <em>I</em>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => document.execCommand('underline', false)}
+                                className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 underline text-xs"
+                                title="Gạch chân (Underline)"
+                              >
+                                <u>U</u>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => document.execCommand('strikeThrough', false)}
+                                className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 line-through text-xs"
+                                title="Gạch ngang (Strikethrough)"
+                              >
+                                S
+                              </button>
+                            </div>
 
-                          <span className="w-[1px] h-4 bg-slate-200" />
+                            <span className="w-[1px] h-4 bg-slate-200" />
 
-                          {/* Lists group */}
-                          <div className="flex items-center gap-1">
-                            <button type="button" onClick={() => insertTag('- ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 transition cursor-pointer" title="Danh sách gạch đầu dòng (Thêm - ở đầu dòng)">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-                            </button>
-                            <button type="button" onClick={() => insertTag('1. ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 transition cursor-pointer" title="Danh sách số (Thêm 1. ở đầu dòng)">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
-                            </button>
-                            <button type="button" onClick={() => insertTag('- [ ] ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 transition cursor-pointer" title="Danh sách công việc (Thêm - [ ] ở đầu dòng)">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M9 12l2 2 4-4"/></svg>
-                            </button>
-                            <button type="button" onClick={() => insertTag('> ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 transition cursor-pointer" title="Trích dẫn (Thêm > ở đầu dòng)">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21c3 0 7-9 7-14a5 5 0 0 0-10 0c0 5 3 14 3 14zm11 0c3 0 7-9 7-14a5 5 0 0 0-10 0c0 5 3 14 3 14z"/></svg>
-                            </button>
-                          </div>
+                            {/* Text alignments */}
+                            <div className="flex items-center gap-0.5">
+                              <button type="button" onClick={() => document.execCommand('justifyLeft', false)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80" title="Canh trái">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><line x1="17" y1="10" x2="3" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="15" y1="18" x2="3" y2="18"/></svg>
+                              </button>
+                              <button type="button" onClick={() => document.execCommand('justifyCenter', false)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80" title="Canh giữa">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="10" x2="6" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="16" y1="18" x2="8" y2="18"/></svg>
+                              </button>
+                              <button type="button" onClick={() => document.execCommand('justifyRight', false)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80" title="Canh phải">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><line x1="21" y1="10" x2="7" y2="10"/><line x1="21" y1="6" x2="3" y2="6"/><line x1="21" y1="14" x2="3" y2="14"/><line x1="21" y1="18" x2="9" y2="18"/></svg>
+                              </button>
+                            </div>
 
-                          <span className="w-[1px] h-4 bg-slate-200" />
+                            <span className="w-[1px] h-4 bg-slate-200" />
 
-                          {/* Media group */}
-                          <div className="flex items-center gap-1">
-                            <button type="button" onClick={() => openCustomPrompt('link')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 text-blue-600 transition cursor-pointer" title="Chèn liên kết URL">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                            </button>
-                            <button type="button" onClick={() => openCustomPrompt('image')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 text-emerald-600 transition cursor-pointer" title="Chèn hình ảnh từ URL">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                            </button>
-                          </div>
+                            {/* Lists */}
+                            <div className="flex items-center gap-0.5">
+                              <button type="button" onClick={() => document.execCommand('insertUnorderedList', false)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80" title="Danh sách không thứ tự">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></svg>
+                              </button>
+                              <button type="button" onClick={() => document.execCommand('insertOrderedList', false)} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80" title="Danh sách có thứ tự">
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><line x1="10" y1="6" x2="21" y2="6"/><line x1="10" y1="12" x2="21" y2="12"/><line x1="10" y1="18" x2="21" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
+                              </button>
+                            </div>
 
-                          <span className="w-[1px] h-4 bg-slate-200" />
+                            <span className="w-[1px] h-4 bg-slate-200" />
 
-                          {/* Advanced elements */}
-                          <div className="flex items-center gap-1">
-                            <button type="button" onClick={() => insertTag('`', '`')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 transition font-mono text-xs cursor-pointer" title="Đoạn mã code inline (Bọc bằng `)">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                            </button>
-                            <button type="button" onClick={() => insertTag('```\n', '\n```')} className="h-7 px-1.5 flex items-center justify-center rounded hover:bg-slate-200/80 transition font-mono text-[9px] font-bold cursor-pointer" title="Khối mã code lớn (Bọc bằng ```)">&lt;/&gt;</button>
-                            <button type="button" onClick={() => insertTag('\n---\n', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 transition cursor-pointer" title="Dòng kẻ phân cách ngang">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                            </button>
-                            <button type="button" onClick={() => insertTag('\n| Cột 1 | Cột 2 |\n|---|---|\n| Ô 1 | Ô 2 |\n', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 text-indigo-600 transition cursor-pointer" title="Chèn bảng biểu mẫu (Markdown)">
-                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/></svg>
+                            {/* Insert Elements */}
+                            <div className="flex items-center gap-0.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const url = prompt('Nhập địa chỉ liên kết (URL):', 'https://');
+                                  if (url) document.execCommand('createLink', false, url);
+                                }}
+                                className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 text-blue-600 font-bold"
+                                title="Chèn liên kết"
+                              >
+                                🔗
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const url = prompt('Nhập URL hình ảnh:');
+                                  if (url) document.execCommand('insertImage', false, url);
+                                }}
+                                className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 text-emerald-600 font-bold"
+                                title="Chèn hình ảnh"
+                              >
+                                🖼️
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const tableHtml = `
+                                    <table class="w-full border-collapse border border-slate-300 my-4 text-xs">
+                                      <thead>
+                                        <tr class="bg-slate-50 border-b border-slate-300">
+                                          <th class="border border-slate-300 px-3 py-2 font-bold text-slate-700">Tiêu đề 1</th>
+                                          <th class="border border-slate-300 px-3 py-2 font-bold text-slate-700">Tiêu đề 2</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        <tr class="border-b border-slate-200">
+                                          <td class="border border-slate-300 px-3 py-2">Nội dung ô 1</td>
+                                          <td class="border border-slate-300 px-3 py-2">Nội dung ô 2</td>
+                                        </tr>
+                                      </tbody>
+                                    </table>
+                                  `;
+                                  document.execCommand('insertHTML', false, tableHtml);
+                                }}
+                                className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 text-indigo-600 font-bold"
+                                title="Chèn bảng biểu mẫu"
+                              >
+                                📊
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => document.execCommand('insertHorizontalRule', false)}
+                                className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 text-slate-600 font-bold"
+                                title="Chèn đường kẻ phân cách"
+                              >
+                                ➖
+                              </button>
+                            </div>
+
+                            <span className="w-[1px] h-4 bg-slate-200" />
+
+                            {/* Clear Format */}
+                            <button
+                              type="button"
+                              onClick={() => document.execCommand('removeFormat', false)}
+                              className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 text-red-500 font-semibold"
+                              title="Xóa định dạng"
+                            >
+                              🧹
                             </button>
                           </div>
                         </div>
+                      ) : (
+                        /* ─── Raw Markdown/HTML Editor Toolbar ─── */
+                        <div className="flex justify-between items-center bg-[#f8fafc] border border-[#dce5e1] border-b-0 rounded-t-lg px-3 py-1.5 flex-wrap gap-2">
+                          <div className="flex items-center gap-1.5 flex-wrap text-slate-500">
+                            <div className="flex items-center gap-1">
+                              <button type="button" onClick={() => insertTag('# ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 font-black border border-transparent text-[#123c34] text-xs transition" title="Tiêu đề H1">H1</button>
+                              <button type="button" onClick={() => insertTag('## ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 font-extrabold border border-transparent text-[#123c34] text-xs transition" title="Tiêu đề H2">H2</button>
+                              <button type="button" onClick={() => insertTag('### ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 font-bold border border-transparent text-[#123c34] text-xs transition" title="Tiêu đề H3">H3</button>
+                            </div>
 
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setShowPreviewPane(!showPreviewPane)}
-                            className={`flex items-center gap-1 px-2.5 py-1 text-[9px] font-extrabold border rounded-lg transition-all cursor-pointer ${
-                              showPreviewPane 
-                                ? 'bg-[#0f766e] border-[#0f766e] text-white shadow-sm' 
-                                : 'bg-white border-[#dce5e1] text-[#52605b] hover:bg-[#edf4f1]'
-                            }`}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
-                              <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                            <span>{showPreviewPane ? 'Đang bật Xem trước' : 'Xem trước'}</span>
-                          </button>
-                          <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded border hidden xl:inline">Markdown Supported</span>
+                            <span className="w-[1px] h-4 bg-slate-200" />
+
+                            <div className="flex items-center gap-1">
+                              <button type="button" onClick={() => insertTag('**', '**')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 font-bold text-xs" title="In đậm"><strong>B</strong></button>
+                              <button type="button" onClick={() => insertTag('*', '*')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 italic text-xs" title="In nghiêng"><em>I</em></button>
+                              <button type="button" onClick={() => insertTag('~~', '~~')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 line-through text-xs" title="Gạch ngang">S</button>
+                            </div>
+
+                            <span className="w-[1px] h-4 bg-slate-200" />
+
+                            <div className="flex items-center gap-1">
+                              <button type="button" onClick={() => insertTag('- ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80" title="Gạch đầu dòng">•</button>
+                              <button type="button" onClick={() => insertTag('1. ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80" title="Danh sách số">1.</button>
+                              <button type="button" onClick={() => insertTag('> ', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80" title="Trích dẫn">&ldquo;</button>
+                            </div>
+
+                            <span className="w-[1px] h-4 bg-slate-200" />
+
+                            <div className="flex items-center gap-1">
+                              <button type="button" onClick={() => openCustomPrompt('link')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 text-blue-600" title="Chèn liên kết URL">🔗</button>
+                              <button type="button" onClick={() => openCustomPrompt('image')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 text-emerald-600" title="Chèn hình ảnh">🖼️</button>
+                              <button type="button" onClick={() => insertTag('\n| Cột 1 | Cột 2 |\n|---|---|\n| Ô 1 | Ô 2 |\n', '')} className="h-7 w-7 flex items-center justify-center rounded hover:bg-slate-200/80 text-indigo-600" title="Chèn bảng">📊</button>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setShowPreviewPane(!showPreviewPane)}
+                              className={`flex items-center gap-1 px-2.5 py-1 text-[9px] font-extrabold border rounded-lg transition-all ${
+                                showPreviewPane ? 'bg-[#0f766e] border-[#0f766e] text-white shadow-sm' : 'bg-white border-[#dce5e1] text-[#52605b] hover:bg-[#edf4f1]'
+                              }`}
+                            >
+                              👁️ <span>{showPreviewPane ? 'Đang bật Xem trước' : 'Xem trước'}</span>
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
-                      <div className={`flex-1 grid grid-cols-1 ${showPreviewPane ? 'md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200' : ''} border border-[#dce5e1] rounded-b-lg overflow-hidden bg-white ${isMaximized ? 'min-h-[450px] md:h-[calc(100vh-280px)]' : 'min-h-[320px]'}`}>
-                        <div className="flex flex-col">
-                          <textarea
-                            id="post-content-textarea"
-                            className={`flex-1 w-full p-3 text-xs font-mono focus:outline-none resize-none leading-relaxed ${isMaximized ? 'h-full' : 'min-h-[220px]'}`}
-                            value={formContent}
-                            onChange={e => setFormContent(e.target.value)}
-                            placeholder="Nhập nội dung chi tiết bài viết (Chấp nhận Markdown)..."
-                            required
+                      {/* ─── Editor Content Panes ─── */}
+                      <div className={`flex-1 flex flex-col border border-[#dce5e1] rounded-b-lg overflow-hidden bg-white ${isMaximized ? 'min-h-[450px] md:h-[calc(100vh-280px)]' : 'min-h-[320px]'}`}>
+                        {editorMode === 'wysiwyg' ? (
+                          /* Visual WYSIWYG Pane */
+                          <div
+                            ref={editorRef}
+                            contentEditable
+                            onInput={handleWysiwygInput}
+                            className="flex-1 w-full p-4 text-[13px] leading-relaxed text-slate-800 outline-none overflow-y-auto select-text prose max-w-none text-justify bg-white"
+                            style={{ minHeight: '220px' }}
                           />
-                        </div>
-                        {showPreviewPane && (
-                          <div className={`p-3 overflow-y-auto bg-slate-50/50 text-slate-800 text-xs leading-relaxed prose max-w-none ${isMaximized ? 'h-[450px] md:h-[calc(100vh-280px)]' : 'max-h-[380px] min-h-[220px]'}`}>
-                            <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2 border-b pb-1">Xem trước nội dung (Live Preview):</p>
-                            {formContent ? (
-                              <div dangerouslySetInnerHTML={{ __html: parseMarkdownToHtml(formContent) }} className="space-y-2 select-text" />
-                            ) : (
-                              <p className="text-slate-400 italic text-xs">Nội dung xem trước sẽ hiển thị ở đây...</p>
+                        ) : (
+                          /* Raw Source Code Pane */
+                          <div className={`flex-1 grid grid-cols-1 ${showPreviewPane ? 'md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-slate-200' : ''} overflow-hidden`}>
+                            <textarea
+                              id="post-content-textarea"
+                              className={`w-full p-3 text-xs font-mono focus:outline-none resize-none leading-relaxed bg-white h-full ${isMaximized ? 'min-h-[400px]' : 'min-h-[220px]'}`}
+                              value={formContent}
+                              onChange={e => setFormContent(e.target.value)}
+                              placeholder="Nhập mã nguồn HTML hoặc cú pháp Markdown chi tiết..."
+                              required
+                            />
+                            {showPreviewPane && (
+                              <div className={`p-3 overflow-y-auto bg-slate-50/50 text-slate-800 text-xs leading-relaxed prose max-w-none ${isMaximized ? 'h-[450px] md:h-[calc(100vh-280px)]' : 'max-h-[380px] min-h-[220px]'}`}>
+                                <p className="text-[9px] font-bold uppercase tracking-wider text-slate-400 mb-2 border-b pb-1">Xem trước nội dung:</p>
+                                {formContent ? (
+                                  <div dangerouslySetInnerHTML={{ __html: parseMarkdownToHtml(formContent) }} className="space-y-2 select-text" />
+                                ) : (
+                                  <p className="text-slate-400 italic text-xs">Nội dung xem trước sẽ hiển thị ở đây...</p>
+                                )}
+                              </div>
                             )}
                           </div>
                         )}
                       </div>
                     </div>
+
                   </>
                 ) : (
                   <div className={`flex flex-col space-y-4 bg-slate-50/80 p-4 rounded-xl border border-slate-200 overflow-y-auto ${isMaximized ? 'h-[60vh] md:h-[calc(100vh-200px)]' : 'max-h-[500px]'}`}>

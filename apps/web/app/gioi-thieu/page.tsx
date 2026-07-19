@@ -448,17 +448,20 @@ export default function GioiThieuPage() {
           display: inline-flex;
           align-items: center;
           gap: 9px;
-          padding: 7px 13px;
-          border: 1px solid color-mix(in srgb, var(--about-primary) 22%, var(--about-border));
-          border-radius: 999px;
-          background: color-mix(in srgb, var(--about-primary) 7%, var(--about-surface));
+          padding: 0 !important;
+          border: none !important;
+          background: transparent !important;
           color: var(--about-primary);
-          font-size: 11px;
+          font-size: 13px !important;
           font-weight: 800;
           letter-spacing: .12em;
           text-transform: uppercase;
         }
-        .about-eyebrow > span,
+        @media (min-width: 640px) {
+          .about-eyebrow {
+            font-size: 15px !important;
+          }
+        }
         .about-status-pill > span {
           width: 7px;
           height: 7px;
@@ -483,7 +486,7 @@ export default function GioiThieuPage() {
           justify-content: center;
           flex-wrap: wrap;
           gap: 10px;
-          margin-top: 18px;
+          margin-top: 10px !important;
         }
         .about-hero-facts span {
           padding: 7px 12px;
@@ -542,12 +545,50 @@ export default function GioiThieuPage() {
           z-index: 30;
           display: flex;
           align-items: center;
-          gap: 5px;
-          max-width: 720px;
-          padding: 6px;
+          gap: 4px;
+          max-width: 780px;
+          padding: 5px;
           border: 1px solid var(--about-border);
           border-radius: 999px;
           background: color-mix(in srgb, var(--about-surface) 90%, transparent);
+          box-shadow: 0 12px 36px rgba(15,23,42,.10), 0 0 0 1px rgba(255,255,255,0.03);
+          backdrop-filter: blur(18px);
+        }
+        .about-quick-nav a {
+          position: relative;
+          min-height: 38px;
+          display: flex;
+          align-items: center;
+          gap: 7px;
+          padding: 0 14px;
+          border-radius: 999px;
+          color: var(--about-text-secondary);
+          font-size: 12px;
+          font-weight: 700;
+          transition: background 0.25s ease, color 0.25s ease, transform 0.2s ease, box-shadow 0.25s ease;
+        }
+        .about-quick-nav a:hover {
+          background: color-mix(in srgb, var(--about-primary) 10%, var(--about-surface));
+          color: var(--about-primary);
+          transform: translateY(-1px);
+          box-shadow: 0 4px 14px color-mix(in srgb, var(--about-primary) 18%, transparent);
+        }
+        .about-quick-nav a:hover .about-nav-num { background: var(--about-primary); color: #fff; }
+        .about-nav-num {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 20px;
+          height: 20px;
+          border-radius: 6px;
+          background: color-mix(in srgb, var(--about-primary) 12%, transparent);
+          color: var(--about-primary);
+          font-size: 9px;
+          font-weight: 900;
+          letter-spacing: 0;
+          transition: background 0.25s ease, color 0.25s ease;
+        }
+        .about-nav-label { font-size: 11px; font-weight: 700; }
           box-shadow: 0 12px 36px rgba(15,23,42,.10);
           backdrop-filter: blur(18px);
         }
@@ -564,7 +605,6 @@ export default function GioiThieuPage() {
           transition: background .2s ease, color .2s ease;
         }
         .about-quick-nav a:hover { background: var(--about-surface-sec); color: var(--about-primary); }
-        .about-quick-nav a span { color: var(--about-primary); font-size: 10px; font-weight: 900; }
         .about-section-anchor { scroll-margin-top: 150px; }
         .about-section-title { letter-spacing: -.025em; }
         .about-section-title::after {
@@ -661,6 +701,33 @@ export default function GioiThieuPage() {
           outline-offset: 3px !important;
         }
 
+        /* Hero title animated gradient */
+        @keyframes titleGradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        .about-hero-title-gradient {
+          background-size: 200% 200%;
+        }
+        .about-hero h1 {
+          font-size: 42px !important;
+          font-weight: 900 !important;
+          line-height: 1.12 !important;
+          margin-top: 12px !important;
+          margin-bottom: 12px !important;
+          max-width: 960px !important;
+        }
+        @media (min-width: 640px) {
+          .about-hero h1 {
+            font-size: 64px !important;
+          }
+        }
+        @media (min-width: 768px) {
+          .about-hero h1 {
+            font-size: 80px !important;
+          }
+        }
+
         @media (max-width: 700px) {
           :root[data-theme='dark'] .about-page-premium { background-attachment: scroll !important; }
           .about-ambient { display: none; }
@@ -695,13 +762,24 @@ export default function GioiThieuPage() {
               ref={titleSection.ref} 
               className={`about-hero flex flex-col items-center text-center mb-8 sm:mb-10 ${isMounted ? 'animate-on-scroll' : ''} ${isMounted && titleSection.visible ? 'visible' : ''}`}
             >
-              <h1 className="text-[32px] sm:text-[48px] font-extrabold tracking-[-0.035em] leading-[1.08] text-[color:var(--about-text-primary)]">
+              <div className="about-eyebrow mb-3">
                 Cuộc thi HUIT Startup lần thứ VII năm 2026 cấp Thành phố
-              </h1>
-              <p className="mt-4 text-[16px] sm:text-[20px] font-semibold text-[color:var(--about-primary)] tracking-[-0.01em]">
+              </div>
+              <h1 
+                className="relative font-black tracking-[-0.03em]"
+                style={{
+                  fontSize: 'clamp(24px, 3.5vw, 36px)',
+                  lineHeight: '1.2',
+                  marginTop: '12px',
+                  marginBottom: '12px',
+                  maxWidth: '960px',
+                  fontWeight: 900,
+                  color: 'var(--about-text-primary)'
+                }}
+              >
                 Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững
-              </p>
-              <div className="about-hero-facts" aria-label="Thông tin nổi bật">
+              </h1>
+              <div className="about-hero-facts mt-3" aria-label="Thông tin nổi bật">
                 <span><b>03</b> bảng thi</span>
                 <span><b>05 tỷ</b> tổng giải thưởng</span>
                 <span><b>2026</b> cấp Thành phố</span>
@@ -742,7 +820,8 @@ export default function GioiThieuPage() {
             <nav className="about-quick-nav mb-16" aria-label="Điều hướng nhanh trang giới thiệu">
               {quickLinks.map((item) => (
                 <a key={item.href} href={item.href} className="about-focusable">
-                  <span>{item.icon}</span>{item.label}
+                  <span className="about-nav-num">{item.icon}</span>
+                  <span className="about-nav-label">{item.label}</span>
                 </a>
               ))}
             </nav>

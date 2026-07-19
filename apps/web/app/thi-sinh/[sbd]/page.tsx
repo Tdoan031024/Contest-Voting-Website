@@ -294,7 +294,8 @@ export default function CandidateDetailPage() {
 
       {/* ─── HERO SECTION (Title & Description Full Width) ─── */}
       <section className="max-w-[1300px] mx-auto px-4 pt-3 pb-1">
-        <span className="inline-flex px-2 py-1 bg-slate-100 border border-slate-300 text-slate-700 text-[10px] font-bold rounded-full w-max tracking-wide uppercase">
+        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r from-[#0A2FFF]/10 to-[#79BCC2]/10 border border-[#0A2FFF]/25 text-[#0A2FFF] dark:text-[#79BCC2] text-[10px] font-bold rounded-full w-max tracking-wide uppercase">
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
           Mã dự án · {candidate.sbd}
         </span>
         <h1 className="mt-2 text-2xl md:text-[32px] font-black text-slate-900 tracking-tight leading-snug">
@@ -361,8 +362,9 @@ export default function CandidateDetailPage() {
                 {
                   label: 'Lượt bình chọn',
                   value: candidate.votes.toLocaleString(),
+                  bgIcon: 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400',
                   icon: (
-                    <svg className="w-5 h-5 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
                       <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                     </svg>
                   )
@@ -370,8 +372,9 @@ export default function CandidateDetailPage() {
                 {
                   label: 'Lượt xem',
                   value: mockViews,
+                  bgIcon: 'bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400',
                   icon: (
-                    <svg className="w-5 h-5 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 stroke-current fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
                       <circle cx="12" cy="12" r="3" />
                     </svg>
@@ -380,43 +383,47 @@ export default function CandidateDetailPage() {
                 {
                   label: 'Bảng xếp hạng',
                   value: currentRank,
+                  bgIcon: 'bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400',
                   icon: (
-                    <svg className="w-5 h-5 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 0a7.454 7.454 0 00.981 3.172m0 0a8.25 8.25 0 001.38 2.226m0 0a8.25 8.25 0 01-1.38-2.226m0 0h1.003V10.5" />
+                    <svg className="w-5 h-5 stroke-current fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14a7.454 7.454 0 00.981 3.172m0 0a8.25 8.25 0 001.38 2.226m0 0a8.25 8.25 0 01-1.38-2.226" />
                     </svg>
                   )
                 },
                 {
                   label: 'Kết thúc vote',
                   value: remainingDays,
+                  bgIcon: 'bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400',
                   icon: (
-                    <svg className="w-5 h-5 stroke-slate-800 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 stroke-current fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   )
                 }
               ].map((stat, i) => (
-                <div key={i} className="bg-white p-3 rounded-xl border border-slate-300 hover:border-slate-400 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-blue-400/80 transition-all duration-300 flex flex-col justify-center">
-                  <div className="flex items-center gap-2">
-                    {stat.icon}
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-500">{stat.label}</span>
+                <div key={i} className="bg-white dark:bg-slate-900 px-5 py-4 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/30 hover:shadow-md transition-all duration-300 flex items-center justify-between gap-4">
+                  <div className="space-y-1.5 text-left">
+                    <span className="text-[12px] font-bold text-slate-500 dark:text-slate-400 tracking-wide">{stat.label}</span>
+                    <p className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">{stat.value}</p>
                   </div>
-                  <p className="mt-1.5 text-xl font-black text-slate-900 tracking-tight">{stat.value}</p>
+                  <div className={`h-11 w-11 shrink-0 rounded-xl flex items-center justify-center shadow-sm ${stat.bgIcon}`}>
+                    {stat.icon}
+                  </div>
                 </div>
               ))}
             </div>
  
             {/* Compact project metadata details */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-50 border border-slate-300 p-2.5 rounded-xl shrink-0 transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.02)]">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-gradient-to-r from-[#0A2FFF]/[0.03] to-[#79BCC2]/[0.03] border border-[#0A2FFF]/15 p-2.5 rounded-xl shrink-0">
               {[
                 ['Bảng thi', candidate.contestTableLabel || candidate.contestTable || 'Chưa phân bảng'],
                 ['Vòng thi', candidate.currentRound || 'Vòng loại'],
                 ['Điểm bình chọn', `${candidate.votes.toLocaleString()} điểm`],
               ].map(([lbl, val]) => (
-                <div key={lbl} className="flex justify-between sm:flex-col sm:justify-start gap-0.5 px-2 py-1 sm:border-r last:border-r-0 border-slate-300">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">{lbl}</span>
+                <div key={lbl} className="flex justify-between sm:flex-col sm:justify-start gap-0.5 px-2 py-1 sm:border-r last:border-r-0 border-[#0A2FFF]/15">
+                  <span className="text-[10px] font-bold text-[#0A2FFF]/70 dark:text-[#79BCC2]/70 uppercase tracking-wide">{lbl}</span>
                   <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-slate-800">{val}</span>
+                    <span className="text-sm font-bold text-slate-800 dark:text-white">{val}</span>
                     {lbl === 'Điểm bình chọn' && settings?.activeVotingPromotion && (
                       <span className="inline-flex items-center rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-black text-amber-700 border border-amber-200/60 animate-pulse">
                         x{settings.activeVotingPromotion.multiplier}
@@ -439,9 +446,9 @@ export default function CandidateDetailPage() {
           
           {/* 1. Thông tin nhóm dự thi */}
           <div className="bg-white rounded-[16px] border border-slate-300 p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
-            <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-300 pb-3">
-              <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-slate-50 border border-slate-300 text-slate-700">
-                <svg className="w-4 h-4 stroke-slate-700 fill-none" strokeWidth="2.2" viewBox="0 0 24 24">
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-200 dark:border-slate-700 pb-3">
+              <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-br from-[#0A2FFF]/10 to-[#79BCC2]/10 border border-[#0A2FFF]/20 text-[#0A2FFF] dark:text-[#79BCC2]">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.2" viewBox="0 0 24 24">
                   <path d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
                 </svg>
               </span>
@@ -597,17 +604,13 @@ export default function CandidateDetailPage() {
               {recentVotes.length === 0 ? (
                 <p className="text-xs text-slate-400 text-center py-8 font-semibold">Chưa có lượt bình chọn nào.</p>
               ) : (
-                recentVotes.map((v, idx) => (
+                recentVotes.slice(0, 5).map((v, idx) => (
                   <div key={v.id || idx} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
                     <div className="flex flex-col gap-0.5">
                       <span className="text-[13px] font-extrabold text-slate-800 truncate max-w-[170px]">{v.voterName}</span>
-                      <span className="text-[11px] text-slate-500 font-mono font-semibold">SĐT: {v.voterPhone}</span>
                     </div>
                     <div className="text-right flex flex-col items-end gap-0.5 shrink-0">
-                      <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-black text-emerald-700 border border-emerald-200/50">
-                        +1 lượt
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-medium">
+                      <span className="text-[11px] text-slate-500 font-medium">
                         {(() => {
                           const d = new Date(v.voteTime);
                           const pad = (n: number) => String(n).padStart(2, '0');

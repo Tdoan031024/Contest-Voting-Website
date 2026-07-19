@@ -98,6 +98,107 @@ function getStoredUser() {
 
 const PROJECT_FALLBACK_IMAGE = '/duan/anhmauduan.png';
 
+// ── Vote Toast Notification ──────────────────────────────────────────────────
+interface VoteToastItem {
+  id: string;
+  userName: string;
+  candidateName: string;
+  score: number;
+  createdAt: string;
+}
+
+function VoteToastNotification({ toast, onClose }: { toast: VoteToastItem; onClose: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 5500);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="vote-toast-item">
+      <div className="vote-toast-avatar">
+        {toast.userName ? toast.userName.charAt(0).toUpperCase() : '?'}
+      </div>
+      <div className="vote-toast-body">
+        <p className="vote-toast-text">
+          <strong>{toast.userName || 'Ai đó'}</strong> vừa bình chọn cho{' '}
+          <strong>{toast.candidateName}</strong>
+        </p>
+        <span className="vote-toast-badge">+{toast.score} điểm 🔥</span>
+      </div>
+      <button onClick={onClose} className="vote-toast-close" aria-label="Đóng">×</button>
+    </div>
+  );
+}
+
+function VoteToastContainer() {
+  const [toasts, setToasts] = useState<VoteToastItem[]>([]);
+  const lastVoteIdRef = useRef<string | null>(null);
+  const isFirstPoll = useRef(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function pollLatestVote() {
+      try {
+        const res = await fetch(apiUrl('/api/admin/votes?limit=1'));
+        if (!res.ok) return;
+        const data = await res.json();
+        const latestVote = Array.isArray(data) && data.length > 0 ? data[0] : null;
+
+        if (!latestVote) return;
+
+        // Skip on first poll to avoid showing old votes on page load
+        if (isFirstPoll.current) {
+          lastVoteIdRef.current = latestVote.id;
+          isFirstPoll.current = false;
+          return;
+        }
+
+        if (latestVote.id !== lastVoteIdRef.current) {
+          lastVoteIdRef.current = latestVote.id;
+          if (isMounted) {
+            const newToast: VoteToastItem = {
+              id: `${latestVote.id}-${Date.now()}`,
+              userName: latestVote.userName || 'Người dùng',
+              candidateName: latestVote.candidateName || 'Dự án',
+              score: latestVote.score || 1,
+              createdAt: latestVote.createdAt,
+            };
+            setToasts((prev) => [...prev.slice(-2), newToast]);
+          }
+        }
+      } catch {
+        // Silently fail
+      }
+    }
+
+    const interval = setInterval(pollLatestVote, 8000);
+    pollLatestVote(); // Run immediately
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  const removeToast = (id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  };
+
+  if (toasts.length === 0) return null;
+
+  return (
+    <div className="vote-toast-container">
+      {toasts.map((toast) => (
+        <VoteToastNotification
+          key={toast.id}
+          toast={toast}
+          onClose={() => removeToast(toast.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
 function getCandidateImageUrl(url?: string | null) {
   if (!url) return PROJECT_FALLBACK_IMAGE;
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
@@ -169,6 +270,17 @@ export default function HomePage() {
   }, []);
   const ABOUT_FALLBACK_DESCRIPTION = `Cuộc thi HUIT Startup lần 07 năm 2026 với chủ đề “Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững" cấp thành phố (HUIT STARTUP LẦN THỨ VII) là hoạt động thường niên do Trường Đại học Công Thương TP. Hồ Chí Minh tổ chức, nhằm tìm kiếm và ươm tạo các ý tưởng, dự án sáng tạo của học sinh, sinh viên, học viên và doanh nghiệp góp phần giải quyết các vấn đề xã hội và thúc đẩy phát triển bền vững. Đây không chỉ là sân chơi học thuật mà còn là bệ phóng cho những ý tưởng sáng tạo, những giải pháp thiết thực được hình thành, phát triển và hiện thực hóa, mang lại giá trị thiết thực cho bản thân, gia đình, cộng đồng và toàn xã hội. Năm 2026, cuộc thi trở lại với quy mô mở rộng và chủ đề đầy cảm hứng: "Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững". Cuộc thi chào đón sự tham gia của Học sinh, sinh viên, học viên ở các trường đại học, cao đắng, trung cấp, THPT, GDTX và Các cá nhân, tổ chức, doanh nghiệp (HTX, hộ kinh doanh, doanh nghiệp vừa và nhỏ trên địa bàn Thành phố Hồ Chí Minh và các tỉnh lân cận yêu thích hoạt động khởi nghiệp, có ý tưởng, dự án khởi nghiệp sáng. Mục tiêu là tìm kiếm và ươm mầm những ý tưởng, giải pháp đổi mới sáng tạo, góp phần giải quyết các vấn đề cấp thiết của cộng đồng, xã hội và thúc đẩy phát triển kinh tế – xã hội một cách bền vững. Thông qua cuộc thi, ban tổ chức mong muốn lan tỏa mạnh mẽ tinh thần khởi nghiệp, đổi mới sáng tạo trong giới trẻ; đồng thời kết nối và mở rộng hệ sinh thái khởi nghiệp đổi mới sáng tạo trong khối các cơ sở giáo dục, các startup tạo tiền đề cho sự phát triển nguồn nhân lực sáng tạo, thích ứng và bản lĩnh trong thời đại mới.`;
   const ABOUT_REGISTER_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdlRmaBRgPAl_rbLjDOY__ROcyZsCOnoxec2izDhRVJTcHBfA/viewform';
+
+  const MOCK_ONLINE_SPONSORS = [
+    { id: 'sp1', name: 'HUIT', logoUrl: 'https://huit.edu.vn/menu/images/logo.png' },
+    { id: 'sp2', name: 'Google', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg' },
+    { id: 'sp3', name: 'React', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg' },
+    { id: 'sp4', name: 'NextJS', logoUrl: 'https://cdn.worldvectorlogo.com/logos/next-js.svg' },
+    { id: 'sp5', name: 'Tailwind', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg' },
+    { id: 'sp6', name: 'Prisma', logoUrl: 'https://cdn.worldvectorlogo.com/logos/prisma-3.svg' },
+    { id: 'sp7', name: 'NodeJS', logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg' }
+  ];
+
   const [candidates, setCandidates] = useState<Candidate[]>(LOCAL_MOCK_CANDIDATES);
   const [activeVoteCandidate, setActiveVoteCandidate] = useState<Candidate | null>(null);
   const [search, setSearch] = useState('');
@@ -182,6 +294,34 @@ export default function HomePage() {
   const [homepageNewsPosts, setHomepageNewsPosts] = useState<any[]>(SAMPLE_NEWS_POSTS.slice(0, 3));
   const totalVotes = useMemo(() => candidates.reduce((sum, c) => sum + c.votes, 0), [candidates]);
   const aboutTitleText = (settings?.aboutTitle || ABOUT_FALLBACK_TITLE).replace(/\s+NĂM\s+/i, ' ');
+
+  const [promoTimeLeft, setPromoTimeLeft] = useState<string>('');
+
+  useEffect(() => {
+    if (!settings?.activeVotingPromotion?.endAt) return;
+    
+    const updateTimer = () => {
+      const end = new Date(settings.activeVotingPromotion.endAt).getTime();
+      const now = new Date().getTime();
+      const diff = end - now;
+      
+      if (diff <= 0) {
+        setPromoTimeLeft('Đã kết thúc');
+        return;
+      }
+      
+      const hrs = Math.floor(diff / (1000 * 60 * 60));
+      const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+      const secs = Math.floor((diff % (1000 * 60)) / 1000);
+      
+      const pad = (n: number) => String(n).padStart(2, '0');
+      setPromoTimeLeft(`${pad(hrs)} giờ ${pad(mins)} phút ${pad(secs)} giây`);
+    };
+    
+    updateTimer();
+    const t = setInterval(updateTimer, 1000);
+    return () => clearInterval(t);
+  }, [settings?.activeVotingPromotion?.endAt]);
 
   const [isMounted, setIsMounted] = useState(false);
   useEffect(() => {
@@ -726,8 +866,52 @@ export default function HomePage() {
           <div className={`absolute top-1/3 right-1/4 w-[300px] h-[300px] rounded-full bg-gradient-to-br from-[#79BCC2]/10 to-[#0A2FFF]/5 blur-[90px] pointer-events-none transition-opacity duration-[2800ms] ${candidatesVisible ? 'opacity-100' : 'opacity-0'}`} />
           <div className={`absolute bottom-1/4 left-1/4 w-[280px] h-[280px] rounded-full bg-gradient-to-tr from-[#0A2FFF]/5 to-[#79BCC2]/5 blur-[80px] pointer-events-none transition-opacity duration-[2800ms] ${candidatesVisible ? 'opacity-100' : 'opacity-0'}`} />
 
+          {/* ── Sponsor Marquee Banner (NEW POSITION: Direct child of candidates-section, stretching full-width) ── */}
+          {(() => {
+            const displaySponsors = sponsors && sponsors.length > 0 ? sponsors : MOCK_ONLINE_SPONSORS;
+            if (displaySponsors.length === 0) return null;
+            const onlineFallbacks = [
+              'https://upload.wikimedia.org/wikipedia/commons/2/2f/Google_2015_logo.svg',
+              'https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg',
+              'https://cdn.worldvectorlogo.com/logos/next-js.svg',
+              'https://upload.wikimedia.org/wikipedia/commons/d/d5/Tailwind_CSS_Logo.svg',
+              'https://cdn.worldvectorlogo.com/logos/prisma-3.svg',
+              'https://upload.wikimedia.org/wikipedia/commons/d/d9/Node.js_logo.svg',
+              'https://huit.edu.vn/menu/images/logo.png'
+            ];
+            return (
+              <div className="sponsor-marquee-container w-full mt-6 mb-4 overflow-hidden bg-slate-50/50 dark:bg-white/[0.02] py-4 border-y border-neutral-200/40 dark:border-white/5">
+                <div className="sponsor-marquee-track">
+                  {/* Quadruple the list for seamless loop */}
+                  {[...displaySponsors, ...displaySponsors, ...displaySponsors, ...displaySponsors].map((sp, idx) => {
+                    const initialSrc = sp.logoUrl
+                      ? (sp.logoUrl.startsWith('http') ? sp.logoUrl : getCandidateImageUrl(sp.logoUrl))
+                      : onlineFallbacks[idx % onlineFallbacks.length];
+                    return (
+                      <div key={`sp-marquee-${idx}`} className="sponsor-marquee-item">
+                        <img
+                          src={initialSrc}
+                          alt={sp.name}
+                          className="sponsor-marquee-logo animate-fade-in"
+                          onError={(e) => {
+                            const t = e.currentTarget;
+                            const fallbackUrl = onlineFallbacks[idx % onlineFallbacks.length];
+                            if (t.src !== fallbackUrl) {
+                              t.src = fallbackUrl;
+                            }
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
+
+
           <div className="sc-1a037b37-0 ekqPrV relative z-10">
-            <div className="pt-3 sm:pt-[85px] flex flex-col items-center">
+            <div className="pt-3 sm:pt-2 flex flex-col items-center">
 
               {/* Leaderboard title */}
               <div className="flex flex-col space-y-4 text-center opacity-100 translate-y-0">
@@ -748,24 +932,6 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {settings?.activeVotingPromotion && (
-                <div className="promotion-gold-banner relative overflow-hidden py-3 px-4 text-center text-white z-10 w-full max-w-[615px] mx-auto">
-                  <div className="relative flex items-center justify-center gap-2 flex-wrap text-xs sm:text-sm font-bold">
-                    <span className="promotion-glow-badge inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-200 backdrop-blur-md">
-                      <span>⚡</span> Khung giờ vàng <span>🔥</span>
-                    </span>
-                    <span className="text-white/95">
-                      Đang nhân <span className="text-amber-300 font-extrabold text-base px-0.5">{settings.activeVotingPromotion.multiplier}</span> lần điểm:
-                    </span>
-                    <span className="promotion-name-glow text-amber-200 font-black tracking-wide bg-white/5 border border-white/10 px-2 py-0.5 rounded-md">
-                      "{settings.activeVotingPromotion.name}"
-                    </span>
-                    <span className="text-amber-100/80 font-medium text-[11px] sm:text-xs">
-                      (Từ {formatDateTime(settings.activeVotingPromotion.startAt)} đến {formatDateTime(settings.activeVotingPromotion.endAt)})
-                    </span>
-                  </div>
-                </div>
-              )}
 
               {/* Search Bar matching sample web */}
               <div
@@ -790,9 +956,47 @@ export default function HomePage() {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* ── Golden Hour Banner (Full Web Width, naturally aligned between containers) ── */}
+          {settings?.activeVotingPromotion && (
+            <div className="w-full mt-3 mb-0">
+              <div className="promotion-ribbon-banner relative flex items-center justify-center gap-2 sm:gap-3 px-4 sm:px-6 py-2.5 rounded-none overflow-hidden">
+                {/* Animated shimmer overlay */}
+                <div className="promotion-ribbon-shimmer" />
+                {/* Badge */}
+                <span className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 border border-amber-400/30 px-3 py-1 text-[10px] sm:text-[11px] font-black uppercase tracking-[0.12em] text-white shadow-[0_2px_8px_rgba(245,158,11,0.3)] animate-pulse">
+                  <span className="animate-pulse">⚡</span> Thời gian vàng <span>🔥</span>
+                </span>
+                {/* Multiplier info */}
+                <span className="flex-shrink-0 text-slate-800 dark:text-white text-[12px] sm:text-[13px] font-extrabold">
+                  Đang nhân
+                </span>
+                <span className="flex-shrink-0 text-[20px] sm:text-[24px] font-black text-blue-700 dark:text-[#79BCC2] leading-none transition-transform duration-300 scale-105">
+                  ×{settings.activeVotingPromotion.multiplier}
+                </span>
+                <span className="flex-shrink-0 text-slate-800 dark:text-white text-[12px] sm:text-[13px] font-extrabold">điểm</span>
+                
+                {/* Real-time Countdown Timer */}
+                {promoTimeLeft && (
+                  <span className="flex-shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-red-500/10 dark:bg-red-500/20 border border-red-500/30 dark:border-red-500/40 px-3 py-0.5 text-[11px] sm:text-[12px] font-black text-red-600 dark:text-red-400 font-mono shadow-sm ml-2 animate-pulse">
+                    <svg className="w-3.5 h-3.5 stroke-current fill-none" style={{ animation: 'spin 8s linear infinite' }} strokeWidth="2.2" viewBox="0 0 24 24">
+                      <circle cx="12" cy="12" r="9" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h3" />
+                    </svg>
+                    Kết thúc sau: {promoTimeLeft}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="sc-1a037b37-0 ekqPrV relative z-10">
+            <div className="pt-0 flex flex-col items-center w-full">
 
               {/* Grid of Candidates - mirroring 1vote structure */}
-              <div className="w-full mt-3 sm:mt-[64px]"></div>
+              <div className="w-full mt-2 sm:mt-3"></div>
 
               {isLoading ? (
                 <div className="flex justify-center items-center py-20 text-neutral-600 dark:text-white">
@@ -929,6 +1133,7 @@ export default function HomePage() {
           </div>
         </div>
 
+
         <section className="modern-section alt" aria-labelledby="video-title">
           <div className="modern-container video-feature">
             <div className="modern-section-head">
@@ -1033,6 +1238,9 @@ export default function HomePage() {
           }}
         />
       )}
+
+      {/* Vote Toast Notifications */}
+      <VoteToastContainer />
     </>
   );
 }

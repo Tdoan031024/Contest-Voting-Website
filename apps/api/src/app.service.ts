@@ -142,6 +142,7 @@ export interface SystemSettings {
   sepayPrefix?: string;
   sepayApiKey?: string;
   isTestMode?: boolean;
+  faq?: Array<{ question: string; answer: string }>;
 }
 
 type LocalData = {
@@ -245,6 +246,20 @@ export class AppService implements OnModuleInit {
       { id: 'vote-1050', code: 'PAID_1050', name: '1.050 điểm', points: 1050, price: 500000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
       { id: 'vote-2300', code: 'PAID_2300', name: '2.300 điểm', points: 2300, price: 1000000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true },
       { id: 'vote-7000', code: 'PAID_7000', name: '7.000 điểm', points: 7000, price: 3000000, currency: 'VND', vatRate: 10, packageType: 'PAID', isActive: true }
+    ],
+    faq: [
+      {
+        question: 'Bình chọn miễn phí có giới hạn không?',
+        answer: 'Có. Mỗi tài khoản được 2 lượt bình chọn miễn phí mỗi ngày cho toàn bộ dự án trong hệ thống. Dùng hết 2 lượt thì cần chờ sang ngày hôm sau.'
+      },
+      {
+        question: 'Tôi có thể bình chọn cho nhiều dự án không?',
+        answer: 'Có, nhưng tổng số lượt miễn phí mỗi ngày vẫn chỉ là 2. Bạn có thể dùng cả 2 lượt cho một dự án hoặc chia ra cho các dự án khác nhau.'
+      },
+      {
+        question: 'Tôi quên mật khẩu thì phải làm gì?',
+        answer: 'Bạn có thể đăng nhập bằng Google hoặc liên hệ ban tổ chức qua email iec@huit.edu.vn để được hỗ trợ khôi phục tài khoản.'
+      }
     ]
   };
 
@@ -1514,12 +1529,13 @@ export class AppService implements OnModuleInit {
       'registrationUrl',
       'detailUrl',
       'supportZaloUrl',
-       'freeVotesPerAccountPerDay',
-       'guideSections',
-       'exchangeRates',
-       'votePackages',
-       'activeVotingPromotion',
-     ];
+      'freeVotesPerAccountPerDay',
+      'guideSections',
+      'exchangeRates',
+      'votePackages',
+      'activeVotingPromotion',
+      'faq',
+    ];
     const publicSettings: any = {};
     for (const field of publicFields) {
       if (this.settings[field] !== undefined) {
@@ -2000,5 +2016,41 @@ export class AppService implements OnModuleInit {
     });
 
     return { success: true };
+  }
+
+  async deleteVoteLogsBulk(ids: string[]) {
+    if (!ids || ids.length === 0) return { success: true, count: 0 };
+
+    // Group by candidateId to decrement votes correctly
+    const votes = await this.prisma.voteRecord.findMany({
+      where: { id: { in: ids } },
+    });
+
+    const candidateDecrementMap = new Map<string, number>();
+    for (const vote of votes) {
+      candidateDecrementMap.set(
+        vote.candidateId,
+        (candidateDecrementMap.get(vote.candidateId) || 0) + 1
+      );
+    }
+
+    await this.prisma.$transaction(async (tx: any) => {
+      // Decrement votes for each candidate
+      for (const [candidateId, count] of candidateDecrementMap.entries()) {
+        const cand = await tx.candidate.findUnique({ where: { id: candidateId } });
+        const currentVotes = cand?.votes || 0;
+        await tx.candidate.update({
+          where: { id: candidateId },
+          data: { votes: { set: Math.max(0, currentVotes - count) } },
+        });
+      }
+
+      // Delete the vote records
+      await tx.voteRecord.deleteMany({
+        where: { id: { in: ids } },
+      });
+    });
+
+    return { success: true, count: votes.length };
   }
 }

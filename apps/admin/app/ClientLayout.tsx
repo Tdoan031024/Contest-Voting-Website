@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { apiUrl } from './api';
@@ -145,9 +146,23 @@ function getPageMeta(pathname: string) {
 function BellButton() {
   const [isOpen, setIsOpen] = React.useState(false);
   const [settings, setSettings] = React.useState<any>(null);
-  const dropdownRef = React.useRef<HTMLDivElement>(null);
+  const [votes, setVotes] = React.useState<any[]>([]);
+  const [readIds, setReadIds] = React.useState<string[]>([]);
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Load configuration and read notification IDs
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('admin_read_vote_ids');
+      if (stored) {
+        try { setReadIds(JSON.parse(stored)); } catch (e) {}
+      }
+    }
+
     async function loadSettings() {
       try {
         const res = await fetch(apiUrl('/api/admin/settings'));
@@ -159,32 +174,44 @@ function BellButton() {
         console.error(err);
       }
     }
-    loadSettings();
-    const interval = setInterval(loadSettings, 30000);
-    return () => clearInterval(interval);
-  }, []);
 
-  React.useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+    async function loadRecentVotes() {
+      try {
+        const res = await fetch(apiUrl('/api/admin/votes?limit=15'));
+        if (res.ok) {
+          const data = await res.json();
+          setVotes(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
+        console.error(err);
       }
     }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+
+    loadSettings();
+    loadRecentVotes();
+
+    const settingsInterval = setInterval(loadSettings, 30000);
+    const votesInterval = setInterval(loadRecentVotes, 15000);
+
+    return () => {
+      clearInterval(settingsInterval);
+      clearInterval(votesInterval);
+    };
   }, []);
 
-  const alerts: Array<{ id: string; type: 'info' | 'warning' | 'success'; message: string }> = [];
+  // System alerts logic
+  const systemAlerts = React.useMemo(() => {
+    const list: Array<{ id: string; type: 'info' | 'warning' | 'success'; message: string }> = [];
+    if (!settings) return list;
 
-  if (settings) {
     if (settings.isGateOpen) {
-      alerts.push({
+      list.push({
         id: 'gate-open',
         type: 'success',
-        message: 'Cổng bình chọn đang mở và cho phép bỏ phiếu.',
+        message: 'Cổng bình chọn đang mở và hoạt động bình thường.',
       });
     } else {
-      alerts.push({
+      list.push({
         id: 'gate-closed',
         type: 'warning',
         message: 'Cổng bình chọn đang đóng. Vui lòng mở cổng để người dùng vote.',
@@ -208,13 +235,13 @@ function BellButton() {
           return `${parts.hour}:${parts.minute} ngày ${parts.day}/${parts.month}/${parts.year}`;
         } catch { return val; }
       })();
-      alerts.push({
+      list.push({
         id: 'reg-open',
         type: 'info',
-        message: `Đang nhận hồ sơ đăng ký dự án. Hạn chót: ${deadlineStr}.`,
+        message: `Hệ thống đang nhận hồ sơ đăng ký. Hạn chót: ${deadlineStr}.`,
       });
     } else {
-      alerts.push({
+      list.push({
         id: 'reg-closed',
         type: 'warning',
         message: 'Hạn nhận hồ sơ đăng ký dự án đã kết thúc.',
@@ -232,23 +259,58 @@ function BellButton() {
       : null;
 
     if (activePromo) {
-      alerts.push({
+      list.push({
         id: 'promo-active',
         type: 'success',
-        message: `Đang diễn ra sự kiện nhân điểm (Hệ số x${activePromo.multiplier}).`,
+        message: `Khung giờ vàng đang mở (Điểm vote nhân ×${activePromo.multiplier}).`,
       });
     }
+
+    return list;
+  }, [settings]);
+
+  // Calculate unread items
+  const unreadVotes = React.useMemo(() => {
+    return votes.filter(v => !readIds.includes(v.id));
+  }, [votes, readIds]);
+
+  const badgeCount = React.useMemo(() => {
+    return unreadVotes.length;
+  }, [unreadVotes]);
+
+  // Actions
+  const handleMarkAsRead = (id: string) => {
+    if (readIds.includes(id)) return;
+    const updated = [...readIds, id];
+    setReadIds(updated);
+    localStorage.setItem('admin_read_vote_ids', JSON.stringify(updated));
+  };
+
+  const handleMarkAllAsRead = () => {
+    const allIds = votes.map(v => v.id);
+    const updated = Array.from(new Set([...readIds, ...allIds]));
+    setReadIds(updated);
+    localStorage.setItem('admin_read_vote_ids', JSON.stringify(updated));
+  };
+
+  function timeAgo(dateStr: string) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Vừa xong';
+    if (mins < 60) return `${mins} phút trước`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `${hrs} giờ trước`;
+    return `${Math.floor(hrs / 24)} ngày trước`;
   }
 
-  const badgeCount = alerts.filter(a => a.type === 'warning').length;
-
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
+      {/* Notification Bell Button */}
       <button
         type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={`relative grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[var(--primary)] hover:text-[var(--primary-strong)] ${isOpen ? 'border-[var(--primary)] bg-slate-50' : ''}`}
-        aria-label="Thông báo"
+        onClick={() => setIsOpen(true)}
+        className="relative grid h-10 w-10 place-items-center rounded-[14px] border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:border-[var(--primary)] hover:text-[var(--primary-strong)]"
+        aria-label="Mở bảng thông báo"
       >
         <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5" />
@@ -261,57 +323,148 @@ function BellButton() {
         )}
       </button>
 
-      {isOpen && (
-        <div className="absolute right-0 mt-2 w-[320px] rounded-xl border border-slate-200 bg-white p-2 shadow-xl z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="border-b border-slate-100 px-3 py-2">
-            <h3 className="text-xs font-bold text-slate-900">Trạng thái hệ thống</h3>
-          </div>
-          <div className="mt-1 max-h-[280px] overflow-y-auto space-y-1">
-            {alerts.length === 0 ? (
-              <div className="px-3 py-6 text-center text-xs text-slate-400">
-                Đang tải dữ liệu cấu hình...
+      {/* Slide-over Notification Drawer */}
+      {isOpen && mounted && createPortal(
+        <div className="fixed inset-0 z-[9999] flex justify-end text-slate-700">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity"
+            onClick={() => setIsOpen(false)}
+          />
+
+          {/* Drawer content Panel */}
+          <div className="relative z-10 flex h-full w-[380px] max-w-full flex-col bg-white shadow-2xl animate-in slide-in-from-right duration-250 ease-out border-l border-slate-200">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+              <div>
+                <h3 className="text-[16px] font-black text-slate-950">Thông báo hệ thống</h3>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {badgeCount > 0 ? `Bạn có ${badgeCount} thông báo chưa xem` : 'Không có thông báo mới'}
+                </p>
               </div>
-            ) : (
-              alerts.map((alert) => {
-                let iconColor = 'bg-blue-500';
-                let iconSvg = (
-                  <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                );
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+              >
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
 
-                if (alert.type === 'success') {
-                  iconColor = 'bg-emerald-500';
-                  iconSvg = (
-                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  );
-                } else if (alert.type === 'warning') {
-                  iconColor = 'bg-amber-500';
-                  iconSvg = (
-                    <svg className="h-3 w-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                  );
-                }
-
-                return (
-                  <div key={alert.id} className="flex gap-2.5 rounded-lg p-2 hover:bg-slate-50 transition-colors">
-                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full ${iconColor}`}>
-                      {iconSvg}
-                    </span>
-                    <p className="text-[12px] font-semibold text-slate-700 leading-relaxed">{alert.message}</p>
-                  </div>
-                );
-              })
+            {/* Actions Bar */}
+            {unreadVotes.length > 0 && (
+              <div className="flex items-center justify-end bg-slate-50 px-5 py-2 border-b border-slate-100">
+                <button
+                  type="button"
+                  onClick={handleMarkAllAsRead}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-700 transition"
+                >
+                  Đánh dấu đã đọc tất cả
+                </button>
+              </div>
             )}
+
+            {/* Scrollable list */}
+            <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+              
+              {/* Section 1: System Alerts */}
+              <div className="space-y-2">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400 px-1">Cấu hình & Trạng thái</h4>
+                {systemAlerts.map((alert) => {
+                  let alertBg = 'bg-blue-50 border-blue-100 text-blue-800';
+                  let iconColor = 'text-blue-500';
+                  let iconSvg = (
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  );
+
+                  if (alert.type === 'success') {
+                    alertBg = 'bg-emerald-50 border-emerald-100 text-emerald-800';
+                    iconColor = 'text-emerald-500';
+                    iconSvg = (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    );
+                  } else if (alert.type === 'warning') {
+                    alertBg = 'bg-amber-50 border-amber-100 text-amber-900';
+                    iconColor = 'text-amber-600';
+                    iconSvg = (
+                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                    );
+                  }
+
+                  return (
+                    <div key={alert.id} className={`flex gap-3 rounded-xl border p-3 ${alertBg}`}>
+                      <span className={`shrink-0 ${iconColor}`}>{iconSvg}</span>
+                      <p className="text-[12.5px] font-semibold leading-relaxed">{alert.message}</p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Section 2: Recent Votes Log */}
+              <div className="space-y-2 pt-2">
+                <h4 className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400 px-1">Lượt bình chọn mới nhận</h4>
+                
+                {votes.length === 0 ? (
+                  <p className="py-8 text-center text-xs text-slate-400">Chưa ghi nhận hoạt động bình chọn nào.</p>
+                ) : (
+                  <div className="divide-y divide-slate-100">
+                    {votes.map((vote) => {
+                      const isUnread = !readIds.includes(vote.id);
+                      return (
+                        <div
+                          key={vote.id}
+                          onClick={() => handleMarkAsRead(vote.id)}
+                          className={`flex gap-3 py-3 px-1.5 cursor-pointer rounded-xl transition ${isUnread ? 'bg-blue-50/40 font-semibold' : 'hover:bg-slate-50'}`}
+                        >
+                          {/* Avatar with status indicator */}
+                          <div className="relative">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-white text-[13px] font-bold shadow-sm">
+                              {vote.userName ? vote.userName.charAt(0).toUpperCase() : '?'}
+                            </div>
+                            {isUnread && (
+                              <span className="absolute right-0 top-0 h-2.5 w-2.5 rounded-full bg-blue-600 ring-2 ring-white" />
+                            )}
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <p className="text-[12.5px] text-slate-700 leading-normal">
+                              <span className="font-bold text-slate-900">{vote.userName || 'Người dùng'}</span>{' '}
+                              đã bình chọn dự án{' '}
+                              <span className="font-bold text-slate-800">{vote.candidateName}</span>
+                            </p>
+                            <div className="mt-1 flex items-center gap-2">
+                              <span className="text-[10.5px] text-slate-400">{timeAgo(vote.createdAt)}</span>
+                              <span className="h-1 w-1 rounded-full bg-slate-300" />
+                              <span className="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-[9.5px] font-bold text-blue-700">
+                                +{vote.score} điểm
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+            </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
-    </div>
+    </>
   );
 }
+
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();

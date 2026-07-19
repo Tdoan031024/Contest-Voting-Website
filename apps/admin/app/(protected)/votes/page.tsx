@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { apiUrl } from '../../api';
+import { useAlert } from '../../AlertProvider';
 
 interface VoteLog {
   id: string;
@@ -40,6 +41,8 @@ export default function VoteLogsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [candidateFilter, setCandidateFilter] = useState('ALL');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const { showConfirm } = useAlert();
 
   const loadLogs = async () => {
     try {
@@ -47,6 +50,7 @@ export default function VoteLogsAdminPage() {
       const res = await fetch(apiUrl('/api/admin/votes'));
       if (res.ok) {
         setLogs(await res.json());
+        setSelectedIds(new Set());
       }
     } catch (err) {
       console.error('Lỗi tải danh sách bình chọn:', err);
@@ -61,7 +65,7 @@ export default function VoteLogsAdminPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('CẢNH BÁO: Xóa bản ghi bình chọn này sẽ tự động giảm trừ 1 điểm của ứng viên tương ứng. Bạn có chắc chắn muốn xóa không?')) {
+    if (!await showConfirm('CẢNH BÁO: Xóa bản ghi bình chọn này sẽ tự động giảm trừ 1 điểm của ứng viên tương ứng. Bạn có chắc chắn muốn xóa không?')) {
       return;
     }
     try {
@@ -145,6 +149,56 @@ export default function VoteLogsAdminPage() {
     return list.sort((a, b) => a.sbd.localeCompare(b.sbd));
   }, [logs]);
 
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredLogs.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredLogs.map((log) => log.id)));
+    }
+  };
+
+  const toggleSelectOne = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setSelectedIds(next);
+  };
+
+  const handleDeleteBulk = async () => {
+    if (selectedIds.size === 0) return;
+    if (
+      !await showConfirm(
+        `CẢNH BÁO: Bạn có chắc chắn muốn xóa ${selectedIds.size} lượt bình chọn đã chọn? Điểm của các ứng viên tương ứng sẽ tự động giảm trừ tương ứng. Hành động này không thể hoàn tác!`
+      )
+    ) {
+      return;
+    }
+    try {
+      setLoading(true);
+      const res = await fetch(apiUrl('/api/admin/votes/delete-bulk'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+      });
+      if (res.ok) {
+        alert(`Đã xóa thành công ${selectedIds.size} lượt bình chọn và hoàn lại điểm cho ứng viên!`);
+        setSelectedIds(new Set());
+        loadLogs();
+      } else {
+        const errorData = await res.json();
+        alert(errorData.message || 'Xóa hàng loạt thất bại.');
+        setLoading(false);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Đã xảy ra lỗi kết nối đến server.');
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Header section */}
@@ -207,20 +261,56 @@ export default function VoteLogsAdminPage() {
           </select>
         </div>
 
+        {selectedIds.size > 0 && (
+          <div className="flex items-center justify-between border-b border-rose-100 bg-rose-50/60 px-5 py-3 backdrop-blur-sm transition-all duration-300">
+            <span className="text-xs font-bold text-rose-700">
+              Đã chọn <b className="text-[14px]">{selectedIds.size}</b> lượt bình chọn
+            </span>
+            <button
+              type="button"
+              onClick={handleDeleteBulk}
+              className="flex items-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition"
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18" />
+                <path d="M8 6V4h8v2" />
+                <path d="M19 6l-1 14H6L5 6" />
+              </svg>
+              Xóa các lượt đã chọn
+            </button>
+          </div>
+        )}
+
         {/* Bảng dữ liệu */}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[950px] border-collapse text-left">
             <thead>
               <tr className="border-b border-[#edf2f0] bg-[#fbfdfc] text-[10px] font-black uppercase tracking-[0.12em] text-[#7a8b85]">
+                <th className="px-5 py-3 w-12 text-center">
+                  <input
+                    type="checkbox"
+                    checked={filteredLogs.length > 0 && selectedIds.size === filteredLogs.length}
+                    onChange={toggleSelectAll}
+                    className="h-4 w-4 rounded border-[#dce5e1] text-[#0f766e] focus:ring-[#0f766e] cursor-pointer"
+                  />
+                </th>
                 <th className="px-5 py-3 w-1/3">Cử tri (Người bình chọn)</th>
                 <th className="px-5 py-3">Dự án được bình chọn</th>
                 <th className="px-5 py-3">Thời gian</th>
-                <th className="px-5 py-3 text-center w-24">Hành động</th>
+                <th className="px-5 py-3 text-center w-32 whitespace-nowrap">Hành động</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#edf2f0] text-xs">
               {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-[#edf4f1]/25 transition-colors">
+                <tr key={log.id} className={`hover:bg-[#edf4f1]/25 transition-colors ${selectedIds.has(log.id) ? 'bg-[#edf4f1]/40' : ''}`}>
+                  <td className="px-5 py-3 text-center w-12">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(log.id)}
+                      onChange={() => toggleSelectOne(log.id)}
+                      className="h-4 w-4 rounded border-[#dce5e1] text-[#0f766e] focus:ring-[#0f766e] cursor-pointer"
+                    />
+                  </td>
                   <td className="px-5 py-3">
                     <div>
                       <p className="font-black text-[#123c34]">{log.voterName}</p>
@@ -263,7 +353,7 @@ export default function VoteLogsAdminPage() {
               ))}
               {filteredLogs.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-5 py-10 text-center text-sm font-semibold text-[#7a8b85]">
+                  <td colSpan={5} className="px-5 py-10 text-center text-sm font-semibold text-[#7a8b85]">
                     {loading ? 'Đang tải lịch sử bình chọn...' : 'Chưa có lượt bình chọn nào phù hợp.'}
                   </td>
                 </tr>

@@ -348,45 +348,66 @@ function QuickStatsCard({
   );
 }
 
-type ActivityItem = {
-  id: string;
-  title: string;
-  author: string;
-  time: string;
-  icon: React.ReactNode;
-};
-
-function RecentActivityCard({
+function VoteHistoryCard({
   loading,
-  activities,
+  votes,
 }: {
   loading: boolean;
-  activities: ActivityItem[];
+  votes: Array<{ id: string; userName: string; candidateName: string; candidateSbd: string; score: number; createdAt: string; }>;
 }) {
+  function timeAgo(dateStr: string) {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'Vừa xong';
+    if (minutes < 60) return `${minutes} phút trước`;
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} giờ trước`;
+    const days = Math.floor(hours / 24);
+    return `${days} ngày trước`;
+  }
+
   return (
     <article className="admin-card !p-0">
       <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3.5">
-        <h2 className="text-[20px] font-bold tracking-[-0.03em] text-slate-950">Hoạt động gần đây</h2>
-        <button type="button" className="text-[14px] font-semibold text-blue-600 transition hover:text-blue-700">
-          Xem tất cả
-        </button>
+        <h2 className="text-[20px] font-bold tracking-[-0.03em] text-slate-950 flex items-center gap-2">
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-lg bg-blue-50 text-blue-600">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </span>
+          Lịch sử vote
+        </h2>
+        <span className="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-600">
+          Real-time
+        </span>
       </div>
-      <div className="space-y-3 px-4 py-3">
+      <div className="space-y-1 px-4 py-3">
         {loading
-          ? Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[56px] w-full" />)
-          : activities.map((activity) => (
-              <div key={activity.id} className="flex gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-600">
-                  {activity.icon}
-                </div>
-                <div className="min-w-0">
-                  <p className="text-[14px] font-medium leading-6 text-slate-900">{activity.title}</p>
-                  <p className="mt-0.5 text-[13px] font-medium text-slate-500">
-                    {activity.author} • {activity.time}
-                  </p>
+          ? Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-[60px] w-full" />)
+          : votes.length === 0 ? (
+            <p className="py-6 text-center text-[13px] text-slate-400">Chưa có lượt vote nào</p>
+          ) : votes.map((vote) => (
+            <div key={vote.id} className="flex gap-3 rounded-[12px] px-2 py-2.5 transition hover:bg-slate-50/80">
+              {/* Avatar */}
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-[#79BCC2] text-white text-[13px] font-bold shadow-sm">
+                {vote.userName ? vote.userName.charAt(0).toUpperCase() : '?'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13.5px] font-semibold text-slate-900 leading-[1.4]">
+                  <span className="text-blue-600">{vote.userName || 'Nười dùng'}</span>{' '}
+                  bình chọn cho{' '}
+                  <span className="font-bold text-slate-800">{vote.candidateName}</span>
+                </p>
+                <div className="mt-0.5 flex items-center gap-2">
+                  <span className="text-[11px] text-slate-400">{timeAgo(vote.createdAt)}</span>
+                  <span className="h-1 w-1 rounded-full bg-slate-300" />
+                  <span className="inline-flex items-center rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700">
+                    +{vote.score} điểm
+                  </span>
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
       </div>
     </article>
   );
@@ -397,6 +418,8 @@ export default function OverviewPage() {
   const [isGateOpen, setIsGateOpen] = useState(true);
   const [endDate, setEndDate] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [recentVotes, setRecentVotes] = useState<any[]>([]);
+  const [isVotesLoading, setIsVotesLoading] = useState(true);
   const [statsData, setStatsData] = useState<any>(null);
 
   useEffect(() => {
@@ -422,6 +445,25 @@ export default function OverviewPage() {
     }
 
     loadStats();
+
+    // Fetch recent votes (vote history)
+    async function loadVotes() {
+      try {
+        const res = await fetch(apiUrl('/api/admin/votes?limit=5'));
+        if (res.ok) {
+          const data = await res.json();
+          setRecentVotes(Array.isArray(data) ? data.slice(0, 5) : []);
+        }
+      } catch (err) {
+        console.error('Failed to load recent votes.', err);
+      } finally {
+        setIsVotesLoading(false);
+      }
+    }
+    loadVotes();
+
+    const votesInterval = setInterval(loadVotes, 15000);
+    return () => clearInterval(votesInterval);
   }, []);
 
   const totalVotes = useMemo(() => candidates.reduce((sum, item) => sum + item.votes, 0), [candidates]);
@@ -454,21 +496,7 @@ export default function OverviewPage() {
     [statsData, totalVotes],
   );
 
-  const recentActivities = useMemo<ActivityItem[]>(() => {
-    if (statsData?.activities && Array.isArray(statsData.activities) && statsData.activities.length > 0) {
-      return statsData.activities.map((act: any) => ({
-        id: act.id,
-        title: act.title,
-        author: act.author,
-        time: act.time,
-        icon: <ActivityStackIcon />
-      }));
-    }
-
-    return [
-      { id: 'fallback-1', title: 'Chưa có dữ liệu hoạt động bình chọn', author: 'Hệ thống', time: '--:--', icon: <ActivityStackIcon /> },
-    ];
-  }, [statsData]);
+  const recentActivities: any[] = [];
 
   return (
     <div className="space-y-4">
@@ -486,7 +514,7 @@ export default function OverviewPage() {
 
       <section className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
         <QuickStatsCard loading={isLoading} stats={quickStats} />
-        <RecentActivityCard loading={isLoading} activities={recentActivities} />
+        <VoteHistoryCard loading={isVotesLoading} votes={recentVotes} />
       </section>
     </div>
   );
