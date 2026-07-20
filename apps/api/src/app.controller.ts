@@ -7,7 +7,7 @@ import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 import { AdminSessionGuard } from './admin-session.guard';
 
 async function processAndConvertToWebp(filePath: string): Promise<{ webpFilePath: string; webpFilename: string }> {

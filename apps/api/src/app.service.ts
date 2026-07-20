@@ -1970,7 +1970,7 @@ export class AppService implements OnModuleInit {
       orderBy: { voteTime: 'desc' },
     });
 
-    const candidateIds: string[] = [...new Set(votes.map((v: any) => String(v.candidateId)).filter(Boolean))];
+    const candidateIds: string[] = Array.from(new Set(votes.map((v: any) => String(v.candidateId)).filter(Boolean)));
     const candidates = await this.prisma.candidate.findMany({
       where: { id: { in: candidateIds } },
     });
