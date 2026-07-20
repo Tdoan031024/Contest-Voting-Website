@@ -58,20 +58,20 @@
   "sponsors": [
     {
       "id": "s1",
-      "name": "Eventista",
-      "logoUrl": "/images/eventista.7a1126d5.svg",
+      "name": "Trường Đại học Công Thương TP.HCM (HUIT)",
+      "logoUrl": "/images/site-logo.png",
       "tier": "PLATINUM"
     },
     {
       "id": "s2",
-      "name": "HUIT Media",
-      "logoUrl": "/images/imageb821.png",
+      "name": "Trung tâm Đổi mới Sáng tạo & Khởi nghiệp IEC",
+      "logoUrl": "/images/ieclogo.png",
       "tier": "GOLD"
     },
     {
       "id": "s3",
-      "name": "Sen Vàng Entertainment",
-      "logoUrl": "/images/image5999.jpg",
+      "name": "HUIT Startup 2026",
+      "logoUrl": "/images/startuplogo.png",
       "tier": "SILVER"
     }
   ],
@@ -117,6 +117,7 @@
     "contactEmail": "media@huit.edu.vn",
     "isMaintenanceMode": false,
     "sponsorBannerUrl": "/uploads/nhataitro.png",
+    "hideSponsorBanner": false,
     "aboutTitle": "HUIT STARTUP LẦN THỨ VII 2026",
     "aboutDescription": "Cuộc thi HUIT Startup lần thứ VII năm 2026 cấp Thành phố với chủ đề “Đổi mới sáng tạo hướng tới mục tiêu phát triển bền vững” là hoạt động thường niên do Trường Đại học Công Thương TP. Hồ Chí Minh tổ chức. Cuộc thi hướng đến việc tìm kiếm, ươm tạo và phát triển các ý tưởng, dự án khởi nghiệp sáng tạo có khả năng giải quyết những vấn đề thực tiễn của cộng đồng và đóng góp tích cực cho sự phát triển kinh tế – xã hội.\n\nĐây không chỉ là một sân chơi học thuật mà còn là bệ phóng để các đội thi hoàn thiện tư duy kinh doanh, kiểm chứng mô hình, kết nối nguồn lực và từng bước hiện thực hóa dự án. Thông qua các hoạt động đào tạo, cố vấn chuyên sâu, tham quan doanh nghiệp, kiểm chứng thị trường và kết nối đầu tư, thí sinh có cơ hội nâng cao kiến thức, kỹ năng và bản lĩnh cần thiết trên hành trình khởi nghiệp.\n\nNăm 2026, cuộc thi được tổ chức với quy mô mở rộng, chào đón học sinh, sinh viên, học viên, cá nhân, tổ chức và doanh nghiệp tại Thành phố Hồ Chí Minh cùng các tỉnh lân cận. Ba bảng thi gồm Học sinh, Sinh viên và Doanh nghiệp tạo điều kiện để những ý tưởng ở nhiều giai đoạn phát triển đều có cơ hội tham gia, được đánh giá và tiếp tục hoàn thiện.\n\nThông qua cuộc thi, Ban Tổ chức mong muốn lan tỏa mạnh mẽ tinh thần khởi nghiệp và đổi mới sáng tạo; đồng thời kết nối các cơ sở giáo dục, chuyên gia, doanh nghiệp, quỹ đầu tư và tổ chức hỗ trợ để mở rộng hệ sinh thái khởi nghiệp. Những dự án tiềm năng sẽ có cơ hội tiếp cận các chương trình ươm tạo, nguồn lực cố vấn và mạng lưới đối tác nhằm phát triển bền vững sau cuộc thi.",
     "aboutImageUrl": "/uploads/poster-khoi-nghiep.jpg",
@@ -140,7 +141,7 @@
     "aboutContactWebsite": "https://khoinghiep.huit.edu.vn",
     "aboutContactQrUrl": "/images/qrdangky.png",
     "isRegistrationOpen": false,
-    "registrationDeadline": "2026-07-30T23:59",
+    "registrationDeadline": "2026-05-30T23:59",
     "registrationUrl": "https://khoinghiep.huit.edu.vn",
     "detailUrl": "https://khoinghiep.huit.edu.vn",
     "supportZaloUrl": "https://zalo.me/4418938306145458374",
@@ -181,17 +182,7 @@
         "price": "0"
       }
     ],
-    "votingPromotions": [
-      {
-        "id": "promo-1783449479438-akqa6s",
-        "name": "Khung giờ nhân điểm",
-        "multiplier": 2,
-        "startAt": "2026-07-07T01:47",
-        "endAt": "2026-07-30T03:47",
-        "isEnabled": true,
-        "appliesTo": "FREE"
-      }
-    ],
+    "votingPromotions": [],
     "votePackages": [
       {
         "id": "free-daily-vote",
@@ -219,15 +210,7 @@
         "answer": "Bạn có thể đăng nhập bằng Google hoặc liên hệ ban tổ chức qua email iec@huit.edu.vn để được hỗ trợ khôi phục tài khoản."
       }
     ],
-    "activeVotingPromotion": {
-      "id": "promo-1783449479438-akqa6s",
-      "name": "Khung giờ nhân điểm",
-      "multiplier": 2,
-      "startAt": "2026-07-07T01:47",
-      "endAt": "2026-07-30T03:47",
-      "isEnabled": true,
-      "appliesTo": "FREE"
-    }
+    "activeVotingPromotion": null
   },
   "webUsers": [
     {
@@ -245,6 +228,38 @@
     }
   ],
   "voteHistory": [
+    {
+      "id": "vote-1784569387975",
+      "candidateId": "001",
+      "candidateSbd": "001",
+      "eventId": "thi-sinh-duoc-yeu-thich-nhat",
+      "packageId": "free-daily-vote",
+      "packageType": "FREE",
+      "points": 1,
+      "basePoints": 1,
+      "multiplierApplied": 1,
+      "amount": 0,
+      "userId": "tuyenvan24212",
+      "voterPhone": "tuyenvan24212@gmail.com",
+      "createdAt": "2026-07-20T17:43:07.975Z"
+    },
+    {
+      "id": "vote-1784569263662",
+      "candidateId": "001",
+      "candidateSbd": "001",
+      "eventId": "thi-sinh-duoc-yeu-thich-nhat",
+      "packageId": "free-daily-vote",
+      "packageType": "FREE",
+      "points": 2,
+      "basePoints": 1,
+      "multiplierApplied": 2,
+      "promotionId": "promo-1783449479438-akqa6s",
+      "promotionName": "Khung giờ nhân điểm",
+      "amount": 0,
+      "userId": "tuyenvan24212",
+      "voterPhone": "tuyenvan24212@gmail.com",
+      "createdAt": "2026-07-20T17:41:03.662Z"
+    },
     {
       "id": "vote-1783444866392",
       "candidateId": "001",

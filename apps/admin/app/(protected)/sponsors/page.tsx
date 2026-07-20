@@ -121,6 +121,8 @@ export default function SponsorsAdminPage() {
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [hideSponsorBanner, setHideSponsorBanner] = useState<boolean>(false);
+  const [savingToggle, setSavingToggle] = useState<boolean>(false);
 
   useEffect(() => {
     setSelectedIds([]);
@@ -142,14 +144,43 @@ export default function SponsorsAdminPage() {
 
   const loadFromApi = async () => {
     try {
-      const res = await fetch(apiUrl('/api/sponsors'));
-      if (res.ok) {
-        const data = await res.json();
+      const [spRes, setRes] = await Promise.all([
+        fetch(apiUrl('/api/sponsors')),
+        fetch(apiUrl('/api/public-settings')),
+      ]);
+      if (spRes.ok) {
+        const data = await spRes.json();
         setSponsors(data);
+      }
+      if (setRes.ok) {
+        const setData = await setRes.json();
+        setHideSponsorBanner(!!setData.hideSponsorBanner);
       }
     } catch (e) {
       console.log('Lỗi tải danh sách nhà tài trợ:', e);
       setSponsors([]);
+    }
+  };
+
+  const handleToggleHideSponsorBanner = async () => {
+    const nextVal = !hideSponsorBanner;
+    setSavingToggle(true);
+    try {
+      const res = await fetch(apiUrl('/api/admin/settings'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hideSponsorBanner: nextVal }),
+      });
+      if (res.ok) {
+        setHideSponsorBanner(nextVal);
+      } else {
+        alert('Cập nhật trạng thái ẩn banner thất bại.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Không thể kết nối đến máy chủ.');
+    } finally {
+      setSavingToggle(false);
     }
   };
 
@@ -321,6 +352,41 @@ export default function SponsorsAdminPage() {
         </button>
       </div>
 
+      {/* Sponsor Banner Toggle Card */}
+      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="flex items-center gap-3">
+          <div className="grid h-10 w-10 place-items-center rounded-xl bg-amber-500/10 text-amber-600 font-bold text-lg">
+            {hideSponsorBanner ? '🙈' : '👁️'}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-extrabold text-slate-800">Hiển thị Banner &amp; Logo Nhà tài trợ trên Trang chủ</h3>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                hideSponsorBanner ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              }`}>
+                {hideSponsorBanner ? 'ĐANG ẨN' : 'ĐANG HIỂN THỊ'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-0.5">Kích hoạt nút này để Bật hoặc Ẩn toàn bộ phần banner và logo chạy ngang nhà tài trợ ngoài trang chủ công khai.</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          disabled={savingToggle}
+          onClick={handleToggleHideSponsorBanner}
+          className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
+            !hideSponsorBanner ? 'bg-emerald-600' : 'bg-slate-300'
+          }`}
+          title={hideSponsorBanner ? 'Hiện banner nhà tài trợ' : 'Ẩn banner nhà tài trợ'}
+        >
+          <span
+            className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+              !hideSponsorBanner ? 'translate-x-5' : 'translate-x-0'
+            }`}
+          />
+        </button>
+      </div>
+
       {/* Filter / Search input */}
       <div className="w-full max-w-md">
         <input 
@@ -457,28 +523,69 @@ export default function SponsorsAdminPage() {
 
       {/* ADD SPONSOR MODAL */}
       {modalMode === 'add' && (
-        <div className="fixed inset-0 bg-[#10211d]/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <form onSubmit={handleAddSubmit} className="bg-white border border-[#dce5e1] p-5 rounded-xl w-full max-w-lg flex flex-col space-y-3.5 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-base font-black text-[#123c34] border-b border-[#edf2f0] pb-2.5">Thêm nhà tài trợ mới</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div className="fixed inset-0 bg-slate-950/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <form onSubmit={handleAddSubmit} className="bg-white border border-slate-200 p-6 rounded-2xl w-full max-w-xl flex flex-col space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black uppercase tracking-wider border border-emerald-200">
+                  THÊM MỚI ĐỐI TÁC
+                </span>
+                <h3 className="text-base font-black text-slate-900 mt-1">Thêm nhà tài trợ mới</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalMode(null)}
+                className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-400 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Live Logo Preview Container */}
+            <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+              <div className="flex h-16 w-28 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 shadow-sm overflow-hidden relative">
+                {formLogoUrl ? (
+                  <img
+                    src={formatAssetUrl(formLogoUrl)}
+                    alt="Xem trước logo"
+                    className="max-h-full max-w-full object-contain"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/images/startuplogo.png';
+                    }}
+                  />
+                ) : (
+                  <span className="text-[10px] font-extrabold text-slate-400">Chưa có logo</span>
+                )}
+              </div>
+              <div className="flex-1 text-xs">
+                <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <span>🖼️</span> Xem trước hiển thị Logo
+                </p>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                  Logo sẽ được căn chỉnh hiển thị trực tiếp trên trang chủ và danh sách nhà tài trợ đồng hành.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
               <div className="flex flex-col space-y-1.5 md:col-span-2">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Tên nhà tài trợ *</label>
-                <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formName} onChange={e => setFormName(e.target.value)} required />
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Tên nhà tài trợ *</label>
+                <input type="text" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formName} onChange={e => setFormName(e.target.value)} placeholder="Nhập tên nhà tài trợ / thương hiệu" required />
               </div>
 
               <div className="flex flex-col space-y-1.5 md:col-span-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-end">
                   <div className="flex flex-col space-y-1.5">
-                    <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Đường dẫn logo (URL) *</label>
-                    <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formLogoUrl} onChange={e => setFormLogoUrl(e.target.value)} required />
+                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Đường dẫn logo (URL) *</label>
+                    <input type="text" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formLogoUrl} onChange={e => setFormLogoUrl(e.target.value)} required />
                   </div>
                   <div className="flex flex-col space-y-1.5">
-                    <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Hoặc tải logo từ máy tính</label>
+                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Hoặc tải logo từ máy tính</label>
                     <input
                       type="file"
                       accept="image/*"
-                      className="w-full text-xs text-[#52605b] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-[#123c34] file:text-white hover:file:bg-[#0f766e] cursor-pointer"
+                      className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-slate-900 file:text-white hover:file:bg-emerald-700 cursor-pointer transition"
                       onChange={async (event) => {
                         const file = event.target.files?.[0];
                         if (!file) return;
@@ -506,9 +613,9 @@ export default function SponsorsAdminPage() {
               </div>
 
               <div className="flex flex-col space-y-1.5">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Phân hạng (Tier) *</label>
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Phân hạng (Tier) *</label>
                 <select 
-                  className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                  className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold cursor-pointer transition"
                   value={formTier}
                   onChange={e => setFormTier(e.target.value as Sponsor['tier'])}
                 >
@@ -520,34 +627,34 @@ export default function SponsorsAdminPage() {
               </div>
 
               <div className="flex flex-col space-y-1.5">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Người liên hệ</label>
-                <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formContactPerson} onChange={e => setFormContactPerson(e.target.value)} />
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Người liên hệ đại diện</label>
+                <input type="text" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formContactPerson} onChange={e => setFormContactPerson(e.target.value)} placeholder="Họ và tên người đại diện" />
               </div>
 
               <div className="flex flex-col space-y-1.5">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Số điện thoại liên hệ</label>
-                <input type="tel" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formPhone} onChange={e => setFormPhone(e.target.value)} />
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Số điện thoại liên hệ</label>
+                <input type="tel" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder="VD: 0912345678" />
               </div>
 
               <div className="flex flex-col space-y-1.5">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Email liên hệ</label>
-                <input type="email" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formEmail} onChange={e => setFormEmail(e.target.value)} />
-              </div>
-
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Website liên kết (URL)</label>
-                <input type="url" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formWebsiteUrl} onChange={e => setFormWebsiteUrl(e.target.value)} placeholder="https://example.com" />
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Email liên hệ</label>
+                <input type="email" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="email@domain.com" />
               </div>
 
               <div className="flex flex-col space-y-1.5 md:col-span-2">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Mô tả / Giới thiệu đối tác</label>
-                <textarea rows={3} className="px-3 py-2 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold resize-none" value={formDescription} onChange={e => setFormDescription(e.target.value)} placeholder="Nhập thông tin giới thiệu ngắn về nhà tài trợ..." />
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Website liên kết (URL)</label>
+                <input type="url" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formWebsiteUrl} onChange={e => setFormWebsiteUrl(e.target.value)} placeholder="https://example.com" />
+              </div>
+
+              <div className="flex flex-col space-y-1.5 md:col-span-2">
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Mô tả / Giới thiệu đối tác</label>
+                <textarea rows={3} className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold resize-none transition" value={formDescription} onChange={e => setFormDescription(e.target.value)} placeholder="Nhập thông tin giới thiệu ngắn về nhà tài trợ..." />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-[#edf2f0]">
-              <button type="button" onClick={() => setModalMode(null)} className="px-3.5 py-1.5 border border-[#dce5e1] hover:bg-[#edf4f1] rounded-lg text-[#52605b] text-[10px] font-bold transition-colors">Hủy bỏ</button>
-              <button type="submit" className="px-3.5 py-1.5 bg-[#123c34] hover:bg-[#0f766e] rounded-lg text-white text-[10px] font-bold shadow transition-colors">Thêm mới</button>
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button type="button" onClick={() => setModalMode(null)} className="px-4 py-2 border border-slate-200 hover:bg-slate-100 rounded-xl text-slate-600 text-xs font-bold transition">Hủy bỏ</button>
+              <button type="submit" className="px-5 py-2 bg-emerald-700 hover:bg-emerald-800 rounded-xl text-white text-xs font-extrabold shadow transition">Thêm đối tác</button>
             </div>
           </form>
         </div>
@@ -555,28 +662,69 @@ export default function SponsorsAdminPage() {
 
       {/* EDIT SPONSOR MODAL */}
       {modalMode === 'edit' && (
-        <div className="fixed inset-0 bg-[#10211d]/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <form onSubmit={handleEditSubmit} className="bg-white border border-[#dce5e1] p-5 rounded-xl w-full max-w-lg flex flex-col space-y-3.5 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-base font-black text-[#123c34] border-b border-[#edf2f0] pb-2.5">Chỉnh sửa nhà tài trợ</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <div className="fixed inset-0 bg-slate-950/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+          <form onSubmit={handleEditSubmit} className="bg-white border border-slate-200 p-6 rounded-2xl w-full max-w-xl flex flex-col space-y-4 shadow-2xl animate-in fade-in zoom-in duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <span className="px-2.5 py-0.5 rounded-full bg-sky-50 text-sky-700 text-[10px] font-black uppercase tracking-wider border border-sky-200">
+                  CẬP NHẬT ĐỐI TÁC
+                </span>
+                <h3 className="text-base font-black text-slate-900 mt-1">Chỉnh sửa nhà tài trợ</h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setModalMode(null)}
+                className="grid h-8 w-8 place-items-center rounded-lg border border-slate-200 text-slate-400 hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Live Logo Preview Container */}
+            <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/80 p-3.5">
+              <div className="flex h-16 w-28 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white p-2 shadow-sm overflow-hidden relative">
+                {formLogoUrl ? (
+                  <img
+                    src={formatAssetUrl(formLogoUrl)}
+                    alt="Xem trước logo"
+                    className="max-h-full max-w-full object-contain"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/images/startuplogo.png';
+                    }}
+                  />
+                ) : (
+                  <span className="text-[10px] font-extrabold text-slate-400">Chưa có logo</span>
+                )}
+              </div>
+              <div className="flex-1 text-xs">
+                <p className="font-bold text-slate-800 flex items-center gap-1.5">
+                  <span>🖼️</span> Xem trước hiển thị Logo
+                </p>
+                <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                  Logo sẽ được căn chỉnh hiển thị trực tiếp trên trang chủ và danh sách nhà tài trợ đồng hành.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 text-xs">
               <div className="flex flex-col space-y-1.5 md:col-span-2">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Tên nhà tài trợ *</label>
-                <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formName} onChange={e => setFormName(e.target.value)} required />
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Tên nhà tài trợ *</label>
+                <input type="text" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formName} onChange={e => setFormName(e.target.value)} required />
               </div>
 
               <div className="flex flex-col space-y-1.5 md:col-span-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 items-end">
                   <div className="flex flex-col space-y-1.5">
-                    <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Đường dẫn logo (URL) *</label>
-                    <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formLogoUrl} onChange={e => setFormLogoUrl(e.target.value)} required />
+                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Đường dẫn logo (URL) *</label>
+                    <input type="text" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formLogoUrl} onChange={e => setFormLogoUrl(e.target.value)} required />
                   </div>
                   <div className="flex flex-col space-y-1.5">
-                    <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Hoặc tải logo từ máy tính</label>
+                    <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Hoặc tải logo từ máy tính</label>
                     <input
                       type="file"
                       accept="image/*"
-                      className="w-full text-xs text-[#52605b] file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-[10px] file:font-bold file:bg-[#123c34] file:text-white hover:file:bg-[#0f766e] cursor-pointer"
+                      className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-bold file:bg-slate-900 file:text-white hover:file:bg-emerald-700 cursor-pointer transition"
                       onChange={async (event) => {
                         const file = event.target.files?.[0];
                         if (!file) return;
@@ -604,9 +752,9 @@ export default function SponsorsAdminPage() {
               </div>
 
               <div className="flex flex-col space-y-1.5">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Phân hạng (Tier) *</label>
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Phân hạng (Tier) *</label>
                 <select 
-                  className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold"
+                  className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold cursor-pointer transition"
                   value={formTier}
                   onChange={e => setFormTier(e.target.value as Sponsor['tier'])}
                 >
@@ -618,34 +766,34 @@ export default function SponsorsAdminPage() {
               </div>
 
               <div className="flex flex-col space-y-1.5">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Người liên hệ</label>
-                <input type="text" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formContactPerson} onChange={e => setFormContactPerson(e.target.value)} />
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Người liên hệ đại diện</label>
+                <input type="text" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formContactPerson} onChange={e => setFormContactPerson(e.target.value)} placeholder="Họ và tên người đại diện" />
               </div>
 
               <div className="flex flex-col space-y-1.5">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Số điện thoại liên hệ</label>
-                <input type="tel" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formPhone} onChange={e => setFormPhone(e.target.value)} />
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Số điện thoại liên hệ</label>
+                <input type="tel" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formPhone} onChange={e => setFormPhone(e.target.value)} placeholder="VD: 0912345678" />
               </div>
 
               <div className="flex flex-col space-y-1.5">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Email liên hệ</label>
-                <input type="email" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formEmail} onChange={e => setFormEmail(e.target.value)} />
-              </div>
-
-              <div className="flex flex-col space-y-1.5">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Website liên kết (URL)</label>
-                <input type="url" className="h-9 px-3 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold" value={formWebsiteUrl} onChange={e => setFormWebsiteUrl(e.target.value)} placeholder="https://example.com" />
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Email liên hệ</label>
+                <input type="email" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formEmail} onChange={e => setFormEmail(e.target.value)} placeholder="email@domain.com" />
               </div>
 
               <div className="flex flex-col space-y-1.5 md:col-span-2">
-                <label className="text-[10px] font-bold text-[#52605b] uppercase tracking-wider">Mô tả / Giới thiệu đối tác</label>
-                <textarea rows={3} className="px-3 py-2 rounded-lg bg-[#fbfdfc] border border-[#dce5e1] text-[#18211f] focus:outline-none focus:border-[#0f766e] text-xs font-semibold resize-none" value={formDescription} onChange={e => setFormDescription(e.target.value)} placeholder="Nhập thông tin giới thiệu ngắn về nhà tài trợ..." />
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Website liên kết (URL)</label>
+                <input type="url" className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold transition" value={formWebsiteUrl} onChange={e => setFormWebsiteUrl(e.target.value)} placeholder="https://example.com" />
+              </div>
+
+              <div className="flex flex-col space-y-1.5 md:col-span-2">
+                <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Mô tả / Giới thiệu đối tác</label>
+                <textarea rows={3} className="px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold resize-none transition" value={formDescription} onChange={e => setFormDescription(e.target.value)} placeholder="Nhập thông tin giới thiệu ngắn về nhà tài trợ..." />
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-[#edf2f0]">
-              <button type="button" onClick={() => setModalMode(null)} className="px-3.5 py-1.5 border border-[#dce5e1] hover:bg-[#edf4f1] rounded-lg text-[#52605b] text-[10px] font-bold transition-colors">Hủy bỏ</button>
-              <button type="submit" className="px-3.5 py-1.5 bg-[#123c34] hover:bg-[#0f766e] rounded-lg text-white text-[10px] font-bold shadow transition-colors">Lưu thay đổi</button>
+            <div className="flex justify-end gap-2.5 pt-3 border-t border-slate-100">
+              <button type="button" onClick={() => setModalMode(null)} className="px-4 py-2 border border-slate-200 hover:bg-slate-100 rounded-xl text-slate-600 text-xs font-bold transition">Hủy bỏ</button>
+              <button type="submit" className="px-5 py-2 bg-slate-900 hover:bg-emerald-700 rounded-xl text-white text-xs font-extrabold shadow transition">Lưu thay đổi</button>
             </div>
           </form>
         </div>

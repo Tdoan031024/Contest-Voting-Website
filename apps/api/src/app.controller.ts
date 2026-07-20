@@ -7,7 +7,42 @@ import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
+import * as sharp from 'sharp';
 import { AdminSessionGuard } from './admin-session.guard';
+
+async function processAndConvertToWebp(filePath: string): Promise<{ webpFilePath: string; webpFilename: string }> {
+  const ext = path.extname(filePath).toLowerCase();
+  const dir = path.dirname(filePath);
+  const baseName = path.basename(filePath, ext);
+
+  // If file is a video, return as-is
+  if (['.mp4', '.webm', '.ogg', '.mov'].includes(ext)) {
+    return { webpFilePath: filePath, webpFilename: path.basename(filePath) };
+  }
+
+  const webpFilename = `${baseName}.webp`;
+  const webpFilePath = path.join(dir, webpFilename);
+
+  try {
+    await sharp(filePath)
+      .rotate() // Auto-orient based on EXIF tag
+      .webp({ quality: 82, effort: 4 })
+      .toFile(webpFilePath);
+
+    // Unlink raw non-webp original file to conserve disk storage
+    if (ext !== '.webp' && fs.existsSync(filePath)) {
+      try {
+        fs.unlinkSync(filePath);
+      } catch (e) {
+        console.error('Failed to unlink original file after webp conversion:', e);
+      }
+    }
+    return { webpFilePath, webpFilename };
+  } catch (err) {
+    console.error('⚠️ WebP conversion failed, falling back to original file:', err);
+    return { webpFilePath: filePath, webpFilename: path.basename(filePath) };
+  }
+}
 
 function getProjectRootDir() {
   let currentDir = __dirname;
@@ -94,20 +129,23 @@ export class AppController {
       throw new Error('File upload failed');
     }
     
-    // Copy file to admin public uploads so it displays correctly on localhost:3001
+    // Process & convert image to WebP format for maximum performance & light file size
+    const { webpFilePath, webpFilename } = await processAndConvertToWebp(file.path);
+
+    // Copy converted webp file to admin public uploads so it displays correctly on localhost:3001
     try {
       const rootDir = getProjectRootDir();
       const adminUploadDir = path.join(rootDir, 'apps/admin/public/uploads');
       if (!fs.existsSync(adminUploadDir)) {
         fs.mkdirSync(adminUploadDir, { recursive: true });
       }
-      fs.copyFileSync(file.path, path.join(adminUploadDir, file.filename));
-      console.log(`✅ Uploaded file copied to admin static folder: /uploads/${file.filename}`);
+      fs.copyFileSync(webpFilePath, path.join(adminUploadDir, webpFilename));
+      console.log(`✅ WebP file converted & copied to admin static folder: /uploads/${webpFilename}`);
     } catch (e) {
-      console.error('⚠️ Failed to copy uploaded file to admin public:', e);
+      console.error('⚠️ Failed to copy WebP file to admin public:', e);
     }
     
-    return { url: `/uploads/${file.filename}` };
+    return { url: `/uploads/${webpFilename}` };
   }
 
   @Post('admin/candidates/:sbd/upload')
@@ -136,11 +174,11 @@ export class AppController {
         fileSize: 10 * 1024 * 1024, // 10MB limit
       },
       fileFilter: (req: any, file: any, cb: any) => {
-        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'video/mp4'];
+        const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp', 'image/tiff', 'video/mp4'];
         if (allowedMimeTypes.includes(file.mimetype)) {
           cb(null, true);
         } else {
-          cb(new Error('Chỉ cho phép tải lên file ảnh (jpeg, png, webp, gif) hoặc video mp4!'), false);
+          cb(new Error('Chỉ cho phép tải lên file ảnh hoặc video mp4!'), false);
         }
       },
     }),
@@ -153,20 +191,23 @@ export class AppController {
       throw new Error('File upload failed');
     }
     
-    // Copy file to admin static folder under /duan/<sbd>
+    // Process & convert image to WebP format
+    const { webpFilePath, webpFilename } = await processAndConvertToWebp(file.path);
+
+    // Copy converted webp file to admin static folder under /duan/<sbd>
     try {
       const rootDir = getProjectRootDir();
       const adminUploadDir = path.join(rootDir, 'apps/admin/public/duan', sbd);
       if (!fs.existsSync(adminUploadDir)) {
         fs.mkdirSync(adminUploadDir, { recursive: true });
       }
-      fs.copyFileSync(file.path, path.join(adminUploadDir, file.filename));
-      console.log(`✅ Uploaded candidate file copied to admin static: /duan/${sbd}/${file.filename}`);
+      fs.copyFileSync(webpFilePath, path.join(adminUploadDir, webpFilename));
+      console.log(`✅ WebP candidate file converted & copied to admin static: /duan/${sbd}/${webpFilename}`);
     } catch (e) {
-      console.error('⚠️ Failed to copy uploaded candidate file to admin public:', e);
+      console.error('⚠️ Failed to copy WebP candidate file to admin public:', e);
     }
     
-    return { url: `/duan/${sbd}/${file.filename}` };
+    return { url: `/duan/${sbd}/${webpFilename}` };
   }
 
   // --- CANDIDATES ---

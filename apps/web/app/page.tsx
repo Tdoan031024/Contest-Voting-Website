@@ -199,6 +199,13 @@ function VoteToastContainer() {
   );
 }
 
+function getSponsorLogoUrl(url?: string | null) {
+  if (!url) return '/images/startuplogo.png';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  if (url.startsWith('/uploads/') || url.startsWith('/original_assets/')) return apiUrl(url);
+  return url;
+}
+
 function getCandidateImageUrl(url?: string | null) {
   if (!url) return PROJECT_FALLBACK_IMAGE;
   if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
@@ -868,20 +875,29 @@ export default function HomePage() {
 
           {/* ── Sponsor Marquee Banner (NEW POSITION: Direct child of candidates-section, stretching full-width) ── */}
           {(() => {
-            const displaySponsors = sponsors || [];
-            if (displaySponsors.length === 0) return null;
+            const displaySponsors = sponsors && sponsors.length > 0 ? sponsors : [];
+            if (settings?.hideSponsorBanner || displaySponsors.length === 0) return null;
+
+            let halfList = displaySponsors;
+            while (halfList.length < 15) {
+              halfList = [...halfList, ...displaySponsors];
+            }
+            const marqueeItems = [...halfList, ...halfList];
+
             return (
               <div className="sponsor-marquee-container w-full mt-6 mb-4 overflow-hidden bg-slate-50/50 dark:bg-white/[0.02] py-4 border-y border-neutral-200/40 dark:border-white/5">
                 <div className="sponsor-marquee-track">
-                  {/* Quadruple the list for seamless loop */}
-                  {[...displaySponsors, ...displaySponsors, ...displaySponsors, ...displaySponsors].map((sp, idx) => {
-                    const initialSrc = sp.logoUrl.startsWith('http') ? sp.logoUrl : (typeof getCandidateImageUrl === 'function' ? getCandidateImageUrl(sp.logoUrl) : sp.logoUrl);
+                  {marqueeItems.map((sp, idx) => {
+                    const initialSrc = getSponsorLogoUrl(sp.logoUrl);
                     return (
                       <div key={`sp-marquee-${idx}`} className="sponsor-marquee-item">
                         <img
                           src={initialSrc}
                           alt={sp.name}
                           className="sponsor-marquee-logo animate-fade-in"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = '/images/startuplogo.png';
+                          }}
                         />
                       </div>
                     );
@@ -1171,38 +1187,40 @@ export default function HomePage() {
         </section>
 
         {/* Sponsor Section matching sample web */}
-        <div className="relative w-full max-w-[1180px] mx-auto pb-8 sm:pb-12" id="sponsor-section" ref={sponsorsRef}>
+        {!settings?.hideSponsorBanner && (
+          <div className="relative w-full max-w-[1180px] mx-auto pb-8 sm:pb-12" id="sponsor-section" ref={sponsorsRef}>
 
-          <div className="pt-8 sm:pt-12 flex flex-col space-y-5 items-center relative z-10">
-            <div className={`flex flex-col space-y-1.5 text-center transform transition-all duration-700 ease-out ${sponsorsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-              <div className="flex flex-col space-y-1.5">
-                <h2 className="text-[19px] sm:text-[31px] tracking-[-0.5px] leading-[25px] sm:leading-[38px] font-extrabold uppercase bg-clip-text text-transparent bg-gradient-to-r from-black to-black/70 dark:from-white dark:to-white/70">
-                  NHÀ TÀI TRỢ &amp; ĐỐI TÁC
-                </h2>
-                <h3 className="text-[13px] sm:text-[18px] py-0.5 leading-[22px] uppercase font-bold text-blue-600 dark:text-blue-400">
-                  {settings?.eventTitle || "HUIT's Iconic"}
-                </h3>
+            <div className="pt-8 sm:pt-12 flex flex-col space-y-5 items-center relative z-10">
+              <div className={`flex flex-col space-y-1.5 text-center transform transition-all duration-700 ease-out ${sponsorsVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                <div className="flex flex-col space-y-1.5">
+                  <h2 className="text-[19px] sm:text-[31px] tracking-[-0.5px] leading-[25px] sm:leading-[38px] font-extrabold uppercase bg-clip-text text-transparent bg-gradient-to-r from-black to-black/70 dark:from-white dark:to-white/70">
+                    NHÀ TÀI TRỢ &amp; ĐỐI TÁC
+                  </h2>
+                  <h3 className="text-[13px] sm:text-[18px] py-0.5 leading-[22px] uppercase font-bold text-blue-600 dark:text-blue-400">
+                    {settings?.eventTitle || "HUIT's Iconic"}
+                  </h3>
+                </div>
+                <div
+                  className="h-[3.5px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-2 transition-all duration-[3200ms] ease-out"
+                  style={{ width: sponsorsVisible ? '52px' : '0px' }}
+                />
               </div>
-              <div
-                className="h-[3.5px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-2 transition-all duration-[3200ms] ease-out"
-                style={{ width: sponsorsVisible ? '52px' : '0px' }}
-              />
-            </div>
 
-            <div
-              style={{
-                transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
-                transitionDelay: '600ms'
-              }}
-              className={`w-full max-w-[1080px] px-4 transform transition-all duration-700 ${sponsorsVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
-                }`}
-            >
-              <div className="relative group hover-shine-effect rounded-2xl overflow-hidden">
-                <img alt="Sponsors Logo" className="w-full h-auto object-contain rounded-xl relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]" src={formatSponsorBannerUrl(settings?.sponsorBannerUrl, theme)} />
+              <div
+                style={{
+                  transitionTimingFunction: 'cubic-bezier(0.16, 1, 0.3, 1)',
+                  transitionDelay: '600ms'
+                }}
+                className={`w-full max-w-[1080px] px-4 transform transition-all duration-700 ${sponsorsVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4'
+                  }`}
+              >
+                <div className="relative group hover-shine-effect rounded-2xl overflow-hidden">
+                  <img alt="Sponsors Logo" className="w-full h-auto object-contain rounded-xl relative z-10 transition-transform duration-700 ease-out group-hover:scale-[1.01]" src={formatSponsorBannerUrl(settings?.sponsorBannerUrl, theme)} />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
       </main>
 
