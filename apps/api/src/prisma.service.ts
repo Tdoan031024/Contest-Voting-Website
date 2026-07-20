@@ -45,6 +45,11 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
   }
 
   async onModuleInit() {
-    await this.$connect();
+    try {
+      await this.$connect();
+      console.log('✅ Connected to MySQL database via Prisma.');
+    } catch (err) {
+      console.error('⚠️ Could not connect to MySQL database via Prisma. Fallback to local DB file mode.', err);
+    }
   }
 }

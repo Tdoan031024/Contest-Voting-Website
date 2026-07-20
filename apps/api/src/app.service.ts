@@ -816,10 +816,16 @@ export class AppService implements OnModuleInit {
 
   // --- CANDIDATES ---
   async getCandidates(): Promise<Candidate[]> {
-    const candidates = await this.prisma.candidate.findMany({
-      orderBy: { votes: 'desc' },
-    });
-    return candidates.map((candidate: any) => this.mergeCandidate(candidate));
+    try {
+      const candidates = await this.prisma.candidate.findMany({
+        orderBy: { votes: 'desc' },
+      });
+      return candidates.map((candidate: any) => this.mergeCandidate(candidate));
+    } catch (e) {
+      console.error('⚠️ Prisma DB query failed for candidates, falling back to local JSON file:', e);
+      const local = this.readLocalData() as any;
+      return (local.candidates || []).map((candidate: any) => this.mergeCandidate(candidate));
+    }
   }
 
   async getCandidateVotes(sbd: string) {
@@ -1053,7 +1059,13 @@ export class AppService implements OnModuleInit {
 
   // --- SPONSORS ---
   async getSponsors(): Promise<Sponsor[]> {
-    return this.prisma.sponsor.findMany() as any;
+    try {
+      return (await this.prisma.sponsor.findMany()) as any;
+    } catch (e) {
+      console.error('⚠️ Prisma DB query failed for sponsors, falling back to local JSON file:', e);
+      const local = this.readLocalData() as any;
+      return (local.sponsors || []) as any;
+    }
   }
 
   async addSponsor(newSponsor: Partial<Sponsor>): Promise<Sponsor> {
