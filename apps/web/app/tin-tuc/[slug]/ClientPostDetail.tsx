@@ -60,6 +60,8 @@ export default function ClientPostDetail({ post, relatedPosts }: ClientPostDetai
         }
         .post-body-content p {
           margin-bottom: 20px;
+          text-align: justify;
+          text-justify: inter-word;
         }
         .post-body-content strong {
           color: var(--site-text);
@@ -129,7 +131,7 @@ export default function ClientPostDetail({ post, relatedPosts }: ClientPostDetai
               📢 {post.category}
             </div>
 
-            <h1 className="text-xl sm:text-3xl font-black text-center max-w-[800px] leading-tight" style={{ color: 'var(--site-text)' }}>
+            <h1 className="text-2xl sm:text-4xl font-extrabold text-center sm:text-justify max-w-[1100px] leading-tight mx-auto" style={{ color: 'var(--site-text)', textJustify: 'inter-word' }}>
               {post.title}
             </h1>
             
@@ -144,7 +146,7 @@ export default function ClientPostDetail({ post, relatedPosts }: ClientPostDetai
         </section>
 
         {/* === MAIN CONTENT BODY === */}
-        <div className="max-w-[800px] mx-auto px-4 sm:px-6 py-6">
+        <div className="max-w-[1100px] mx-auto px-4 sm:px-6 py-6">
           <div className="flex flex-col">
             {/* Action buttons (Back) */}
             <div className="mb-8">

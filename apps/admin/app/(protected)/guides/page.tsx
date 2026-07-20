@@ -168,8 +168,27 @@ export default function GuidesAdminPage() {
       }
 
       const data = await res.json();
-      handleStepImageChange(sectionIndex, stepIndex, data.url);
-      alert('Tải ảnh minh họa thành công.');
+      const updatedUrl = data.url;
+
+      setSections((prev) => {
+        const nextSections = prev.map((section, index) => {
+          if (index !== sectionIndex) return section;
+          return {
+            ...section,
+            steps: section.steps.map((step, idx) => idx === stepIndex ? { ...step, image: updatedUrl } : step),
+          };
+        });
+
+        fetch(apiUrl('/api/admin/settings'), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ guideSections: nextSections, exchangeRates }),
+        }).catch((err) => console.error('Failed to auto-save guide settings:', err));
+
+        return nextSections;
+      });
+
+      alert('Tải ảnh minh họa thành công và đã lưu tự động.');
     } catch (err) {
       console.error(err);
       alert('Không thể kết nối server tải ảnh.');

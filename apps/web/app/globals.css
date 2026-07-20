@@ -581,6 +581,22 @@ body,
   color: var(--site-text) !important;
 }
 
+.step-card-info h4 {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--site-text) !important;
+  margin: 0;
+}
+
+.step-card-info p {
+  font-size: 16px;
+  line-height: 1.65;
+  font-weight: 500;
+  color: var(--site-text) !important;
+  opacity: 0.95;
+  margin: 0;
+}
+
 :root[data-theme='dark'] .theme-page [class*="text-white/"],
 :root[data-theme='dark'] .theme-page .rich-content {
   color: var(--site-muted) !important;
@@ -3900,6 +3916,35 @@ button, a { -webkit-tap-highlight-color: transparent; }
   font-size: 13px;
   font-weight: 900;
   letter-spacing: 0.05em;
+}
+
+.step-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.step-card-info h4 {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--site-text) !important;
+  margin: 0;
+}
+
+.step-card-info p {
+  font-size: 17.5px;
+  line-height: 1.65;
+  font-weight: 500;
+  color: var(--site-text) !important;
+  opacity: 0.95;
+  margin: 0;
+}
+
+.step-screenshot {
+  width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  margin-top: 12px;
 }
 
 /* ─── Vote Toast Notification ─── */

@@ -409,23 +409,29 @@ export class AppService implements OnModuleInit {
     this.settings.freeVotesPerAccountPerDay = Number(this.settings.freeVotesPerAccountPerDay) > 0
       ? Number(this.settings.freeVotesPerAccountPerDay)
       : 2;
-    this.settings.exchangeRates = [
-      { points: 1, price: 0, label: '1 lượt bình chọn miễn phí' },
-    ];
-    this.settings.votePackages = [this.getFreeVotePackage()];
+    if (!Array.isArray(this.settings.exchangeRates) || this.settings.exchangeRates.length === 0) {
+      this.settings.exchangeRates = [
+        { points: 1, price: 0, label: '1 lượt bình chọn miễn phí' },
+      ];
+    }
+    if (!Array.isArray(this.settings.votePackages) || this.settings.votePackages.length === 0) {
+      this.settings.votePackages = [this.getFreeVotePackage()];
+    }
     this.settings.votingPromotions = this.normalizeVotingPromotions(this.settings.votingPromotions);
     this.settings.activeVotingPromotion = this.getActiveVotingPromotion();
-    this.settings.guideSections = [
-      {
-        title: 'Bình chọn miễn phí mỗi ngày',
-        steps: [
-          { number: '01', description: 'Đăng ký hoặc đăng nhập tài khoản để bình chọn.' },
-          { number: '02', description: 'Mỗi tài khoản có 2 lượt bình chọn miễn phí trong mỗi ngày.' },
-          { number: '03', description: 'Mỗi lần bình chọn tăng 1 lượt cho dự án bạn chọn.' },
-          { number: '04', description: 'Dùng hết 2 lượt trong ngày thì không thể bình chọn cho bất kỳ dự án nào khác cho đến ngày hôm sau.' },
-        ],
-      },
-    ] as any;
+    if (!Array.isArray(this.settings.guideSections) || this.settings.guideSections.length === 0) {
+      this.settings.guideSections = [
+        {
+          title: 'Bình chọn miễn phí mỗi ngày',
+          steps: [
+            { number: '01', description: 'Đăng ký hoặc đăng nhập tài khoản để bình chọn.', image: '/original_assets/imagefca6.png' },
+            { number: '02', description: 'Mỗi tài khoản có 2 lượt bình chọn miễn phí trong mỗi ngày.', image: '/original_assets/imagef1be.png' },
+            { number: '03', description: 'Mỗi lần bình chọn tăng 1 lượt cho dự án bạn chọn.', image: '/original_assets/image81d3.png' },
+            { number: '04', description: 'Dùng hết 2 lượt trong ngày thì không thể bình chọn cho bất kỳ dự án nào khác cho đến ngày hôm sau.', image: '/original_assets/image20da.png' },
+          ],
+        },
+      ] as any;
+    }
   }
 
   private mergeCandidate(candidate: any): Candidate {

@@ -157,7 +157,8 @@
         "steps": [
           {
             "number": "01",
-            "description": "Đăng ký hoặc đăng nhập tài khoản để bình chọn."
+            "description": "Đăng ký hoặc đăng nhập tài khoản để bình chọn.",
+            "image": "/uploads/73d6ebfa-f291-4d60-ac0f-d19caece673e.png"
           },
           {
             "number": "02",
@@ -176,9 +177,8 @@
     ],
     "exchangeRates": [
       {
-        "points": 1,
-        "price": 0,
-        "label": "1 lượt bình chọn miễn phí"
+        "points": "1",
+        "price": "0"
       }
     ],
     "votingPromotions": [

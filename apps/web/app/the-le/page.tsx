@@ -314,7 +314,7 @@ export default function TheLePage() {
               hidden={sections.length > 1 && activeTab !== sectionIndex}
             >
               <div className="mb-8 flex items-center gap-3">
-                <div className="step-num-circle" style={{ background: sectionColors[sectionIndex % sectionColors.length].gradient, width: 48, height: 48, fontSize: 20 }}>
+                <div className="step-num-circle" suppressHydrationWarning style={{ background: sectionColors[sectionIndex % sectionColors.length].gradient, width: 48, height: 48, fontSize: 20 }}>
                   {sectionColors[sectionIndex % sectionColors.length].icon}
                 </div>
                 <div>
@@ -342,8 +342,8 @@ export default function TheLePage() {
                       {parseInt(step.number, 10)}
                     </div>
                     <div className={`step-card-info ${!step.image ? 'md:col-span-2' : ''}`}>
-                      <h4>Bước {step.number}</h4>
-                      <p>{step.description}</p>
+                      <h4 style={{ fontSize: 'clamp(20px, 2.2vw, 25px)', fontWeight: 900, marginBottom: 6 }}>Bước {step.number}</h4>
+                      <p style={{ fontSize: 'clamp(15px, 1.5vw, 18px)', lineHeight: 1.7, fontWeight: 500 }}>{step.description}</p>
                     </div>
                     {step.image && (
                       <div className="step-screenshot">
@@ -359,7 +359,7 @@ export default function TheLePage() {
 
           <div id="faq" ref={faqSection.ref} className="mt-20">
             <div className="flex items-center gap-3 mb-8">
-              <div className="step-num-circle" style={{ background: 'linear-gradient(135deg, #8b5cf6, #c084fc)', fontSize: 20 }}>❓</div>
+              <div className="step-num-circle" suppressHydrationWarning style={{ background: 'linear-gradient(135deg, #8b5cf6, #c084fc)', fontSize: 20 }}>❓</div>
               <div>
                 <div
                   style={{
