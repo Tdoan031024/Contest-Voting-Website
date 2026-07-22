@@ -1119,8 +1119,22 @@ export default function CandidatesAdminPage() {
 
   const [isTableFilterOpen, setIsTableFilterOpen] = useState(false);
   const [isRoundFilterOpen, setIsRoundFilterOpen] = useState(false);
+  const [isViewConfigOpen, setIsViewConfigOpen] = useState(false);
   const tableDropdownRef = useRef<HTMLDivElement>(null);
   const roundDropdownRef = useRef<HTMLDivElement>(null);
+  const viewConfigRef = useRef<HTMLDivElement>(null);
+
+  // View Mode & Column Visibility Controls
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [gridCols, setGridCols] = useState<number>(4);
+  const [visibleColumns, setVisibleColumns] = useState({
+    select: true,
+    project: true,
+    table: true,
+    leader: true,
+    votes: true,
+    actions: true,
+  });
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -1129,6 +1143,9 @@ export default function CandidatesAdminPage() {
       }
       if (roundDropdownRef.current && !roundDropdownRef.current.contains(event.target as Node)) {
         setIsRoundFilterOpen(false);
+      }
+      if (viewConfigRef.current && !viewConfigRef.current.contains(event.target as Node)) {
+        setIsViewConfigOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -1575,158 +1592,294 @@ export default function CandidatesAdminPage() {
       </section>
 
       <section className="dashboard-filter-bar p-2.5">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_190px_170px_110px] items-start">
-          <input
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            placeholder="Tìm theo tên dự án, mã, nhóm, trưởng nhóm hoặc đơn vị..."
-            className="admin-input min-w-0"
-          />
-          
-          {/* Custom Bảng thi Dropdown */}
-          <div className="relative w-full" ref={tableDropdownRef}>
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          {/* Left filters: Compact Search & Select Dropdowns */}
+          <div className="flex flex-wrap items-center gap-2 max-w-full">
+            <div className="w-full sm:w-[260px] md:w-[290px] shrink-0">
+              <input
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Tìm theo tên dự án, SBD, trưởng nhóm..."
+                className="admin-input w-full"
+              />
+            </div>
+            
+            {/* Custom Bảng thi Dropdown */}
+            <div className="relative w-[150px] shrink-0" ref={tableDropdownRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsTableFilterOpen(!isTableFilterOpen);
+                  setIsRoundFilterOpen(false);
+                  setIsViewConfigOpen(false);
+                }}
+                className="flex h-[38px] w-full items-center justify-between rounded-[10px] border border-slate-200 bg-[#fbfdfc] px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-[#0f766e] focus:outline-none"
+              >
+                <span className="truncate">
+                  {tableFilter === 'ALL' && 'Tất cả bảng thi'}
+                  {tableFilter === 'HIGH_SCHOOL' && 'Bảng học sinh'}
+                  {tableFilter === 'STUDENT' && 'Bảng sinh viên'}
+                  {tableFilter === 'ENTERPRISE' && 'Bảng doanh nghiệp'}
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`text-slate-500 transition-transform duration-200 shrink-0 ${isTableFilterOpen ? 'rotate-180' : ''}`}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              {isTableFilterOpen && (
+                <div className="absolute left-0 right-0 z-[60] mt-1.5 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur-md">
+                  {[
+                    ['ALL', 'Tất cả bảng thi'],
+                    ['HIGH_SCHOOL', 'Bảng học sinh'],
+                    ['STUDENT', 'Bảng sinh viên'],
+                    ['ENTERPRISE', 'Bảng doanh nghiệp'],
+                  ].map(([val, label]) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        setTableFilter(val);
+                        setIsTableFilterOpen(false);
+                      }}
+                      className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-bold transition-colors ${
+                        tableFilter === val
+                          ? 'bg-[#0f766e]/10 text-[#0f766e]'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Custom Vòng thi Dropdown */}
+            <div className="relative w-[150px] shrink-0" ref={roundDropdownRef}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsRoundFilterOpen(!isRoundFilterOpen);
+                  setIsTableFilterOpen(false);
+                  setIsViewConfigOpen(false);
+                }}
+                className="flex h-[38px] w-full items-center justify-between rounded-[10px] border border-slate-200 bg-[#fbfdfc] px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-[#0f766e] focus:outline-none"
+              >
+                <span className="truncate">
+                  {roundFilter === 'ALL' ? 'Tất cả vòng thi' : roundFilter}
+                </span>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`text-slate-500 transition-transform duration-200 shrink-0 ${isRoundFilterOpen ? 'rotate-180' : ''}`}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              {isRoundFilterOpen && (
+                <div className="absolute left-0 right-0 z-[60] mt-1.5 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur-md">
+                  {[
+                    'ALL',
+                    'Vòng loại',
+                    'Vòng bán kết',
+                    'Vòng chung kết',
+                  ].map((val) => (
+                    <button
+                      key={val}
+                      type="button"
+                      onClick={() => {
+                        setRoundFilter(val);
+                        setIsRoundFilterOpen(false);
+                      }}
+                      className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-bold transition-colors ${
+                        roundFilter === val
+                          ? 'bg-[#0f766e]/10 text-[#0f766e]'
+                          : 'text-slate-700 hover:bg-slate-50'
+                      }`}
+                    >
+                      {val === 'ALL' ? 'Tất cả vòng thi' : val}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Right: Single View Config Popover Button & Modal Dropdown */}
+          <div className="relative shrink-0" ref={viewConfigRef}>
             <button
               type="button"
               onClick={() => {
-                setIsTableFilterOpen(!isTableFilterOpen);
+                setIsViewConfigOpen(!isViewConfigOpen);
+                setIsTableFilterOpen(false);
                 setIsRoundFilterOpen(false);
               }}
-              className="flex h-[38px] w-full items-center justify-between rounded-[10px] border border-slate-200 bg-[#fbfdfc] px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-[#0f766e] focus:outline-none focus:border-[#0f766e]"
+              className="flex h-[38px] items-center gap-2 rounded-[10px] border border-slate-200 bg-white px-3.5 text-xs font-extrabold text-slate-800 shadow-sm transition hover:border-blue-600 hover:text-blue-700"
             >
-              <span>
-                {tableFilter === 'ALL' && 'Tất cả bảng thi'}
-                {tableFilter === 'HIGH_SCHOOL' && 'Bảng học sinh'}
-                {tableFilter === 'STUDENT' && 'Bảng sinh viên'}
-                {tableFilter === 'ENTERPRISE' && 'Bảng doanh nghiệp'}
-              </span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`text-slate-500 transition-transform duration-200 ${isTableFilterOpen ? 'rotate-180' : ''}`}
-              >
-                <polyline points="6 9 12 15 18 9" />
+              <svg viewBox="0 0 24 24" className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                <rect x="3" y="14" width="7" height="7" rx="1.5" />
               </svg>
+              <span>Hiển thị</span>
+              <span className="rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-[10px] font-black border border-blue-200">
+                {viewMode === 'table' ? '📋 Bảng' : `🔲 Thẻ (${gridCols})`}
+              </span>
+              <svg viewBox="0 0 24 24" className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${isViewConfigOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
 
-            {isTableFilterOpen && (
-              <div className="absolute left-0 right-0 z-[60] mt-1.5 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur-md">
-                {[
-                  ['ALL', 'Tất cả bảng thi'],
-                  ['HIGH_SCHOOL', 'Bảng học sinh'],
-                  ['STUDENT', 'Bảng sinh viên'],
-                  ['ENTERPRISE', 'Bảng doanh nghiệp'],
-                ].map(([val, label]) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => {
-                      setTableFilter(val);
-                      setIsTableFilterOpen(false);
-                    }}
-                    className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-bold transition-colors ${
-                      tableFilter === val
-                        ? 'bg-[#0f766e]/10 text-[#0f766e]'
-                        : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
+            {isViewConfigOpen && (
+              <div className="absolute right-0 z-[70] mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+                {/* 1. Chọn Dạng hiển thị */}
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">Dạng hiển thị</p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('table')}
+                      className={`flex items-center justify-center gap-1.5 p-2 rounded-xl text-xs font-bold border transition ${
+                        viewMode === 'table' ? 'bg-blue-50 border-blue-300 text-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      📋 Bảng danh sách
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setViewMode('grid')}
+                      className={`flex items-center justify-center gap-1.5 p-2 rounded-xl text-xs font-bold border transition ${
+                        viewMode === 'grid' ? 'bg-blue-50 border-blue-300 text-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      🔲 Thẻ ô vuông
+                    </button>
+                  </div>
+                </div>
+
+                {/* 2. Cấu hình số ô vuông nếu dạng Thẻ */}
+                {viewMode === 'grid' && (
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">Số ô vuông 1 hàng</p>
+                    <div className="grid grid-cols-4 gap-1.5">
+                      {[2, 3, 4, 6].map((num) => (
+                        <button
+                          key={num}
+                          type="button"
+                          onClick={() => setGridCols(num)}
+                          className={`py-1.5 rounded-lg text-xs font-bold border text-center transition ${
+                            gridCols === num ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                        >
+                          {num} ô
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 3. Ẩn / Hiện cột nếu dạng Bảng */}
+                {viewMode === 'table' && (
+                  <div>
+                    <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">⚙️ Ẩn / Hiện cột hiển thị</p>
+                    <div className="space-y-2">
+                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <input type="checkbox" checked={visibleColumns.project} onChange={(e) => setVisibleColumns({ ...visibleColumns, project: e.target.checked })} className="rounded text-blue-600" />
+                        Cột Dự án
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <input type="checkbox" checked={visibleColumns.table} onChange={(e) => setVisibleColumns({ ...visibleColumns, table: e.target.checked })} className="rounded text-blue-600" />
+                        Cột Bảng thi
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <input type="checkbox" checked={visibleColumns.leader} onChange={(e) => setVisibleColumns({ ...visibleColumns, leader: e.target.checked })} className="rounded text-blue-600" />
+                        Cột Đại diện / Trưởng nhóm
+                      </label>
+                      <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                        <input type="checkbox" checked={visibleColumns.votes} onChange={(e) => setVisibleColumns({ ...visibleColumns, votes: e.target.checked })} className="rounded text-blue-600" />
+                        Cột Điểm bình chọn
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
-          </div>
-
-          {/* Custom Vòng thi Dropdown */}
-          <div className="relative w-full" ref={roundDropdownRef}>
-            <button
-              type="button"
-              onClick={() => {
-                setIsRoundFilterOpen(!isRoundFilterOpen);
-                setIsTableFilterOpen(false);
-              }}
-              className="flex h-[38px] w-full items-center justify-between rounded-[10px] border border-slate-200 bg-[#fbfdfc] px-3 text-xs font-bold text-slate-700 shadow-sm transition hover:border-[#0f766e] focus:outline-none focus:border-[#0f766e]"
-            >
-              <span>
-                {roundFilter === 'ALL' ? 'Tất cả vòng thi' : roundFilter}
-              </span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className={`text-slate-500 transition-transform duration-200 ${isRoundFilterOpen ? 'rotate-180' : ''}`}
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </button>
-
-            {isRoundFilterOpen && (
-              <div className="absolute left-0 right-0 z-[60] mt-1.5 rounded-xl border border-slate-200 bg-white/95 p-1 shadow-lg backdrop-blur-md">
-                {[
-                  'ALL',
-                  'Vòng loại',
-                  'Vòng bán kết',
-                  'Vòng chung kết',
-                ].map((val) => (
-                  <button
-                    key={val}
-                    type="button"
-                    onClick={() => {
-                      setRoundFilter(val);
-                      setIsRoundFilterOpen(false);
-                    }}
-                    className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-xs font-bold transition-colors ${
-                      roundFilter === val
-                        ? 'bg-[#0f766e]/10 text-[#0f766e]'
-                        : 'text-slate-700 hover:bg-slate-50'
-                    }`}
-                  >
-                    {val === 'ALL' ? 'Tất cả vòng thi' : val}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="flex h-[38px] items-center justify-center rounded-[12px] border border-slate-200 bg-white text-[11px] font-black text-slate-500 shadow-sm">
-            {filteredProjects.length.toLocaleString()} kết quả
           </div>
         </div>
       </section>
 
-      <section className="admin-card overflow-hidden p-0">
-        {selectedIds.length > 0 && (
-          <div className="flex items-center justify-between border-b border-rose-100 bg-rose-50/60 px-5 py-3 backdrop-blur-sm transition-all duration-300">
-            <span className="text-xs font-bold text-rose-700">
-              Đã chọn <b className="text-[14px]">{selectedIds.length}</b> dự án
-            </span>
-            <button
-              type="button"
-              onClick={handleBulkDelete}
-              className="flex items-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition"
-            >
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 6h18" />
-                <path d="M8 6V4h8v2" />
-                <path d="M19 6l-1 14H6L5 6" />
-              </svg>
-              Xóa các mục đã chọn
-            </button>
-          </div>
-        )}
-        <div className="w-full overflow-x-auto">
+      {/* RENDER VIEW (TABLE OR GRID) */}
+      {viewMode === 'grid' ? (
+        <div className={`grid gap-4 ${
+          gridCols === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+          gridCols === 3 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' :
+          gridCols === 6 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-6' :
+          'grid-cols-1 sm:grid-cols-2 md:grid-cols-4'
+        }`}>
+          {filteredProjects.map((p) => (
+            <div key={p.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-3 group">
+              <div className="flex items-center justify-between">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                  {p.sbd}
+                </span>
+                <span className="text-xs font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
+                  🗳️ {p.votes} vote
+                </span>
+              </div>
+              <div className="flex flex-col items-center text-center space-y-2 py-2">
+                <div className="w-20 h-20 rounded-full border border-slate-200 bg-slate-50 overflow-hidden shadow-inner">
+                  <img src={formatAssetUrl(p.imageUrl)} className="h-full w-full object-cover cursor-pointer" alt={p.name} />
+                </div>
+                <h3 className="font-extrabold text-slate-900 text-xs leading-snug line-clamp-2">{p.name}</h3>
+                <p className="text-[11px] font-semibold text-slate-500">{p.teamName || p.representativeSchool || 'HUIT Startup'}</p>
+              </div>
+              <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                <button onClick={() => openEditModal(p)} className="text-xs font-bold text-blue-600 hover:underline">Sửa</button>
+                <button onClick={() => handleDelete(p.id)} className="text-xs font-bold text-rose-600 hover:underline">Xóa</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <section className="admin-card overflow-hidden p-0">
+          {selectedIds.length > 0 && (
+            <div className="flex items-center justify-between border-b border-rose-100 bg-rose-50/60 px-5 py-3 backdrop-blur-sm transition-all duration-300">
+              <span className="text-xs font-bold text-rose-700">
+                Đã chọn <b className="text-[14px]">{selectedIds.length}</b> dự án
+              </span>
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                className="flex items-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition"
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+                Xóa các mục đã chọn
+              </button>
+            </div>
+          )}
+          <div className="w-full overflow-x-auto">
           <table className="dashboard-table min-w-[860px] text-left">
             <thead>
               <tr className="text-[10px] font-black uppercase tracking-[0.14em] text-slate-500">
@@ -1839,6 +1992,7 @@ export default function CandidatesAdminPage() {
           </table>
         </div>
       </section>
+      )}
 
       {modalMode && (
         <ProjectModal

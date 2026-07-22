@@ -3,7 +3,7 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { apiUrl } from './api';
 
 const dashboardIcon = (
@@ -101,7 +101,7 @@ const navGroups = [
     items: [
       { href: '/', label: 'Tổng quan', icon: dashboardIcon },
       { href: '/candidates', label: 'Dự án', icon: candidatesIcon },
-      { href: '/votes', label: 'Lịch sử các lượt vote', icon: votesIcon },
+      { href: '/votes', label: 'Lịch sử bình chọn', icon: votesIcon },
       { href: '/users', label: 'Người dùng', icon: usersIcon },
       { href: '/sponsors', label: 'Nhà tài trợ', icon: sponsorsIcon },
       { href: '/news', label: 'Tin tức', icon: newsIcon },
@@ -468,16 +468,77 @@ function BellButton() {
 
 export default function ClientLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const currentMeta = getPageMeta(pathname);
   const [sidebarWidth, setSidebarWidth] = React.useState(238);
   const [isResizing, setIsResizing] = React.useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
+
+  // Global Image Lightbox state
+  const [lightboxImage, setLightboxImage] = React.useState<{ url: string; title?: string } | null>(null);
+
+  // Browser-like tab system & Tab Switcher Modal
+  const [isTabModalOpen, setIsTabModalOpen] = React.useState(false);
+  const [openTabs, setOpenTabs] = React.useState<Array<{ href: string; label: string; icon?: React.ReactNode }>>([
+    { href: '/', label: 'Tổng quan', icon: dashboardIcon },
+  ]);
+
+  React.useEffect(() => {
+    const matched = navItems.find((item) => (item.href === '/' ? pathname === '/' : pathname.startsWith(item.href)));
+    if (matched) {
+      setOpenTabs((prev) => {
+        if (prev.some((tab) => tab.href === matched.href)) return prev;
+        return [...prev, { href: matched.href, label: matched.label, icon: matched.icon }];
+      });
+    }
+  }, [pathname]);
+
+  const handleTabClick = (href: string) => {
+    if (pathname !== href) {
+      router.push(href);
+    }
+    setIsTabModalOpen(false);
+  };
+
+  const closeTab = (e: React.MouseEvent, hrefToClose: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (openTabs.length <= 1) return;
+
+    const nextTabs = openTabs.filter((t) => t.href !== hrefToClose);
+    setOpenTabs(nextTabs);
+
+    if (pathname === hrefToClose) {
+      const fallbackTab = nextTabs[nextTabs.length - 1] || { href: '/' };
+      router.push(fallbackTab.href);
+    }
+  };
+
+  const closeOtherTabs = () => {
+    const currentTab = openTabs.find((t) => isActive(t.href)) || { href: '/', label: 'Tổng quan', icon: dashboardIcon };
+    setOpenTabs([currentTab]);
+    setIsTabModalOpen(false);
+  };
 
   React.useEffect(() => {
     const savedWidth = localStorage.getItem('admin_sidebar_width');
     if (savedWidth) setSidebarWidth(parseInt(savedWidth, 10));
     const savedCollapsed = localStorage.getItem('admin_sidebar_collapsed');
     if (savedCollapsed) setIsSidebarCollapsed(savedCollapsed === 'true');
+
+    // Global image click listener for Lightbox popup
+    const handleGlobalImageClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target && target.tagName === 'IMG' && (target.classList.contains('cursor-pointer') || target.closest('.lightbox-trigger'))) {
+        const img = target as HTMLImageElement;
+        if (img.src && !img.src.includes('data:image/svg+xml')) {
+          setLightboxImage({ url: img.src, title: img.alt });
+        }
+      }
+    };
+
+    document.addEventListener('click', handleGlobalImageClick);
+    return () => document.removeEventListener('click', handleGlobalImageClick);
   }, []);
 
   const toggleSidebar = () => {
@@ -644,12 +705,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <header className="sticky top-0 z-20 border-b border-white/70 bg-[rgba(248,251,255,0.9)] px-5 py-3 backdrop-blur-xl md:px-6">
-          <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-3">
+        <header className="sticky top-0 z-20 border-b border-white/70 bg-[rgba(248,251,255,0.92)] px-5 pt-3 pb-2 backdrop-blur-xl md:px-6">
+          <div className="mx-auto flex w-full max-w-[1320px] flex-col gap-2">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0">
                 <h1 className="text-[17px] font-extrabold leading-tight text-slate-950">{currentMeta.title}</h1>
-                <p className="mt-0.5 text-[13px] font-medium text-slate-500">{currentMeta.description}</p>
+                <p className="mt-0.5 text-[12px] font-medium text-slate-500">{currentMeta.description}</p>
               </div>
 
               <div className="flex flex-wrap items-center gap-3">
@@ -664,24 +725,58 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               </div>
             </div>
 
-            <nav className="flex gap-2 overflow-x-auto pb-0.5 lg:hidden">
-              {navItems.map((item) => {
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`inline-flex shrink-0 items-center gap-2 rounded-[14px] border px-3 py-2 text-[12px] font-semibold shadow-sm transition ${active
-                      ? 'border-[rgba(21,101,216,0.16)] bg-[var(--primary-soft)] text-[var(--primary-strong)]'
-                      : 'border-slate-200 bg-white text-slate-600'
-                    }`}
-                  >
-                    <span className="flex h-4 w-4 items-center justify-center">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
+            {/* Modern Browser Multi-Tab Header Bar & Quick Switcher Button */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 pb-0.5 border-t border-slate-200/60 mt-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+                {openTabs.map((tab) => {
+                  const active = isActive(tab.href);
+                  return (
+                    <div
+                      key={tab.href}
+                      onClick={() => handleTabClick(tab.href)}
+                      className={`group relative flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs transition-all duration-200 cursor-pointer shrink-0 select-none ${
+                        active
+                          ? 'bg-white text-blue-700 shadow-sm border border-slate-200/80 font-black'
+                          : 'bg-slate-100/70 text-slate-600 hover:text-slate-900 hover:bg-white/90 font-bold border border-slate-200/50'
+                      }`}
+                    >
+                      {active && (
+                        <span className="absolute top-0 left-3 right-3 h-[2px] bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full" />
+                      )}
+                      <span className={`flex h-4 w-4 items-center justify-center transition ${active ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-700'}`}>
+                        {tab.icon}
+                      </span>
+                      <span className="truncate max-w-[130px] text-[12px]">{tab.label}</span>
+                      {openTabs.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={(e) => closeTab(e, tab.href)}
+                          className="grid h-4 w-4 place-items-center rounded-full text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition ml-0.5 text-[10px] font-bold"
+                          title="Đóng tab"
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Quick Tab Switcher Modal Trigger Button */}
+              <button
+                type="button"
+                onClick={() => setIsTabModalOpen(true)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-blue-50 text-[11px] font-black text-slate-700 hover:text-blue-700 shadow-sm transition shrink-0"
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="3" width="7" height="7" rx="1.5" />
+                  <rect x="14" y="14" width="7" height="7" rx="1.5" />
+                  <rect x="3" y="14" width="7" height="7" rx="1.5" />
+                </svg>
+                Quản lý Tabs <span className="rounded-full bg-blue-100 px-1.5 py-0.2 text-[10px] font-black text-blue-700">{openTabs.length}</span>
+              </button>
+            </div>
           </div>
         </header>
 
@@ -691,6 +786,132 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </div>
         </main>
       </div>
+
+      {/* Quick Tab Switcher Modal */}
+      {isTabModalOpen && (
+        <div
+          className="fixed inset-0 z-[9999] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setIsTabModalOpen(false)}
+        >
+          <div
+            className="relative w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 flex flex-col space-y-4 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="grid h-8 w-8 place-items-center rounded-xl bg-blue-50 text-blue-600 font-bold">
+                  📑
+                </div>
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-900">Danh sách Tab đang mở</h3>
+                  <p className="text-[11px] font-medium text-slate-500">Chuyển đổi nhanh hoặc đóng bớt trang quản trị</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsTabModalOpen(false)}
+                className="grid h-7 w-7 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* List of open tabs */}
+            <div className="max-h-[320px] overflow-y-auto space-y-1.5 pr-1">
+              {openTabs.map((tab) => {
+                const active = isActive(tab.href);
+                return (
+                  <div
+                    key={tab.href}
+                    onClick={() => handleTabClick(tab.href)}
+                    className={`flex items-center justify-between p-3 rounded-xl border transition cursor-pointer ${
+                      active
+                        ? 'bg-blue-50/80 border-blue-200 text-blue-800 font-extrabold shadow-sm'
+                        : 'bg-slate-50/70 border-slate-200/60 text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center ${active ? 'text-blue-600' : 'text-slate-400'}`}>
+                        {tab.icon}
+                      </span>
+                      <span className="truncate text-xs font-bold">{tab.label}</span>
+                      {active && (
+                        <span className="rounded-md bg-blue-600 px-2 py-0.5 text-[9px] font-black text-white uppercase tracking-wider">
+                          Đang xem
+                        </span>
+                      )}
+                    </div>
+                    {openTabs.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={(e) => closeTab(e, tab.href)}
+                        className="grid h-6 w-6 place-items-center rounded-lg text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition"
+                        title="Đóng tab này"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
+              {openTabs.length > 1 ? (
+                <button
+                  type="button"
+                  onClick={closeOtherTabs}
+                  className="text-xs font-bold text-rose-600 hover:underline"
+                >
+                  Xóa tất cả các tab khác
+                </button>
+              ) : (
+                <span className="text-slate-400 text-[11px]">Đang chỉ mở 1 tab</span>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsTabModalOpen(false)}
+                className="rounded-xl bg-slate-900 px-4 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Global Image Lightbox Modal */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-[99999] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setLightboxImage(null)}
+        >
+          <div
+            className="relative max-w-4xl max-h-[90vh] flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setLightboxImage(null)}
+              className="absolute -top-12 right-0 grid h-10 w-10 place-items-center rounded-full bg-white/20 text-white hover:bg-rose-600 transition font-bold shadow-lg"
+            >
+              ✕
+            </button>
+            <img
+              src={lightboxImage.url}
+              alt={lightboxImage.title || 'Xem ảnh'}
+              className="max-h-[82vh] max-w-full rounded-2xl object-contain shadow-2xl border border-white/20 bg-black/40"
+            />
+            {lightboxImage.title && (
+              <p className="mt-3 text-xs font-bold text-white/90 bg-slate-900/80 px-4 py-1.5 rounded-full border border-white/10">
+                {lightboxImage.title}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

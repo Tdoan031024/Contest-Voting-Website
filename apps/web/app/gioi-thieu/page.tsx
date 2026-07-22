@@ -789,6 +789,7 @@ export default function GioiThieuPage() {
             {/* CTA đăng ký đầu trang */}
             <div
               className={`about-registration-card w-full max-w-[920px] mb-6 p-5 sm:p-6 rounded-[24px] flex flex-col sm:flex-row items-center justify-between gap-6 ${isMounted ? 'animate-on-scroll' : ''} ${isMounted && titleSection.visible ? 'visible' : ''}`}
+              suppressHydrationWarning
             >
               <div className="text-center sm:text-left">
                 <span className={`about-status-pill ${!isMounted || registrationOpen === null ? 'pending' : registrationOpen ? 'open' : 'closed'}`}>
@@ -846,63 +847,6 @@ export default function GioiThieuPage() {
                   </div>
                 </div>
               </div>
-
-              {/* Card Đơn vị đồng hành */}
-              <div 
-                className={`about-card w-full p-6 sm:p-8 flex flex-col space-y-6 relative overflow-hidden group ${isMounted ? 'animate-on-scroll' : ''} ${isMounted && gridSection.visible ? 'visible' : ''}`}
-                style={{ transitionDelay: isMounted ? '150ms' : '0ms' }}
-              >
-                <div className="absolute -top-8 -right-8 w-24 h-24 bg-[color:var(--about-primary)]/10 rounded-full blur-xl group-hover:bg-[color:var(--about-primary)]/20 transition-all duration-500 pointer-events-none" />
-
-                <div className="flex items-center space-x-3 pb-4 border-b border-[color:var(--about-border)]">
-                  <div className="p-2.5 bg-[color:color-mix(in_srgb,_var(--about-primary)_10%,_transparent)] rounded-xl text-[color:var(--about-accent)] border border-[color:color-mix(in_srgb,_var(--about-primary)_20%,_transparent)]">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
-                  </div>
-                  <h3 className="text-[18px] sm:text-[20px] font-bold text-[color:var(--about-text-primary)] uppercase tracking-wide">
-                    Đơn vị tổ chức &amp; đồng hành
-                  </h3>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {organizers.map((line: string, idx: number) => {
-                    const colonIndex = line.indexOf(':');
-                    let label = "Đơn vị";
-                    let content = line;
-                    if (colonIndex !== -1) {
-                      label = line.substring(0, colonIndex).trim();
-                      content = line.substring(colonIndex + 1).trim();
-                    }
-                    
-                    let tagStyle = "text-[color:var(--about-accent)] bg-[color:color-mix(in_srgb,_var(--about-accent)_10%,_transparent)] border-[color:color-mix(in_srgb,_var(--about-accent)_20%,_transparent)]";
-                    if (label.toLowerCase().includes("tổ chức")) {
-                      tagStyle = "text-[color:var(--about-primary)] bg-[color:color-mix(in_srgb,_var(--about-primary)_10%,_transparent)] border-[color:color-mix(in_srgb,_var(--about-primary)_20%,_transparent)]";
-                    } else if (label.toLowerCase().includes("tài trợ")) {
-                      tagStyle = "text-[color:var(--about-warning)] bg-[color:color-mix(in_srgb,_var(--about-warning)_10%,_transparent)] border-[color:color-mix(in_srgb,_var(--about-warning)_20%,_transparent)]";
-                    } else if (label.toLowerCase().includes("phối hợp")) {
-                      tagStyle = "text-emerald-700 dark:text-emerald-300 bg-emerald-500/10 border-emerald-500/20";
-                    } else if (label.toLowerCase().includes("bảo trợ")) {
-                      tagStyle = "text-purple-700 dark:text-purple-300 bg-purple-500/10 border-purple-500/20";
-                    }
-
-                    return (
-                      <div 
-                        key={idx} 
-                        className="flex flex-col sm:flex-row sm:items-center gap-3 bg-[color:var(--about-surface-sec)]/40 hover:bg-[color:var(--about-surface-sec)]/90 border border-[color:var(--about-border)] rounded-xl p-3 sm:p-4 transition-all duration-300 shadow-sm"
-                      >
-                        <span className={`text-[11px] font-bold uppercase tracking-wider px-2.5 py-1.5 rounded-lg border shrink-0 text-center sm:min-w-[125px] ${tagStyle}`}>
-                          {label}
-                        </span>
-                        <span className="text-[14px] text-[color:var(--about-text-primary)] font-medium leading-relaxed text-left">
-                          {content}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
             </section>
 
             {/* Section 2: Lĩnh vực, Quyền lợi, Giải thưởng */}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sponsor } from '@huitfest/shared';
 import { apiUrl, formatAssetUrl } from '../../api';
 
@@ -58,12 +58,11 @@ function DetailModal({
 
           <div className="rounded-xl border border-slate-100 bg-slate-50/50 p-3 col-span-2 sm:col-span-1">
             <p className={labelText}>Phân hạng (Tier)</p>
-            <span className={`inline-block mt-2 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${
-              sponsor.tier === 'PLATINUM' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' :
+            <span className={`inline-block mt-2 rounded-full border px-2.5 py-0.5 text-[10px] font-bold ${sponsor.tier === 'PLATINUM' ? 'border-indigo-200 bg-indigo-50 text-indigo-700' :
               sponsor.tier === 'GOLD' ? 'border-amber-200 bg-amber-50 text-amber-700' :
-              sponsor.tier === 'SILVER' ? 'border-slate-200 bg-slate-50 text-slate-700' :
-              'border-teal-200 bg-teal-50 text-teal-700'
-            }`}>
+                sponsor.tier === 'SILVER' ? 'border-slate-200 bg-slate-50 text-slate-700' :
+                  'border-teal-200 bg-teal-50 text-teal-700'
+              }`}>
               {TIER_LABELS[sponsor.tier] || sponsor.tier}
             </span>
           </div>
@@ -124,14 +123,39 @@ export default function SponsorsAdminPage() {
   const [hideSponsorBanner, setHideSponsorBanner] = useState<boolean>(false);
   const [savingToggle, setSavingToggle] = useState<boolean>(false);
 
+  // View Mode & Column Controls
+  const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
+  const [gridCols, setGridCols] = useState<number>(4);
+  const [isViewConfigOpen, setIsViewConfigOpen] = useState(false);
+  const viewConfigRef = useRef<HTMLDivElement>(null);
+  const [visibleColumns, setVisibleColumns] = useState({
+    select: true,
+    logo: true,
+    name: true,
+    tier: true,
+    actions: true,
+  });
+  const [sortBy, setSortBy] = useState<'name' | 'tier'>('name');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+
   useEffect(() => {
     setSelectedIds([]);
   }, [search]);
-  
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (viewConfigRef.current && !viewConfigRef.current.contains(event.target as Node)) {
+        setIsViewConfigOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Modals state
   const [modalMode, setModalMode] = useState<'add' | 'edit' | 'detail' | null>(null);
   const [selectedSponsor, setSelectedSponsor] = useState<Sponsor | null>(null);
-  
+
   // Form fields state
   const [formName, setFormName] = useState('');
   const [formTier, setFormTier] = useState<Sponsor['tier']>('PLATINUM');
@@ -334,19 +358,26 @@ export default function SponsorsAdminPage() {
     s.name.toLowerCase().includes(search.toLowerCase()) || s.tier.toLowerCase().includes(search.toLowerCase())
   );
 
+  const sortedSponsors = [...filteredSponsors].sort((a, b) => {
+    let valA = a[sortBy] || '';
+    let valB = b[sortBy] || '';
+    if (sortOrder === 'asc') return valA.localeCompare(valB);
+    return valB.localeCompare(valA);
+  });
+
   return (
     <div className="flex flex-col space-y-4">
-      
+
       {/* Title Header */}
       <div className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Quản lý đối tác</p>
-          <h1 className="text-lg font-black text-[#123c34]">Nhà tài trợ & Đối tác</h1>
-          <p className="text-xs text-[#6b7773] mt-0.5">Danh sách nhà tài trợ đồng hành cùng sự kiện HUIT's Iconic 2024.</p>
+          <h1 className="text-lg font-black text-[#123c34]">Nhà tài trợ &amp; Đối tác</h1>
+          <p className="text-xs text-[#6b7773] mt-0.5">Danh sách nhà tài trợ đồng hành cùng sự kiện HUIT Startup 2026.</p>
         </div>
-        <button 
+        <button
           onClick={openAddModal}
-          className="px-3.5 py-2 bg-[#e45136] hover:bg-[#c83f28] rounded-lg text-white font-bold text-[11px] shadow transition active:scale-[0.98]"
+          className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 rounded-xl text-white font-extrabold text-xs shadow transition active:scale-[0.98]"
         >
           + Thêm nhà tài trợ mới
         </button>
@@ -361,9 +392,8 @@ export default function SponsorsAdminPage() {
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-extrabold text-slate-800">Hiển thị Banner &amp; Logo Nhà tài trợ trên Trang chủ</h3>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                hideSponsorBanner ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-              }`}>
+              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${hideSponsorBanner ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                }`}>
                 {hideSponsorBanner ? 'ĐANG ẨN' : 'ĐANG HIỂN THỊ'}
               </span>
             </div>
@@ -374,152 +404,301 @@ export default function SponsorsAdminPage() {
           type="button"
           disabled={savingToggle}
           onClick={handleToggleHideSponsorBanner}
-          className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
-            !hideSponsorBanner ? 'bg-emerald-600' : 'bg-slate-300'
-          }`}
+          className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${!hideSponsorBanner ? 'bg-emerald-600' : 'bg-slate-300'
+            }`}
           title={hideSponsorBanner ? 'Hiện banner nhà tài trợ' : 'Ẩn banner nhà tài trợ'}
         >
           <span
-            className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-              !hideSponsorBanner ? 'translate-x-5' : 'translate-x-0'
-            }`}
+            className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${!hideSponsorBanner ? 'translate-x-5' : 'translate-x-0'
+              }`}
           />
         </button>
       </div>
 
-      {/* Filter / Search input */}
-      <div className="w-full max-w-md">
-        <input 
-          type="text" 
-          placeholder="Tìm kiếm nhà tài trợ theo tên hoặc phân hạng..." 
-          className="w-full h-9 px-4 rounded-lg bg-white border border-[#dce5e1] text-[#18211f] placeholder-[#9aa9a4] text-xs focus:outline-none focus:border-[#0f766e] transition-colors shadow-sm"
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
+      {/* Controls Bar: Search + Popover View Config Button */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+        {/* Search Input (Short & Compact) */}
+        <div className="w-full sm:w-[280px] relative shrink-0">
+          <input
+            type="text"
+            placeholder="Tìm kiếm nhà tài trợ..."
+            className="w-full h-9 pl-9 pr-3 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white transition"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+          <span className="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
+        </div>
+
+        {/* Right: Single View Config Popover Button & Modal Dropdown */}
+        <div className="relative shrink-0" ref={viewConfigRef}>
+          <button
+            type="button"
+            onClick={() => setIsViewConfigOpen(!isViewConfigOpen)}
+            className="flex h-[38px] items-center gap-2 rounded-[10px] border border-slate-200 bg-white px-3.5 text-xs font-extrabold text-slate-800 shadow-sm transition hover:border-blue-600 hover:text-blue-700"
+          >
+            <svg viewBox="0 0 24 24" className="h-4 w-4 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="14" width="7" height="7" rx="1.5" />
+              <rect x="3" y="14" width="7" height="7" rx="1.5" />
+            </svg>
+            <span>Hiển thị</span>
+            <span className="rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-[10px] font-black border border-blue-200">
+              {viewMode === 'table' ? '📋 Bảng' : `🔲 Thẻ (${gridCols})`}
+            </span>
+            <svg viewBox="0 0 24 24" className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${isViewConfigOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9" /></svg>
+          </button>
+
+          {isViewConfigOpen && (
+            <div className="absolute right-0 z-[70] mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl space-y-4 animate-in fade-in zoom-in-95 duration-150">
+              {/* 1. Chọn Dạng hiển thị */}
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">Dạng hiển thị</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('table')}
+                    className={`flex items-center justify-center gap-1.5 p-2 rounded-xl text-xs font-bold border transition ${viewMode === 'table' ? 'bg-blue-50 border-blue-300 text-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                  >
+                    📋 Bảng
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setViewMode('grid')}
+                    className={`flex items-center justify-center gap-1.5 p-2 rounded-xl text-xs font-bold border transition ${viewMode === 'grid' ? 'bg-blue-50 border-blue-300 text-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                  >
+                    🔲 Thẻ
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Cấu hình số ô vuông nếu dạng Thẻ */}
+              {viewMode === 'grid' && (
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">Số ô vuông 1 hàng</p>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[2, 3, 4, 6].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setGridCols(num)}
+                        className={`py-1.5 rounded-lg text-xs font-bold border text-center transition ${gridCols === num ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
+                          }`}
+                      >
+                        {num} ô
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 3. Ẩn / Hiện cột nếu dạng Bảng */}
+              {viewMode === 'table' && (
+                <div>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">⚙️ Ẩn / Hiện cột hiển thị</p>
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                      <input type="checkbox" checked={visibleColumns.logo} onChange={(e) => setVisibleColumns({ ...visibleColumns, logo: e.target.checked })} className="rounded text-blue-600" />
+                      Cột Logo nhà tài trợ
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                      <input type="checkbox" checked={visibleColumns.name} onChange={(e) => setVisibleColumns({ ...visibleColumns, name: e.target.checked })} className="rounded text-blue-600" />
+                      Cột Tên nhà tài trợ
+                    </label>
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+                      <input type="checkbox" checked={visibleColumns.tier} onChange={(e) => setVisibleColumns({ ...visibleColumns, tier: e.target.checked })} className="rounded text-blue-600" />
+                      Cột Phân hạng đối tác
+                    </label>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Sponsors Table */}
-      <div className="w-full bg-white border border-[#dce5e1] rounded-xl overflow-hidden shadow-sm">
-        {selectedIds.length > 0 && (
-          <div className="flex items-center justify-between border-b border-rose-100 bg-rose-50/60 px-5 py-3 backdrop-blur-sm transition-all duration-300">
-            <span className="text-xs font-bold text-rose-700">
-              Đã chọn <b className="text-[14px]">{selectedIds.length}</b> nhà tài trợ
-            </span>
-            <button
-              type="button"
-              onClick={handleBulkDelete}
-              className="flex items-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition"
-            >
-              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 6h18" />
-                <path d="M8 6V4h8v2" />
-                <path d="M19 6l-1 14H6L5 6" />
-              </svg>
-              Xóa các mục đã chọn
-            </button>
-          </div>
-        )}
-        <table className="w-full border-collapse text-left text-[#18211f]">
-          <thead className="bg-[#fbfdfc] text-[10px] font-black uppercase tracking-wider text-[#7a8b85] border-b border-[#edf2f0]">
-            <tr>
-              <th className="px-5 py-3 w-10">
-                <input
-                  type="checkbox"
-                  checked={filteredSponsors.length > 0 && selectedIds.length === filteredSponsors.length}
-                  onChange={(e) => {
-                    if (e.target.checked) {
-                      setSelectedIds(filteredSponsors.map((s) => s.id));
-                    } else {
-                      setSelectedIds([]);
-                    }
-                  }}
-                  className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
-                />
-              </th>
-              <th className="px-5 py-3">Logo</th>
-              <th className="px-5 py-3 min-w-[220px]">Tên Nhà Tài Trợ</th>
-              <th className="px-5 py-3">Phân hạng</th>
-              <th className="px-5 py-3 text-center">Hành động</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-[#edf2f0] text-xs">
-            {filteredSponsors.map(s => (
-              <tr key={s.id} className="hover:bg-[#edf4f1]/20 transition-colors">
-                <td className="px-5 py-2.5 w-10">
+      {/* TABLE VIEW */}
+      {viewMode === 'table' && (
+        <div className="w-full bg-white border border-[#dce5e1] rounded-xl overflow-hidden shadow-sm">
+          {selectedIds.length > 0 && (
+            <div className="flex items-center justify-between border-b border-rose-100 bg-rose-50/60 px-5 py-3 backdrop-blur-sm transition-all duration-300">
+              <span className="text-xs font-bold text-rose-700">
+                Đã chọn <b className="text-[14px]">{selectedIds.length}</b> nhà tài trợ
+              </span>
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                className="flex items-center gap-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm transition"
+              >
+                <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14H6L5 6" />
+                </svg>
+                Xóa các mục đã chọn
+              </button>
+            </div>
+          )}
+          <table className="w-full border-collapse text-left text-[#18211f]">
+            <thead className="bg-[#fbfdfc] text-[10px] font-black uppercase tracking-wider text-[#7a8b85] border-b border-[#edf2f0]">
+              <tr>
+                <th className="px-5 py-3 w-10">
                   <input
                     type="checkbox"
-                    checked={selectedIds.includes(s.id)}
+                    checked={sortedSponsors.length > 0 && selectedIds.length === sortedSponsors.length}
                     onChange={(e) => {
                       if (e.target.checked) {
-                        setSelectedIds((prev) => [...prev, s.id]);
+                        setSelectedIds(sortedSponsors.map((s) => s.id));
                       } else {
-                        setSelectedIds((prev) => prev.filter((id) => id !== s.id));
+                        setSelectedIds([]);
                       }
                     }}
                     className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
                   />
-                </td>
-                <td className="px-5 py-2.5">
-                  <div className="bg-white p-1 rounded-lg border border-[#dce5e1] flex items-center justify-center w-16 h-9 overflow-hidden shadow-sm">
-                    <img src={formatAssetUrl(s.logoUrl)} className="max-w-full max-h-full object-contain" alt={s.name} />
-                  </div>
-                </td>
-                <td className="px-5 py-2.5 font-bold text-[#123c34] whitespace-nowrap">{s.name}</td>
-                <td className="px-5 py-2.5">
-                  <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${TIER_COLORS[s.tier] || TIER_COLORS.PARTNER}`}>
-                    {s.tier}
-                  </span>
-                </td>
-                <td className="px-5 py-2.5">
-                  <div className="flex items-center justify-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => openDetailModal(s)}
-                      className="grid h-7 w-7 place-items-center rounded-md border border-slate-200 bg-white text-slate-500 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 transition"
-                      title="Xem chi tiết"
-                    >
-                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
-                        <circle cx="12" cy="12" r="3" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(s)}
-                      className="grid h-7 w-7 place-items-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100 transition"
-                      title="Chỉnh sửa"
-                    >
-                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M12 20h9" />
-                        <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(s.id)}
-                      className="grid h-7 w-7 place-items-center rounded-md border border-red-200 bg-red-50 text-red-600 hover:border-red-400 hover:bg-red-100 transition"
-                      title="Xóa đối tác"
-                    >
-                      <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M3 6h18" />
-                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                      </svg>
-                    </button>
-                  </div>
-                </td>
+                </th>
+                {visibleColumns.logo && <th className="px-5 py-3">Logo</th>}
+                {visibleColumns.name && (
+                  <th
+                    className="px-5 py-3 min-w-[220px] cursor-pointer hover:text-slate-900 transition select-none"
+                    onClick={() => {
+                      setSortBy('name');
+                      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                    }}
+                  >
+                    Tên Nhà Tài Trợ {sortBy === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+                  </th>
+                )}
+                {visibleColumns.tier && (
+                  <th
+                    className="px-5 py-3 cursor-pointer hover:text-slate-900 transition select-none"
+                    onClick={() => {
+                      setSortBy('tier');
+                      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+                    }}
+                  >
+                    Phân hạng {sortBy === 'tier' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+                  </th>
+                )}
+                {visibleColumns.actions && <th className="px-5 py-3 text-center">Hành động</th>}
               </tr>
-            ))}
-            {filteredSponsors.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-5 py-10 text-center text-sm font-semibold text-[#7a8b85]">
-                  Chưa có nhà tài trợ nào phù hợp bộ lọc.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-[#edf2f0] text-xs">
+              {sortedSponsors.map((s) => (
+                <tr key={s.id} className="hover:bg-[#edf4f1]/20 transition-colors">
+                  <td className="px-5 py-2.5 w-10">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(s.id)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedIds([...selectedIds, s.id]);
+                        } else {
+                          setSelectedIds(selectedIds.filter((id) => id !== s.id));
+                        }
+                      }}
+                      className="rounded border-slate-300 text-teal-600 focus:ring-teal-500 cursor-pointer"
+                    />
+                  </td>
+                  {visibleColumns.logo && (
+                    <td className="px-5 py-2.5">
+                      <div className="bg-white p-1 rounded-lg border border-[#dce5e1] flex items-center justify-center w-16 h-9 overflow-hidden shadow-sm">
+                        <img src={formatAssetUrl(s.logoUrl)} className="max-w-full max-h-full object-contain cursor-pointer" alt={s.name} />
+                      </div>
+                    </td>
+                  )}
+                  {visibleColumns.name && (
+                    <td className="px-5 py-2.5 font-bold text-[#123c34] whitespace-nowrap">{s.name}</td>
+                  )}
+                  {visibleColumns.tier && (
+                    <td className="px-5 py-2.5">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${TIER_COLORS[s.tier] || TIER_COLORS.PARTNER}`}>
+                        {s.tier}
+                      </span>
+                    </td>
+                  )}
+                  {visibleColumns.actions && (
+                    <td className="px-5 py-2.5">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => openDetailModal(s)}
+                          className="grid h-7 w-7 place-items-center rounded-md border border-slate-200 bg-white text-slate-500 hover:border-sky-300 hover:bg-sky-50 hover:text-sky-700 transition"
+                          title="Xem chi tiết"
+                        >
+                          👁️
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openEditModal(s)}
+                          className="grid h-7 w-7 place-items-center rounded-md border border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100 transition"
+                          title="Chỉnh sửa"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(s.id)}
+                          className="grid h-7 w-7 place-items-center rounded-md border border-red-200 bg-red-50 text-red-600 hover:border-red-400 hover:bg-red-100 transition"
+                          title="Xóa đối tác"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              ))}
+              {sortedSponsors.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-5 py-10 text-center text-sm font-semibold text-[#7a8b85]">
+                    Chưa có nhà tài trợ nào phù hợp bộ lọc.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* GRID CARD VIEW */}
+      {viewMode === 'grid' && (
+        <div className={`grid gap-4 ${gridCols === 2 ? 'grid-cols-1 sm:grid-cols-2' :
+          gridCols === 3 ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3' :
+            gridCols === 6 ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-6' :
+              'grid-cols-1 sm:grid-cols-2 md:grid-cols-4'
+          }`}>
+          {sortedSponsors.map((s) => (
+            <div key={s.id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between space-y-3 group">
+              <div className="flex items-center justify-between">
+                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${TIER_COLORS[s.tier] || TIER_COLORS.PARTNER}`}>
+                  {s.tier}
+                </span>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => openEditModal(s)} className="p-1 rounded-md text-emerald-700 hover:bg-emerald-50 text-xs">✏️</button>
+                  <button onClick={() => handleDelete(s.id)} className="p-1 rounded-md text-rose-600 hover:bg-rose-50 text-xs">🗑️</button>
+                </div>
+              </div>
+              <div className="flex flex-col items-center text-center space-y-2 py-2">
+                <div className="w-28 h-16 rounded-xl border border-slate-200 bg-slate-50 p-2 flex items-center justify-center overflow-hidden">
+                  <img src={formatAssetUrl(s.logoUrl)} className="max-h-full max-w-full object-contain cursor-pointer" alt={s.name} />
+                </div>
+                <h3 className="font-extrabold text-slate-900 text-xs leading-snug">{s.name}</h3>
+              </div>
+              <div className="pt-2 border-t border-slate-100 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => openDetailModal(s)}
+                  className="text-[11px] font-bold text-sky-700 hover:underline"
+                >
+                  Xem chi tiết →
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ADD SPONSOR MODAL */}
       {modalMode === 'add' && (
@@ -614,7 +793,7 @@ export default function SponsorsAdminPage() {
 
               <div className="flex flex-col space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Phân hạng (Tier) *</label>
-                <select 
+                <select
                   className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold cursor-pointer transition"
                   value={formTier}
                   onChange={e => setFormTier(e.target.value as Sponsor['tier'])}
@@ -753,7 +932,7 @@ export default function SponsorsAdminPage() {
 
               <div className="flex flex-col space-y-1.5">
                 <label className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">Phân hạng (Tier) *</label>
-                <select 
+                <select
                   className="h-9 px-3 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 focus:outline-none focus:border-emerald-600 focus:bg-white text-xs font-semibold cursor-pointer transition"
                   value={formTier}
                   onChange={e => setFormTier(e.target.value as Sponsor['tier'])}

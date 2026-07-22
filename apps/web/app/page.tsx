@@ -873,7 +873,7 @@ export default function HomePage() {
           <div className={`absolute top-1/3 right-1/4 w-[300px] h-[300px] rounded-full bg-gradient-to-br from-[#79BCC2]/10 to-[#0A2FFF]/5 blur-[90px] pointer-events-none transition-opacity duration-[2800ms] ${candidatesVisible ? 'opacity-100' : 'opacity-0'}`} />
           <div className={`absolute bottom-1/4 left-1/4 w-[280px] h-[280px] rounded-full bg-gradient-to-tr from-[#0A2FFF]/5 to-[#79BCC2]/5 blur-[80px] pointer-events-none transition-opacity duration-[2800ms] ${candidatesVisible ? 'opacity-100' : 'opacity-0'}`} />
 
-          {/* ── Sponsor Marquee Banner (NEW POSITION: Direct child of candidates-section, stretching full-width) ── */}
+          {/* ── Sponsor Marquee Banner with Title ── */}
           {(() => {
             const displaySponsors = sponsors && sponsors.length > 0 ? sponsors : [];
             if (settings?.hideSponsorBanner || displaySponsors.length === 0) return null;
@@ -885,23 +885,38 @@ export default function HomePage() {
             const marqueeItems = [...halfList, ...halfList];
 
             return (
-              <div className="sponsor-marquee-container w-full mt-6 mb-4 overflow-hidden bg-slate-50/50 dark:bg-white/[0.02] py-4 border-y border-neutral-200/40 dark:border-white/5">
-                <div className="sponsor-marquee-track">
-                  {marqueeItems.map((sp, idx) => {
-                    const initialSrc = getSponsorLogoUrl(sp.logoUrl);
-                    return (
-                      <div key={`sp-marquee-${idx}`} className="sponsor-marquee-item">
-                        <img
-                          src={initialSrc}
-                          alt={sp.name}
-                          className="sponsor-marquee-logo animate-fade-in"
-                          onError={(e) => {
-                            (e.currentTarget as HTMLImageElement).src = '/images/startuplogo.png';
-                          }}
-                        />
-                      </div>
-                    );
-                  })}
+              <div className="w-full max-w-[1280px] mx-auto my-12 sm:my-16 px-4 flex flex-col items-center justify-center" suppressHydrationWarning>
+                {/* Header Title & Pill Badge (Perfect Centered) */}
+                <div className="flex flex-col items-center justify-center text-center space-y-3 sm:space-y-4 mb-6 sm:mb-8 mx-auto">
+                  <span className="inline-flex items-center gap-2 text-[11px] sm:text-[13px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50/90 dark:bg-blue-950/70 px-4 py-1.5 rounded-full border border-blue-200/80 dark:border-blue-800/80 shadow-sm">
+                    <span className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
+                    ĐỒNG HÀNH CÙNG HUIT STARTUP
+                  </span>
+                  <h2 className="text-[22px] sm:text-[34px] font-black uppercase tracking-tight text-slate-900 dark:text-white leading-tight">
+                    Nhà tài trợ &amp; Đối tác
+                  </h2>
+                  <div className="h-1 w-16 bg-gradient-to-r from-blue-600 to-teal-400 rounded-full mt-1" />
+                </div>
+
+                {/* Marquee Banner */}
+                <div className="sponsor-marquee-container w-full overflow-hidden bg-slate-50/80 dark:bg-white/[0.03] py-6 sm:py-7 border-y border-slate-200/70 dark:border-white/10 shadow-inner rounded-2xl">
+                  <div className="sponsor-marquee-track">
+                    {marqueeItems.map((sp, idx) => {
+                      const initialSrc = getSponsorLogoUrl(sp.logoUrl);
+                      return (
+                        <div key={`sp-marquee-${idx}`} className="sponsor-marquee-item mx-3.5">
+                          <img
+                            src={initialSrc}
+                            alt={sp.name}
+                            className="sponsor-marquee-logo animate-fade-in cursor-pointer"
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = '/images/startuplogo.png';
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             );
