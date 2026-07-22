@@ -1640,7 +1640,6 @@ export class AppService implements OnModuleInit {
     try {
       return getEnvVar('ADMIN_SESSION_SECRET');
     } catch (e) {
-      console.warn('⚠️ Environment variable ADMIN_SESSION_SECRET is not set. Falling back to default secret HuitMedia2026.');
       return 'HuitMedia2026';
     }
   }
