@@ -42,6 +42,7 @@ export default function VoteLogsAdminPage() {
   const [search, setSearch] = useState('');
   const [candidateFilter, setCandidateFilter] = useState('ALL');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [isListHidden, setIsListHidden] = useState(false);
   const { showConfirm } = useAlert();
 
   const loadLogs = async () => {
@@ -63,6 +64,24 @@ export default function VoteLogsAdminPage() {
   useEffect(() => {
     loadLogs();
   }, []);
+
+  useEffect(() => {
+    try {
+      setIsListHidden(localStorage.getItem('admin_vote_logs_hidden') === 'true');
+    } catch {
+      setIsListHidden(false);
+    }
+  }, []);
+
+  const toggleListHidden = () => {
+    setIsListHidden((current) => {
+      const next = !current;
+      try {
+        localStorage.setItem('admin_vote_logs_hidden', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   const handleDelete = async (id: string) => {
     if (!await showConfirm('CẢNH BÁO: Xóa bản ghi bình chọn này sẽ tự động giảm trừ 1 điểm của ứng viên tương ứng. Bạn có chắc chắn muốn xóa không?')) {
@@ -210,6 +229,13 @@ export default function VoteLogsAdminPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
+            type="button"
+            onClick={toggleListHidden}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow transition hover:border-[#0f766e] hover:text-[#0f766e] active:scale-[0.98] shrink-0"
+          >
+            {isListHidden ? 'Hiện danh sách' : 'Ẩn danh sách'}
+          </button>
+          <button
             onClick={handleExportCSV}
             disabled={filteredLogs.length === 0}
             className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow transition hover:border-[#0f766e] hover:text-[#0f766e] active:scale-[0.98] disabled:opacity-50 shrink-0"
@@ -282,6 +308,19 @@ export default function VoteLogsAdminPage() {
         )}
 
         {/* Bảng dữ liệu */}
+        {isListHidden ? (
+          <div className="px-5 py-10 text-center">
+            <p className="text-sm font-bold text-[#123c34]">Danh sách lịch sử bình chọn đang được ẩn.</p>
+            <p className="mt-1 text-xs font-semibold text-[#6b7773]">Bộ lọc, KPI và xuất CSV vẫn hoạt động với dữ liệu hiện tại.</p>
+            <button
+              type="button"
+              onClick={toggleListHidden}
+              className="mt-4 inline-flex items-center justify-center rounded-lg bg-[#0f766e] px-4 py-2 text-xs font-bold text-white shadow transition hover:bg-[#0b5f59]"
+            >
+              Hiện danh sách
+            </button>
+          </div>
+        ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[950px] border-collapse text-left">
             <thead>
@@ -361,6 +400,7 @@ export default function VoteLogsAdminPage() {
             </tbody>
           </table>
         </div>
+        )}
       </section>
     </div>
   );

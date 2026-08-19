@@ -477,8 +477,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   // Global Image Lightbox state
   const [lightboxImage, setLightboxImage] = React.useState<{ url: string; title?: string } | null>(null);
 
-  // Browser-like tab system & Tab Switcher Modal
+  // Browser-like tab system & compact tab switcher popover
   const [isTabModalOpen, setIsTabModalOpen] = React.useState(false);
+  const tabSwitcherRef = React.useRef<HTMLDivElement>(null);
+  const tabButtonRef = React.useRef<HTMLButtonElement>(null);
   const [openTabs, setOpenTabs] = React.useState<Array<{ href: string; label: string; icon?: React.ReactNode }>>([
     { href: '/', label: 'Tổng quan', icon: dashboardIcon },
   ]);
@@ -519,6 +521,29 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
     setOpenTabs([currentTab]);
     setIsTabModalOpen(false);
   };
+
+  React.useEffect(() => {
+    if (!isTabModalOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!tabSwitcherRef.current?.contains(target) && !tabButtonRef.current?.contains(target)) {
+        setIsTabModalOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsTabModalOpen(false);
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isTabModalOpen]);
 
   React.useEffect(() => {
     const savedWidth = localStorage.getItem('admin_sidebar_width');
@@ -726,7 +751,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             </div>
 
             {/* Modern Browser Multi-Tab Header Bar & Quick Switcher Button */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 pb-0.5 border-t border-slate-200/60 mt-1.5">
+            <div className="relative flex flex-wrap items-center justify-between gap-2 pt-2 pb-0.5 border-t border-slate-200/60 mt-1.5">
               <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                 {openTabs.map((tab) => {
                   const active = isActive(tab.href);
@@ -765,7 +790,8 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               {/* Quick Tab Switcher Modal Trigger Button */}
               <button
                 type="button"
-                onClick={() => setIsTabModalOpen(true)}
+                ref={tabButtonRef}
+                onClick={() => setIsTabModalOpen((open) => !open)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white hover:bg-blue-50 text-[11px] font-black text-slate-700 hover:text-blue-700 shadow-sm transition shrink-0"
               >
                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -780,65 +806,44 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </div>
         </header>
 
-        <main className="min-h-0 flex-1 overflow-y-auto px-5 py-4 md:px-6 md:py-4">
-          <div className="mx-auto w-full max-w-[1320px] space-y-4">
-            {children}
-          </div>
-        </main>
-      </div>
-
-      {/* Quick Tab Switcher Modal */}
-      {isTabModalOpen && (
-        <div
-          className="fixed inset-0 z-[9999] bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-150"
-          onClick={() => setIsTabModalOpen(false)}
-        >
-          <div
-            className="relative w-full max-w-lg rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 flex flex-col space-y-4 animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="grid h-8 w-8 place-items-center rounded-xl bg-blue-50 text-blue-600 font-bold">
-                  📑
-                </div>
-                <div>
-                  <h3 className="text-sm font-extrabold text-slate-900">Danh sách Tab đang mở</h3>
-                  <p className="text-[11px] font-medium text-slate-500">Chuyển đổi nhanh hoặc đóng bớt trang quản trị</p>
-                </div>
+        {isTabModalOpen && (
+          <div ref={tabSwitcherRef} className="fixed right-6 top-[118px] z-[80] w-[340px] max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div>
+                <h3 className="text-xs font-extrabold text-slate-900">Danh sach tab dang mo</h3>
+                <p className="text-[11px] font-medium text-slate-500">Chuyen nhanh hoac dong bot trang</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsTabModalOpen(false)}
-                className="grid h-7 w-7 place-items-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+                className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
+                aria-label="Dong"
               >
-                ✕
+                x
               </button>
             </div>
 
-            {/* List of open tabs */}
-            <div className="max-h-[320px] overflow-y-auto space-y-1.5 pr-1">
+            <div className="mt-2 max-h-[300px] overflow-y-auto space-y-1 pr-1">
               {openTabs.map((tab) => {
                 const active = isActive(tab.href);
                 return (
                   <div
                     key={tab.href}
                     onClick={() => handleTabClick(tab.href)}
-                    className={`flex items-center justify-between p-3 rounded-xl border transition cursor-pointer ${
+                    className={`flex items-center justify-between gap-2 rounded-xl border p-2.5 transition cursor-pointer ${
                       active
                         ? 'bg-blue-50/80 border-blue-200 text-blue-800 font-extrabold shadow-sm'
                         : 'bg-slate-50/70 border-slate-200/60 text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                     }`}
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex min-w-0 items-center gap-2">
                       <span className={`flex h-5 w-5 shrink-0 items-center justify-center ${active ? 'text-blue-600' : 'text-slate-400'}`}>
                         {tab.icon}
                       </span>
                       <span className="truncate text-xs font-bold">{tab.label}</span>
                       {active && (
-                        <span className="rounded-md bg-blue-600 px-2 py-0.5 text-[9px] font-black text-white uppercase tracking-wider">
-                          Đang xem
+                        <span className="rounded-md bg-blue-600 px-1.5 py-0.5 text-[9px] font-black text-white uppercase">
+                          Dang xem
                         </span>
                       )}
                     </div>
@@ -846,10 +851,10 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                       <button
                         type="button"
                         onClick={(e) => closeTab(e, tab.href)}
-                        className="grid h-6 w-6 place-items-center rounded-lg text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition"
-                        title="Đóng tab này"
+                        className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition"
+                        title="Dong tab nay"
                       >
-                        ✕
+                        x
                       </button>
                     )}
                   </div>
@@ -857,30 +862,31 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
               })}
             </div>
 
-            {/* Footer Actions */}
-            <div className="flex items-center justify-between border-t border-slate-100 pt-3 text-xs">
+            <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
               {openTabs.length > 1 ? (
-                <button
-                  type="button"
-                  onClick={closeOtherTabs}
-                  className="text-xs font-bold text-rose-600 hover:underline"
-                >
-                  Xóa tất cả các tab khác
+                <button type="button" onClick={closeOtherTabs} className="font-bold text-rose-600 hover:underline">
+                  Dong cac tab khac
                 </button>
               ) : (
-                <span className="text-slate-400 text-[11px]">Đang chỉ mở 1 tab</span>
+                <span className="text-[11px] text-slate-400">Dang chi mo 1 tab</span>
               )}
               <button
                 type="button"
                 onClick={() => setIsTabModalOpen(false)}
-                className="rounded-xl bg-slate-900 px-4 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition"
+                className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition"
               >
-                Đóng
+                Dong
               </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+
+        <main className="min-h-0 flex-1 overflow-y-auto px-5 py-4 md:px-6 md:py-4">
+          <div className="mx-auto w-full max-w-[1320px] space-y-4">
+            {children}
+          </div>
+        </main>
+      </div>
 
       {/* Global Image Lightbox Modal */}
       {lightboxImage && (

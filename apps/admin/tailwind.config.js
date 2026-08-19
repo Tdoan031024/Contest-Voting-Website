@@ -12,8 +12,9 @@ module.exports = {
         adminPrimary: "#3B82F6",
       },
       fontFamily: {
-        heading: ["'Inter'", "sans-serif"],
-        body: ["'Inter'", "sans-serif"],
+        sans: ["var(--font-sans)", "'Be Vietnam Pro'", "Inter", "system-ui", "sans-serif"],
+        heading: ["var(--font-sans)", "'Be Vietnam Pro'", "Inter", "system-ui", "sans-serif"],
+        body: ["var(--font-sans)", "'Be Vietnam Pro'", "Inter", "system-ui", "sans-serif"],
       }
     },
   },

@@ -421,16 +421,19 @@ export default function OverviewPage() {
   const [recentVotes, setRecentVotes] = useState<any[]>([]);
   const [isVotesLoading, setIsVotesLoading] = useState(true);
   const [statsData, setStatsData] = useState<any>(null);
+  const [analyticsData, setAnalyticsData] = useState<any>(null);
 
   useEffect(() => {
     async function loadStats() {
       try {
-        const [candRes, dashboardRes] = await Promise.all([
+        const [candRes, dashboardRes, analyticsRes] = await Promise.all([
           fetch(apiUrl('/api/candidates')),
-          fetch(apiUrl('/api/admin/stats/dashboard'))
+          fetch(apiUrl('/api/admin/stats/dashboard')),
+          fetch(apiUrl('/api/admin/analytics/summary'))
         ]);
 
         if (candRes.ok) setCandidates(await candRes.json());
+        if (analyticsRes.ok) setAnalyticsData(await analyticsRes.json());
         if (dashboardRes.ok) {
           const data = await dashboardRes.json();
           setStatsData(data);
@@ -500,11 +503,13 @@ export default function OverviewPage() {
 
   return (
     <div className="space-y-4">
-      <section className="grid gap-3 xl:grid-cols-4">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <KPIBlock label="Dự án" value={isLoading ? '--' : <AnimatedMetric value={candidates.length} />} icon={<FolderIcon />} tone="blue" loading={isLoading} />
         <KPIBlock label="Tổng vote" value={isLoading ? '--' : <AnimatedMetric value={totalVotes} />} icon={<VoteIcon />} tone="violet" loading={isLoading} />
         <KPIBlock label="Dẫn đầu" value={leadingCandidate?.sbd || '001'} icon={<TrophyIcon />} tone="amber" loading={isLoading} />
         <KPIBlock label="Thời gian còn lại" value={formatRemaining(endDate)} icon={<CalendarIcon />} tone="emerald" loading={isLoading} />
+        <KPIBlock label="L??t truy c?p" value={isLoading ? '--' : <AnimatedMetric value={analyticsData?.totalViews || 0} />} icon={<ActivityStackIcon />} tone="blue" loading={isLoading} />
+        <KPIBlock label="Kh?ch 30 ng?y" value={isLoading ? '--' : <AnimatedMetric value={analyticsData?.uniqueVisitors30Days || 0} />} icon={<ActivityCreateIcon />} tone="emerald" loading={isLoading} />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">

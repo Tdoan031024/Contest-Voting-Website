@@ -76,8 +76,8 @@ npx prisma generate
 ### Bước 4: Tạo Tài khoản Admin mặc định
 Nếu hệ thống chưa tự động tạo, hoặc bạn muốn khôi phục tài khoản quản trị về mặc định:
 * Tài khoản mặc định:
-  * **Username**: `admin`
-  * **Password**: `1`
+  * **Username**: `Huitmedia`
+  * **Password**: `Huit@meida123`
 * Để reset mật khẩu admin, chạy script sau trong thư mục `apps/api`:
   ```bash
   node reset-admin.js
@@ -116,7 +116,7 @@ npm run dev:web
 npm run dev:admin
 ```
 * Trang admin quản lý hệ thống sẽ chạy tại địa chỉ: `http://localhost:3001`
-* Đăng nhập bằng tài khoản: `admin` / `1`
+* Đăng nhập bằng tài khoản: `Huitmedia` / `Huit@meida123`
 
 ---
 
@@ -146,7 +146,7 @@ npm run dev:admin
 | `npm run dev:admin` | Thư mục gốc | Khởi chạy frontend quản trị viên admin |
 | `npx prisma db push` | `apps/api/` | Cập nhật nhanh cấu trúc schema Prisma lên MySQL |
 | `npx prisma studio` | `apps/api/` | Mở giao diện Web GUI để xem/sửa dữ liệu trực tiếp trong database |
-| `node reset-admin.js` | `apps/api/` | Reset tài khoản admin về username: `admin`, password: `1` |
+| `node reset-admin.js` | `apps/api/` | Reset tài khoản admin về username: `Huitmedia`, password: `Huit@meida123` |
 
 ---
 

@@ -4,20 +4,45 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-  const username = 'admin';
-  const plainPassword = '1';
+  const username = 'Huitmedia';
+  const plainPassword = 'Huit@meida123';
   const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-  const admin = await prisma.adminUser.upsert({
-    where: { username },
-    update: { passwordHash: hashedPassword, isActive: true },
-    create: {
+  const existingTarget = await prisma.adminUser.findUnique({ where: { username } });
+  const legacyAdmin = await prisma.adminUser.findUnique({ where: { username: 'admin' } });
+
+  if (existingTarget) {
+    await prisma.adminUser.update({
+      where: { username },
+      data: { passwordHash: hashedPassword, isActive: true, role: 'admin' },
+    });
+
+    if (legacyAdmin && legacyAdmin.id !== existingTarget.id) {
+      await prisma.adminUser.update({
+        where: { username: 'admin' },
+        data: { isActive: false },
+      });
+    }
+  } else if (legacyAdmin) {
+    await prisma.adminUser.update({
+      where: { username: 'admin' },
+      data: {
+        username,
+        passwordHash: hashedPassword,
+        role: 'admin',
+        isActive: true,
+      },
+    });
+  } else {
+    await prisma.adminUser.create({
+      data: {
       username,
       passwordHash: hashedPassword,
       role: 'admin',
       isActive: true,
-    },
-  });
+      },
+    });
+  }
 
   console.log(`✅ Successfully reset password of administrative user "${username}" to "${plainPassword}".`);
 }

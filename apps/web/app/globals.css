@@ -3853,12 +3853,16 @@ button, a { -webkit-tap-highlight-color: transparent; }
   100% { transform: translateX(200%); }
 }
 
-/* ─── Sponsor Logo Marquee ─── */
+/* ─── Sponsor Logo Marquee (Override) ─── */
 .sponsor-marquee-container {
-  min-height: 80px;
+  width: 100%;
+  min-height: 76px;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent !important;
+  mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 4%, black 96%, transparent 100%);
 }
 .sponsor-marquee-fade-left,
 .sponsor-marquee-fade-right {
@@ -3867,9 +3871,9 @@ button, a { -webkit-tap-highlight-color: transparent; }
 .sponsor-marquee-track {
   display: flex;
   align-items: center;
-  gap: 36px;
+  gap: 32px;
   width: max-content;
-  animation: sponsor-scroll 52s linear infinite;
+  animation: sponsor-scroll 85s linear infinite;
 }
 .sponsor-marquee-container:hover .sponsor-marquee-track {
   animation-play-state: paused;
@@ -3883,30 +3887,43 @@ button, a { -webkit-tap-highlight-color: transparent; }
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  height: 76px;
-  min-width: 140px;
-  padding: 8px 16px;
+  height: 68px;
+  min-width: 130px;
+  padding: 8px 18px;
   border-radius: 14px;
-  background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
   transition: all 0.3s ease;
 }
+:root[data-theme='dark'] .sponsor-marquee-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
 .sponsor-marquee-item:hover {
-  background: rgba(255,255,255,0.12);
-  border-color: rgba(121,188,194,0.4);
-  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(10, 47, 255, 0.25);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 6px 20px rgba(10, 47, 255, 0.08);
+}
+:root[data-theme='dark'] .sponsor-marquee-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(121, 188, 194, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 .sponsor-marquee-logo {
-  max-height: 60px;
-  max-width: 180px;
+  max-height: 52px;
+  max-width: 160px;
   width: auto;
   object-fit: contain;
   filter: none;
   transition: transform 0.3s ease, filter 0.3s ease;
 }
 .sponsor-marquee-item:hover .sponsor-marquee-logo {
-  filter: brightness(1.1);
-  transform: scale(1.04);
+  filter: brightness(1.05);
+  transform: scale(1.03);
 }
 .sponsor-marquee-fallback {
   align-items: center;

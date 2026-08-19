@@ -767,10 +767,10 @@ export class AppService implements OnModuleInit {
       const adminCount = await this.prisma.adminUser.count();
       if (adminCount === 0) {
         console.log('Seeding default admin user...');
-        const hashedPassword = await bcrypt.hash('1', 10);
+        const hashedPassword = await bcrypt.hash('Huit@meida123', 10);
         await this.prisma.adminUser.create({
           data: {
-            username: 'admin',
+            username: 'Huitmedia',
             passwordHash: hashedPassword,
             role: 'admin',
             isActive: true,
@@ -1955,6 +1955,91 @@ export class AppService implements OnModuleInit {
         endDate: this.settings.endDate,
         statsViews: this.settings.statsViews || '1,259',
       }
+    };
+  }
+
+  async recordPageView(body: any, userAgent?: string, ip?: string) {
+    const visitorId = String(body?.visitorId || '').trim().slice(0, 100);
+    if (!visitorId) {
+      throw new BadRequestException('Missing visitor id.');
+    }
+
+    const rawPath = String(body?.path || '/').trim();
+    const pagePath = rawPath.startsWith('/') ? rawPath : `/${rawPath}`;
+    const referrer = body?.referrer ? String(body.referrer).slice(0, 1000) : null;
+    const ipValue = String(ip || '').split(',')[0]?.trim();
+    const ipHash = ipValue ? crypto.createHash('sha256').update(ipValue).digest('hex') : null;
+
+    await this.prisma.pageView.create({
+      data: {
+        visitorId,
+        path: pagePath.slice(0, 190),
+        referrer,
+        userAgent: String(userAgent || body?.userAgent || '').slice(0, 1000) || null,
+        ipHash,
+      },
+    });
+
+    return { ok: true };
+  }
+
+  async getAnalyticsSummary() {
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const start30Days = new Date(now.getTime() - 29 * 24 * 60 * 60 * 1000);
+
+    const [totalViews, todayViews, recentViews] = await Promise.all([
+      this.prisma.pageView.count(),
+      this.prisma.pageView.count({ where: { createdAt: { gte: todayStart } } }),
+      this.prisma.pageView.findMany({
+        where: { createdAt: { gte: start30Days } },
+        select: { path: true, visitorId: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 10000,
+      }),
+    ]);
+
+    const allVisitorIds = new Set(recentViews.map((view: any) => view.visitorId).filter(Boolean));
+    const todayVisitorIds = new Set(
+      recentViews
+        .filter((view: any) => new Date(view.createdAt).getTime() >= todayStart.getTime())
+        .map((view: any) => view.visitorId)
+        .filter(Boolean),
+    );
+
+    const chartData: Array<{ label: string; value: number; visitors: number }> = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+      const end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).getTime();
+      const dayViews = recentViews.filter((view: any) => {
+        const time = new Date(view.createdAt).getTime();
+        return time >= start && time < end;
+      });
+      chartData.push({
+        label: `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`,
+        value: dayViews.length,
+        visitors: new Set(dayViews.map((view: any) => view.visitorId).filter(Boolean)).size,
+      });
+    }
+
+    const pageCounts = new Map<string, number>();
+    for (const view of recentViews) {
+      pageCounts.set(view.path, (pageCounts.get(view.path) || 0) + 1);
+    }
+
+    const topPages = Array.from(pageCounts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([path, views]) => ({ path, views }));
+
+    return {
+      totalViews,
+      todayViews,
+      uniqueVisitors30Days: allVisitorIds.size,
+      todayVisitors: todayVisitorIds.size,
+      chartData,
+      topPages,
     };
   }
 

@@ -1413,6 +1413,68 @@ export default function CandidatesAdminPage() {
     document.body.removeChild(link);
   };
 
+  const handleDownloadCandidateTemplate = () => {
+    const headers = [
+      'SBD',
+      'Tên dự án',
+      'Bảng thi',
+      'Lĩnh vực',
+      'Vòng hiện tại',
+      'Trạng thái',
+      'Điểm bình chọn',
+      'Đường dẫn ảnh',
+      'Tên nhóm',
+      'Đơn vị trường',
+      'Trưởng nhóm',
+      'SĐT trưởng nhóm',
+      'Email trưởng nhóm',
+      'Cố vấn',
+      'Thành viên nhóm',
+      'Hình ảnh trưng bày',
+      'Địa điểm triển khai',
+      'Cam kết sở hữu trí tuệ',
+      'Mô tả ngắn',
+      'Thuyết minh chi tiết',
+      'Nhu cầu hỗ trợ',
+      'Kỳ vọng sau cuộc thi',
+    ];
+    const sampleRow = [
+      'DA001',
+      'Dự án mẫu HUIT Startup',
+      'STUDENT',
+      'Công nghệ, AI',
+      'Vòng loại',
+      'Đủ hồ sơ',
+      '0',
+      '/duan/anhmauduan.png',
+      'Nhóm mẫu',
+      'Trường Đại học Công Thương TP.HCM',
+      'Nguyễn Văn A',
+      '0987654321',
+      'email@example.com',
+      'TS. Trần Văn B',
+      '1. Nguyễn Văn A - 20000001 - HUIT - 0987654321 - email@example.com',
+      '',
+      'TP. Hồ Chí Minh',
+      'Có',
+      'Mô tả ngắn về dự án mẫu.',
+      'Thuyết minh chi tiết dự án mẫu.',
+      'Cần mentor và kết nối doanh nghiệp.',
+      'Hoàn thiện sản phẩm sau cuộc thi.',
+    ];
+    const csvContent = '\uFEFF' + [headers.join(','), sampleRow.map(escapeCSVValue).join(',')].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'candidates_import_template.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="w-full max-w-full space-y-3.5">
       <section className="admin-card overflow-hidden p-0">
@@ -1429,6 +1491,15 @@ export default function CandidatesAdminPage() {
                 <line x1="12" y1="2" x2="12" y2="15" />
               </svg>
               Xuất
+            </button>
+            <button onClick={handleDownloadCandidateTemplate} className="admin-btn admin-btn-secondary !h-8 !min-h-0 px-2.5 text-xs gap-1.5 rounded-lg">
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+                <path d="M12 18v-6" />
+                <path d="m9 15 3 3 3-3" />
+              </svg>
+              Tai mau
             </button>
             <button onClick={() => setIsImportModalOpen(true)} className="admin-btn admin-btn-secondary !h-8 !min-h-0 px-2.5 text-xs gap-1.5 rounded-lg">
               <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1743,7 +1814,7 @@ export default function CandidatesAdminPage() {
               </svg>
               <span>Hiển thị</span>
               <span className="rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-[10px] font-black border border-blue-200">
-                {viewMode === 'table' ? '📋 Bảng' : `🔲 Thẻ (${gridCols})`}
+                {viewMode === 'table' ? 'Bảng' : 'Thẻ'}
               </span>
               <svg viewBox="0 0 24 24" className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${isViewConfigOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
             </button>
@@ -1761,7 +1832,7 @@ export default function CandidatesAdminPage() {
                         viewMode === 'table' ? 'bg-blue-50 border-blue-300 text-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                       }`}
                     >
-                      📋 Bảng danh sách
+                      Bảng
                     </button>
                     <button
                       type="button"
@@ -1770,12 +1841,12 @@ export default function CandidatesAdminPage() {
                         viewMode === 'grid' ? 'bg-blue-50 border-blue-300 text-blue-700 font-extrabold shadow-sm' : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
                       }`}
                     >
-                      🔲 Thẻ ô vuông
+                      Thẻ
                     </button>
                   </div>
                 </div>
 
-                {/* 2. Cấu hình số ô vuông nếu dạng Thẻ */}
+                      The
                 {viewMode === 'grid' && (
                   <div>
                     <p className="text-[11px] font-black uppercase tracking-wider text-slate-400 mb-2">Số ô vuông 1 hàng</p>

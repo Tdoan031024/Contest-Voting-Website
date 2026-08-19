@@ -431,6 +431,22 @@ export class AppController {
     return this.appService.getDashboardStats();
   }
 
+  @Post('analytics/page-view')
+  async recordPageView(
+    @Body() body: any,
+    @Headers('user-agent') userAgent?: string,
+    @Headers('x-forwarded-for') forwardedFor?: string,
+    @Headers('x-real-ip') realIp?: string,
+  ) {
+    return this.appService.recordPageView(body || {}, userAgent, forwardedFor || realIp);
+  }
+
+  @Get('admin/analytics/summary')
+  @UseGuards(AdminSessionGuard)
+  async getAnalyticsSummary() {
+    return this.appService.getAnalyticsSummary();
+  }
+
   @Get('admin/votes')
   @UseGuards(AdminSessionGuard)
   async getVoteLogs() {

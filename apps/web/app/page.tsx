@@ -885,9 +885,9 @@ export default function HomePage() {
             const marqueeItems = [...halfList, ...halfList];
 
             return (
-              <div className="w-full max-w-[1280px] mx-auto my-12 sm:my-16 px-4 flex flex-col items-center justify-center" suppressHydrationWarning>
+              <div className="w-full my-10 sm:my-14 flex flex-col items-center justify-center overflow-x-hidden" suppressHydrationWarning>
                 {/* Header Title & Pill Badge (Perfect Centered) */}
-                <div className="flex flex-col items-center justify-center text-center space-y-3 sm:space-y-4 mb-6 sm:mb-8 mx-auto">
+                <div className="w-full max-w-[1280px] mx-auto px-4 flex flex-col items-center justify-center text-center space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                   <span className="inline-flex items-center gap-2 text-[11px] sm:text-[13px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-50/90 dark:bg-blue-950/70 px-4 py-1.5 rounded-full border border-blue-200/80 dark:border-blue-800/80 shadow-sm">
                     <span className="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse" />
                     ĐỒNG HÀNH CÙNG HUIT STARTUP
@@ -898,13 +898,13 @@ export default function HomePage() {
                   <div className="h-1 w-16 bg-gradient-to-r from-blue-600 to-teal-400 rounded-full mt-1" />
                 </div>
 
-                {/* Marquee Banner */}
-                <div className="sponsor-marquee-container w-full overflow-hidden bg-slate-50/80 dark:bg-white/[0.03] py-6 sm:py-7 border-y border-slate-200/70 dark:border-white/10 shadow-inner rounded-2xl">
+                {/* Marquee Banner - Spans full screen width & uses website background */}
+                <div className="sponsor-marquee-container w-full overflow-hidden py-3 sm:py-5 bg-transparent">
                   <div className="sponsor-marquee-track">
                     {marqueeItems.map((sp, idx) => {
                       const initialSrc = getSponsorLogoUrl(sp.logoUrl);
                       return (
-                        <div key={`sp-marquee-${idx}`} className="sponsor-marquee-item mx-3.5">
+                        <div key={`sp-marquee-${idx}`} className="sponsor-marquee-item mx-3">
                           <img
                             src={initialSrc}
                             alt={sp.name}
