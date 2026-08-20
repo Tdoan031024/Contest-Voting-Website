@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 
 async function main() {
   const username = 'Huitmedia';
-  const plainPassword = 'Huit@meida123';
+  const plainPassword = 'Huit@media2019';
   const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
   const existingTarget = await prisma.adminUser.findUnique({ where: { username } });
