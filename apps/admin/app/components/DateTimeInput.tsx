@@ -156,7 +156,7 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
 
   return (
     <span className={`inline-flex items-center gap-1.5 ${className}`}>
-      <span ref={datePickerRef} className="relative z-[140] inline-flex">
+      <span ref={datePickerRef} className="relative z-[300] inline-flex">
         <input
           type="text"
           inputMode="numeric"
@@ -182,7 +182,7 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
         </button>
 
         {datePickerOpen && !disabled && (
-          <div className="absolute left-0 top-full z-[160] mt-1 w-[248px] rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+          <div className="absolute left-0 top-full z-[320] mt-1 w-[248px] rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
             <div className="mb-2 flex items-center justify-between gap-2">
               <button
                 type="button"
@@ -232,7 +232,7 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
           </div>
         )}
       </span>
-      <span ref={timePickerRef} className="relative z-[140] inline-flex">
+      <span ref={timePickerRef} className="relative z-[300] inline-flex">
         <input
           type="text"
           inputMode="numeric"
@@ -258,7 +258,7 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
         </button>
 
         {timePickerOpen && !disabled && (
-          <div className="absolute right-0 top-full z-[160] mt-1 w-[190px] rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+          <div className="absolute right-0 top-full z-[320] mt-1 w-[190px] rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <p className="mb-1 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Giờ</p>

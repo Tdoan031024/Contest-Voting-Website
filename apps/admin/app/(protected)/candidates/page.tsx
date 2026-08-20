@@ -1547,7 +1547,7 @@ export default function CandidatesAdminPage() {
 
   return (
     <div className="w-full max-w-full space-y-3.5">
-      <section className="admin-card overflow-visible p-0">
+      <section className="admin-card relative z-[80] overflow-visible p-0">
         <div className="flex flex-col gap-2.5 border-b border-slate-200/70 px-4 py-3.5 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--primary-strong)]">Quản lý cuộc thi</p>
@@ -1585,7 +1585,7 @@ export default function CandidatesAdminPage() {
           </div>
         </div>
 
-        <div className="grid gap-2 p-3 xl:grid-cols-8">
+        <div className="relative z-[90] grid gap-2 overflow-visible p-3 xl:grid-cols-8">
           {[
             ['Tổng dự án', projects.length.toLocaleString()],
             ['Thiếu thông tin', missingInfo.toLocaleString()],
@@ -1598,7 +1598,7 @@ export default function CandidatesAdminPage() {
             </div>
           ))}
 
-          <div className="dashboard-stat-card flex min-h-[118px] flex-col justify-between xl:col-span-2">
+          <div className="dashboard-stat-card relative z-30 flex min-h-[118px] flex-col justify-between !overflow-visible xl:col-span-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Đăng ký</p>
@@ -1658,7 +1658,7 @@ export default function CandidatesAdminPage() {
             </div>
           </div>
 
-          <div className="dashboard-stat-card relative z-20 flex min-h-[118px] flex-col justify-between !overflow-visible xl:col-span-2">
+          <div className="dashboard-stat-card relative z-40 flex min-h-[118px] flex-col justify-between !overflow-visible xl:col-span-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Promotion</p>
@@ -1683,7 +1683,7 @@ export default function CandidatesAdminPage() {
         </div>
 
         {showPromotionManager && (
-          <div className="relative z-30 border-t border-slate-200/70 px-3 py-3">
+          <div className="relative z-[100] border-t border-slate-200/70 px-3 py-3">
             <div className="mb-3 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Quy trình tạo Promotion</p>
@@ -1706,7 +1706,7 @@ export default function CandidatesAdminPage() {
                 votingPromotions.map((promotion) => {
                   const status = getPromotionStatus(promotion, currentTime);
                   return (
-                    <div key={promotion.id} className="relative overflow-visible rounded-[14px] border border-slate-200 bg-white/90 p-3 shadow-sm">
+                    <div key={promotion.id} className="relative z-[110] overflow-visible rounded-[14px] border border-slate-200 bg-white/90 p-3 shadow-sm">
                       <div className="grid gap-2.5">
                         <div className="flex items-center justify-between gap-2">
                           <input value={promotion.name} onChange={(event) => updatePromotion(promotion.id, 'name', event.target.value)} className="admin-input min-w-0" />
@@ -1801,7 +1801,7 @@ export default function CandidatesAdminPage() {
         )}
       </section>
 
-      <section className="dashboard-filter-bar p-2.5">
+      <section className="dashboard-filter-bar relative z-0 p-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2.5">
           {/* Left filters: Compact Search & Select Dropdowns */}
           <div className="flex flex-wrap items-center gap-2 max-w-full">
