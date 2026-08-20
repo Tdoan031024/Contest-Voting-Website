@@ -117,7 +117,7 @@ function formatRemaining(endDate?: string | null) {
   const diff = Math.max(end - Date.now(), 0);
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
   const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  return `${days} ngày`;
+  return `${days}\u00A0ngày`;
 }
 
 function KPIBlock({
@@ -144,8 +144,8 @@ function KPIBlock({
     <div className="admin-card min-h-[118px] px-4 py-3.5">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-[14px] font-medium text-slate-500">{label}</p>
-          {loading ? <Skeleton className="mt-4 h-8 w-24" /> : <p className="mt-4 text-[32px] font-bold leading-none tracking-[-0.05em] text-slate-950">{value}</p>}
+          <p className="truncate text-[14px] font-medium text-slate-500" title={label}>{label}</p>
+          {loading ? <Skeleton className="mt-4 h-8 w-24" /> : <p className="mt-4 whitespace-nowrap text-[28px] font-bold leading-none tracking-normal text-slate-950 2xl:text-[32px]">{value}</p>}
         </div>
         <div className={cn('flex h-10 w-10 items-center justify-center rounded-xl border', toneClass[tone])}>{icon}</div>
       </div>
@@ -508,8 +508,8 @@ export default function OverviewPage() {
         <KPIBlock label="Tổng vote" value={isLoading ? '--' : <AnimatedMetric value={totalVotes} />} icon={<VoteIcon />} tone="violet" loading={isLoading} />
         <KPIBlock label="Dẫn đầu" value={leadingCandidate?.sbd || '001'} icon={<TrophyIcon />} tone="amber" loading={isLoading} />
         <KPIBlock label="Thời gian còn lại" value={formatRemaining(endDate)} icon={<CalendarIcon />} tone="emerald" loading={isLoading} />
-        <KPIBlock label="L??t truy c?p" value={isLoading ? '--' : <AnimatedMetric value={analyticsData?.totalViews || 0} />} icon={<ActivityStackIcon />} tone="blue" loading={isLoading} />
-        <KPIBlock label="Kh?ch 30 ng?y" value={isLoading ? '--' : <AnimatedMetric value={analyticsData?.uniqueVisitors30Days || 0} />} icon={<ActivityCreateIcon />} tone="emerald" loading={isLoading} />
+        <KPIBlock label="Lượt truy cập" value={isLoading ? '--' : <AnimatedMetric value={analyticsData?.totalViews || 0} />} icon={<ActivityStackIcon />} tone="blue" loading={isLoading} />
+        <KPIBlock label="Khách 30 ngày" value={isLoading ? '--' : <AnimatedMetric value={analyticsData?.uniqueVisitors30Days || 0} />} icon={<ActivityCreateIcon />} tone="emerald" loading={isLoading} />
       </section>
 
       <section className="grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
