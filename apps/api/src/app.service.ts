@@ -770,7 +770,7 @@ export class AppService implements OnModuleInit {
         const hashedPassword = await bcrypt.hash('Huit@media2019', 10);
         await this.prisma.adminUser.create({
           data: {
-            username: 'Huitmedia',
+            username: 'Startup.Huitmedia',
             passwordHash: hashedPassword,
             role: 'admin',
             isActive: true,

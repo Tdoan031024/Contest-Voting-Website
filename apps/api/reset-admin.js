@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-  const username = 'Huitmedia';
+  const username = 'Startup.Huitmedia';
   const plainPassword = 'Huit@media2019';
   const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
@@ -43,6 +43,13 @@ async function main() {
       },
     });
   }
+
+  await prisma.adminUser.updateMany({
+    where: {
+      username: { in: ['admin', 'Huitmedia'] },
+    },
+    data: { isActive: false },
+  });
 
   console.log(`✅ Successfully reset password of administrative user "${username}" to "${plainPassword}".`);
 }

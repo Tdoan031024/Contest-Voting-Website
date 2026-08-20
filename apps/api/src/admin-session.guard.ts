@@ -29,11 +29,16 @@ export class AdminSessionGuard implements CanActivate {
       }
 
       const parts = token.split('.');
-      if (parts.length !== 3) {
+      if (parts.length < 3) {
         throw new UnauthorizedException('Định dạng phiên đăng nhập không hợp lệ.');
       }
 
-      const [username, expiresAtStr, signature] = parts;
+      const signature = parts.pop();
+      const expiresAtStr = parts.pop();
+      const username = parts.join('.');
+      if (!username || !expiresAtStr || !signature) {
+        throw new UnauthorizedException('Dinh dang phien dang nhap khong hop le.');
+      }
       const expiresAt = Number(expiresAtStr);
       if (isNaN(expiresAt) || expiresAt < Math.floor(Date.now() / 1000)) {
         throw new UnauthorizedException('Phiên đăng nhập đã hết hạn.');
