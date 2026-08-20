@@ -1158,6 +1158,7 @@ export default function CandidatesAdminPage() {
   const [isGateOpen, setIsGateOpen] = useState(true);
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [showPromotionManager, setShowPromotionManager] = useState(false);
+  const [openPromotionApplyId, setOpenPromotionApplyId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [currentTime, setCurrentTime] = useState(() => Date.now());
 
@@ -1729,14 +1730,44 @@ export default function CandidatesAdminPage() {
                               <input type="number" min={2} max={10} value={promotion.multiplier} onChange={(event) => updatePromotion(promotion.id, 'multiplier', Number(event.target.value))} className="admin-input h-8 w-16" />
                             </div>
                           </label>
-                          <label className="grid gap-1">
+                          <div className="relative grid gap-1">
                             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Áp dụng</span>
-                            <select value={promotion.appliesTo || 'FREE'} onChange={(event) => updatePromotion(promotion.id, 'appliesTo', event.target.value)} className="admin-input h-8">
-                              <option value="FREE">Vote miễn phí</option>
-                              <option value="PAID">Vote trả phí</option>
-                              <option value="ALL">Tất cả vote</option>
-                            </select>
-                          </label>
+                            <button
+                              type="button"
+                              onClick={() => setOpenPromotionApplyId((current) => current === promotion.id ? null : promotion.id)}
+                              className="flex h-8 w-full items-center justify-between rounded-lg border border-slate-200 bg-white px-3 text-left text-xs font-bold text-slate-700 shadow-sm transition hover:border-blue-300 hover:bg-blue-50/40 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                            >
+                              <span className="truncate">
+                                {promotion.appliesTo === 'PAID' ? 'Vote trả phí' : promotion.appliesTo === 'ALL' ? 'Tất cả vote' : 'Vote miễn phí'}
+                              </span>
+                              <svg viewBox="0 0 24 24" className={`h-3.5 w-3.5 shrink-0 text-slate-400 transition ${openPromotionApplyId === promotion.id ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9" />
+                              </svg>
+                            </button>
+                            {openPromotionApplyId === promotion.id && (
+                              <div className="absolute left-0 right-0 top-full z-[80] mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+                                {[
+                                  ['FREE', 'Vote miễn phí'],
+                                  ['PAID', 'Vote trả phí'],
+                                  ['ALL', 'Tất cả vote'],
+                                ].map(([value, label]) => (
+                                  <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => {
+                                      updatePromotion(promotion.id, 'appliesTo', value);
+                                      setOpenPromotionApplyId(null);
+                                    }}
+                                    className={`flex h-8 w-full items-center rounded-lg px-2.5 text-left text-xs font-bold transition ${
+                                      promotion.appliesTo === value ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                                    }`}
+                                  >
+                                    {label}
+                                  </button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">

@@ -68,10 +68,12 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.slice(0, 5);
+    let raw = e.target.value.replace(/[^\d:]/g, '');
+    if (raw.length === 2 && !timeVal.endsWith(':') && !raw.includes(':')) raw += ':';
+    raw = raw.slice(0, 5);
     setTimeVal(raw);
     skipEmit.current = false;
-    if (dateVal.length === 10 && isValidDate(dateVal)) emit(dateVal, raw);
+    if (dateVal.length === 10 && isValidDate(dateVal) && /^([01]\d|2[0-3]):[0-5]\d$/.test(raw)) emit(dateVal, raw);
   };
 
   const base = [
@@ -94,12 +96,14 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
         className={`${base} w-[110px]${dateError ? ' !border-red-400 !text-red-500' : ''}`}
       />
       <input
-        type="time"
+        type="text"
+        inputMode="numeric"
+        placeholder="HH:mm"
         value={timeVal}
         onChange={handleTimeChange}
         disabled={disabled}
+        maxLength={5}
         className={`${base} w-[90px]`}
-        style={{ colorScheme: 'light' }}
       />
     </span>
   );
