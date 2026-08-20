@@ -1598,7 +1598,7 @@ export default function CandidatesAdminPage() {
             </div>
           ))}
 
-          <div className="dashboard-stat-card relative z-30 flex min-h-[118px] flex-col justify-between !overflow-visible xl:col-span-2">
+          <div className="dashboard-stat-card relative z-[220] flex min-h-[118px] flex-col justify-between !overflow-visible xl:col-span-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Đăng ký</p>
