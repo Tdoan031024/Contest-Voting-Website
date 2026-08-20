@@ -166,7 +166,7 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
           onFocus={() => !disabled && setDatePickerOpen(true)}
           disabled={disabled}
           maxLength={10}
-          className={`${base} w-[122px] pr-9${dateError ? ' !border-red-400 !text-red-500' : ''}`}
+          className={`${base} w-[136px] pr-10${dateError ? ' !border-red-400 !text-red-500' : ''}`}
         />
         <button
           type="button"
@@ -242,7 +242,7 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
           onFocus={() => !disabled && setTimePickerOpen(true)}
           disabled={disabled}
           maxLength={5}
-          className={`${base} w-[90px] pr-8`}
+          className={`${base} w-[84px] pr-8`}
         />
         <button
           type="button"
