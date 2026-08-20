@@ -36,26 +36,48 @@ function isValidDate(date: string): boolean {
   return dt.getFullYear() === yyyy && dt.getMonth() === mm - 1 && dt.getDate() === dd;
 }
 
+function parseDateValue(date: string) {
+  if (!isValidDate(date)) return null;
+  const [dd, mm, yyyy] = date.split('/').map(Number);
+  return new Date(yyyy, mm - 1, dd);
+}
+
+function formatDateValue(date: Date) {
+  const dd = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const yyyy = date.getFullYear();
+  return `${dd}/${mm}/${yyyy}`;
+}
+
 export default function DateTimeInput({ value = '', onChange, className = '', disabled }: DateTimeInputProps) {
   const [dateVal, setDateVal] = useState('');
   const [timeVal, setTimeVal] = useState('');
   const [dateError, setDateError] = useState(false);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const [timePickerOpen, setTimePickerOpen] = useState(false);
+  const datePickerRef = useRef<HTMLSpanElement>(null);
   const timePickerRef = useRef<HTMLSpanElement>(null);
   const skipEmit = useRef(true);
 
   const hourOptions = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, '0'));
   const minuteOptions = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, '0'));
+  const weekDays = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];
 
   useEffect(() => {
     skipEmit.current = true;
     const { date, time } = parseISO(value);
     setDateVal(date);
     setTimeVal(time);
+    const parsedDate = parseDateValue(date);
+    if (parsedDate) setCalendarMonth(new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1));
   }, [value]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+        setDatePickerOpen(false);
+      }
       if (timePickerRef.current && !timePickerRef.current.contains(event.target as Node)) {
         setTimePickerOpen(false);
       }
@@ -78,8 +100,21 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
     setDateVal(raw);
     const valid = raw.length === 10 && isValidDate(raw);
     setDateError(raw.length === 10 && !valid);
+    if (valid) {
+      const parsedDate = parseDateValue(raw);
+      if (parsedDate) setCalendarMonth(new Date(parsedDate.getFullYear(), parsedDate.getMonth(), 1));
+    }
     skipEmit.current = false;
     if (valid) emit(raw, timeVal);
+  };
+
+  const handleDateSelect = (date: Date) => {
+    const nextDate = formatDateValue(date);
+    setDateVal(nextDate);
+    setDateError(false);
+    setDatePickerOpen(false);
+    skipEmit.current = false;
+    emit(nextDate, timeVal);
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -103,6 +138,14 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
 
   const selectedHour = /^([01]\d|2[0-3]):[0-5]\d$/.test(timeVal) ? timeVal.slice(0, 2) : '00';
   const selectedMinute = /^([01]\d|2[0-3]):[0-5]\d$/.test(timeVal) ? timeVal.slice(3, 5) : '00';
+  const selectedDate = parseDateValue(dateVal);
+  const calendarStart = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+  const firstDayOffset = (calendarStart.getDay() + 6) % 7;
+  const calendarDays = Array.from({ length: 42 }, (_, index) => {
+    const day = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), index - firstDayOffset + 1);
+    return day;
+  });
+  const monthLabel = calendarMonth.toLocaleDateString('vi-VN', { month: 'long', year: 'numeric' });
 
   const base = [
     'h-9 px-2.5 rounded-lg border text-[13px] font-semibold focus:outline-none transition',
@@ -113,16 +156,82 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
 
   return (
     <span className={`inline-flex items-center gap-1.5 ${className}`}>
-      <input
-        type="text"
-        inputMode="numeric"
-        placeholder="DD/MM/YYYY"
-        value={dateVal}
-        onChange={handleDateChange}
-        disabled={disabled}
-        maxLength={10}
-        className={`${base} w-[110px]${dateError ? ' !border-red-400 !text-red-500' : ''}`}
-      />
+      <span ref={datePickerRef} className="relative inline-flex">
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="DD/MM/YYYY"
+          value={dateVal}
+          onChange={handleDateChange}
+          onFocus={() => !disabled && setDatePickerOpen(true)}
+          disabled={disabled}
+          maxLength={10}
+          className={`${base} w-[110px] pr-8${dateError ? ' !border-red-400 !text-red-500' : ''}`}
+        />
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setDatePickerOpen((open) => !open)}
+          className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
+          aria-label="Chọn ngày"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" />
+            <path d="M16 2v4M8 2v4M3 10h18" />
+          </svg>
+        </button>
+
+        {datePickerOpen && !disabled && (
+          <div className="absolute left-0 top-full z-[90] mt-1 w-[248px] rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1))}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100"
+                aria-label="Tháng trước"
+              >
+                ‹
+              </button>
+              <p className="text-sm font-black capitalize text-slate-800">{monthLabel}</p>
+              <button
+                type="button"
+                onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1))}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-slate-100"
+                aria-label="Tháng sau"
+              >
+                ›
+              </button>
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {weekDays.map((day) => (
+                <span key={day} className="flex h-7 items-center justify-center text-[10px] font-black uppercase text-slate-400">
+                  {day}
+                </span>
+              ))}
+              {calendarDays.map((day) => {
+                const isOutside = day.getMonth() !== calendarMonth.getMonth();
+                const isSelected = selectedDate &&
+                  day.getFullYear() === selectedDate.getFullYear() &&
+                  day.getMonth() === selectedDate.getMonth() &&
+                  day.getDate() === selectedDate.getDate();
+                const key = day.toISOString();
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => handleDateSelect(day)}
+                    className={`flex h-8 items-center justify-center rounded-lg text-xs font-bold transition ${
+                      isSelected ? 'bg-blue-600 text-white' : isOutside ? 'text-slate-300 hover:bg-slate-50' : 'text-slate-700 hover:bg-blue-50'
+                    }`}
+                  >
+                    {day.getDate()}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </span>
       <span ref={timePickerRef} className="relative inline-flex">
         <input
           type="text"
