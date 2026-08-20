@@ -1547,7 +1547,7 @@ export default function CandidatesAdminPage() {
 
   return (
     <div className="w-full max-w-full space-y-3.5">
-      <section className="admin-card overflow-hidden p-0">
+      <section className="admin-card overflow-visible p-0">
         <div className="flex flex-col gap-2.5 border-b border-slate-200/70 px-4 py-3.5 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
             <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--primary-strong)]">Quản lý cuộc thi</p>
@@ -1658,7 +1658,7 @@ export default function CandidatesAdminPage() {
             </div>
           </div>
 
-          <div className="dashboard-stat-card flex min-h-[118px] flex-col justify-between xl:col-span-2">
+          <div className="dashboard-stat-card relative z-20 flex min-h-[118px] flex-col justify-between !overflow-visible xl:col-span-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Promotion</p>
@@ -1683,7 +1683,7 @@ export default function CandidatesAdminPage() {
         </div>
 
         {showPromotionManager && (
-          <div className="border-t border-slate-200/70 px-3 py-3">
+          <div className="relative z-30 border-t border-slate-200/70 px-3 py-3">
             <div className="mb-3 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Quy trình tạo Promotion</p>
@@ -1706,7 +1706,7 @@ export default function CandidatesAdminPage() {
                 votingPromotions.map((promotion) => {
                   const status = getPromotionStatus(promotion, currentTime);
                   return (
-                    <div key={promotion.id} className="rounded-[14px] border border-slate-200 bg-white/90 p-3 shadow-sm">
+                    <div key={promotion.id} className="relative overflow-visible rounded-[14px] border border-slate-200 bg-white/90 p-3 shadow-sm">
                       <div className="grid gap-2.5">
                         <div className="flex items-center justify-between gap-2">
                           <input value={promotion.name} onChange={(event) => updatePromotion(promotion.id, 'name', event.target.value)} className="admin-input min-w-0" />
@@ -1730,7 +1730,7 @@ export default function CandidatesAdminPage() {
                               <input type="number" min={2} max={10} value={promotion.multiplier} onChange={(event) => updatePromotion(promotion.id, 'multiplier', Number(event.target.value))} className="admin-input h-8 w-16" />
                             </div>
                           </label>
-                          <div className="relative grid gap-1">
+                          <div className="relative z-40 grid gap-1">
                             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Áp dụng</span>
                             <button
                               type="button"
@@ -1745,7 +1745,7 @@ export default function CandidatesAdminPage() {
                               </svg>
                             </button>
                             {openPromotionApplyId === promotion.id && (
-                              <div className="absolute left-0 right-0 top-full z-[80] mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
+                              <div className="absolute left-0 right-0 top-full z-[120] mt-1 overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-xl">
                                 {[
                                   ['FREE', 'Vote miễn phí'],
                                   ['PAID', 'Vote trả phí'],
@@ -1770,7 +1770,7 @@ export default function CandidatesAdminPage() {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">
+                        <div className="relative z-30 grid grid-cols-1 gap-2 2xl:grid-cols-2">
                           <label className="grid gap-1">
                             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Bắt đầu</span>
                             <DateTimeInput value={promotion.startAt} onChange={(val) => updatePromotion(promotion.id, 'startAt', val)} />
