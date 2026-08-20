@@ -40,7 +40,12 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
   const [dateVal, setDateVal] = useState('');
   const [timeVal, setTimeVal] = useState('');
   const [dateError, setDateError] = useState(false);
+  const [timePickerOpen, setTimePickerOpen] = useState(false);
+  const timePickerRef = useRef<HTMLSpanElement>(null);
   const skipEmit = useRef(true);
+
+  const hourOptions = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, '0'));
+  const minuteOptions = Array.from({ length: 12 }, (_, index) => String(index * 5).padStart(2, '0'));
 
   useEffect(() => {
     skipEmit.current = true;
@@ -48,6 +53,16 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
     setDateVal(date);
     setTimeVal(time);
   }, [value]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (timePickerRef.current && !timePickerRef.current.contains(event.target as Node)) {
+        setTimePickerOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const emit = (date: string, time: string) => {
     if (skipEmit.current) { skipEmit.current = false; return; }
@@ -76,6 +91,19 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
     if (dateVal.length === 10 && isValidDate(dateVal) && /^([01]\d|2[0-3]):[0-5]\d$/.test(raw)) emit(dateVal, raw);
   };
 
+  const handleTimePartSelect = (part: 'hour' | 'minute', value: string) => {
+    const [currentHour = '00', currentMinute = '00'] = timeVal.split(':');
+    const nextTime = part === 'hour'
+      ? `${value}:${(currentMinute || '00').padStart(2, '0')}`
+      : `${(currentHour || '00').padStart(2, '0')}:${value}`;
+    setTimeVal(nextTime);
+    skipEmit.current = false;
+    if (dateVal.length === 10 && isValidDate(dateVal)) emit(dateVal, nextTime);
+  };
+
+  const selectedHour = /^([01]\d|2[0-3]):[0-5]\d$/.test(timeVal) ? timeVal.slice(0, 2) : '00';
+  const selectedMinute = /^([01]\d|2[0-3]):[0-5]\d$/.test(timeVal) ? timeVal.slice(3, 5) : '00';
+
   const base = [
     'h-9 px-2.5 rounded-lg border text-[13px] font-semibold focus:outline-none transition',
     disabled
@@ -95,16 +123,72 @@ export default function DateTimeInput({ value = '', onChange, className = '', di
         maxLength={10}
         className={`${base} w-[110px]${dateError ? ' !border-red-400 !text-red-500' : ''}`}
       />
-      <input
-        type="text"
-        inputMode="numeric"
-        placeholder="HH:mm"
-        value={timeVal}
-        onChange={handleTimeChange}
-        disabled={disabled}
-        maxLength={5}
-        className={`${base} w-[90px]`}
-      />
+      <span ref={timePickerRef} className="relative inline-flex">
+        <input
+          type="text"
+          inputMode="numeric"
+          placeholder="HH:mm"
+          value={timeVal}
+          onChange={handleTimeChange}
+          onFocus={() => !disabled && setTimePickerOpen(true)}
+          disabled={disabled}
+          maxLength={5}
+          className={`${base} w-[90px] pr-8`}
+        />
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setTimePickerOpen((open) => !open)}
+          className="absolute right-1 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:text-slate-300"
+          aria-label="Chọn giờ"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+        </button>
+
+        {timePickerOpen && !disabled && (
+          <div className="absolute right-0 top-full z-[90] mt-1 w-[190px] rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="mb-1 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Giờ</p>
+                <div className="max-h-[168px] overflow-y-auto pr-1">
+                  {hourOptions.map((hour) => (
+                    <button
+                      key={hour}
+                      type="button"
+                      onClick={() => handleTimePartSelect('hour', hour)}
+                      className={`mb-1 flex h-8 w-full items-center justify-center rounded-lg text-xs font-bold transition ${
+                        selectedHour === hour ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {hour}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="mb-1 px-1 text-[10px] font-black uppercase tracking-[0.16em] text-slate-400">Phút</p>
+                <div className="max-h-[168px] overflow-y-auto pr-1">
+                  {minuteOptions.map((minute) => (
+                    <button
+                      key={minute}
+                      type="button"
+                      onClick={() => handleTimePartSelect('minute', minute)}
+                      className={`mb-1 flex h-8 w-full items-center justify-center rounded-lg text-xs font-bold transition ${
+                        selectedMinute === minute ? 'bg-blue-600 text-white' : 'text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {minute}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </span>
     </span>
   );
 }
