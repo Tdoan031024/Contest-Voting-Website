@@ -17,26 +17,79 @@ type VotingPromotion = {
   note?: string;
 };
 
-function createPromotionDraft(): VotingPromotion {
+type PromotionQuickPreset = 'NOW' | 'TONIGHT' | 'TOMORROW' | 'WEEKEND';
+
+function toLocalInput(value: Date) {
+  const offset = value.getTimezoneOffset();
+  const local = new Date(value.getTime() - offset * 60 * 1000);
+  return local.toISOString().slice(0, 16);
+}
+
+function createPromotionDraft(preset: PromotionQuickPreset = 'NOW', multiplier = 2): VotingPromotion {
   const now = new Date();
-  const start = new Date(now.getTime() + 10 * 60 * 1000);
-  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
-  const toLocalInput = (value: Date) => {
-    const offset = value.getTimezoneOffset();
-    const local = new Date(value.getTime() - offset * 60 * 1000);
-    return local.toISOString().slice(0, 16);
-  };
+  let start = new Date(now);
+  let end = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+  let name = 'Promotion đang chạy';
+
+  if (preset === 'TONIGHT') {
+    start = new Date(now);
+    start.setHours(19, 0, 0, 0);
+    if (start.getTime() <= now.getTime()) start.setDate(start.getDate() + 1);
+    end = new Date(start.getTime() + 3 * 60 * 60 * 1000);
+    name = 'Khung vàng buổi tối';
+  }
+
+  if (preset === 'TOMORROW') {
+    start = new Date(now);
+    start.setDate(start.getDate() + 1);
+    start.setHours(8, 0, 0, 0);
+    end = new Date(start);
+    end.setHours(17, 0, 0, 0);
+    name = 'Promotion ngày mai';
+  }
+
+  if (preset === 'WEEKEND') {
+    start = new Date(now);
+    const daysUntilSaturday = (6 - start.getDay() + 7) % 7 || 7;
+    start.setDate(start.getDate() + daysUntilSaturday);
+    start.setHours(8, 0, 0, 0);
+    end = new Date(start);
+    end.setDate(end.getDate() + 1);
+    end.setHours(22, 0, 0, 0);
+    name = 'Promotion cuối tuần';
+  }
 
   return {
     id: `promo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    name: 'Khung giờ nhân điểm',
-    multiplier: 2,
+    name,
+    multiplier,
     startAt: toLocalInput(start),
     endAt: toLocalInput(end),
     isEnabled: true,
     appliesTo: 'FREE',
     note: '',
   };
+}
+
+function parsePromotionTime(value: string) {
+  if (!value) return NaN;
+  let normalized = value.trim();
+  if (!normalized.includes('Z') && !/\+\d{2}:?\d{2}$/.test(normalized) && !/-\d{2}:?\d{2}$/.test(normalized)) {
+    normalized = `${normalized}+07:00`;
+  }
+  return new Date(normalized).getTime();
+}
+
+function getPromotionStatus(promotion: VotingPromotion, now = Date.now()) {
+  if (!promotion.isEnabled) return { label: 'Tạm tắt', className: 'bg-slate-100 text-slate-500 border-slate-200' };
+  const start = parsePromotionTime(promotion.startAt);
+  const end = parsePromotionTime(promotion.endAt);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start >= end) {
+    return { label: 'Cần kiểm tra giờ', className: 'bg-rose-50 text-rose-700 border-rose-200' };
+  }
+  if (start <= now && end >= now) return { label: 'Đang chạy', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' };
+  if (start > now) return { label: 'Đã lên lịch', className: 'bg-blue-50 text-blue-700 border-blue-200' };
+  return { label: 'Đã kết thúc', className: 'bg-amber-50 text-amber-700 border-amber-200' };
 }
 
 const tableLabels: Record<string, string> = {
@@ -1265,6 +1318,22 @@ export default function CandidatesAdminPage() {
     setVotingPromotions((prev) => [...prev, createPromotionDraft()]);
   };
 
+  const addQuickPromotion = (preset: PromotionQuickPreset, multiplier = 2) => {
+    setVotingPromotions((prev) => [createPromotionDraft(preset, multiplier), ...prev]);
+    setShowPromotionManager(true);
+  };
+
+  const duplicatePromotion = (promotion: VotingPromotion) => {
+    setVotingPromotions((prev) => [
+      {
+        ...promotion,
+        id: `promo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        name: `${promotion.name} (bản sao)`,
+      },
+      ...prev,
+    ]);
+  };
+
   const removePromotion = (id: string) => {
     setVotingPromotions((prev) => prev.filter((promotion) => promotion.id !== id));
   };
@@ -1593,19 +1662,19 @@ export default function CandidatesAdminPage() {
               <div className="min-w-0">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Promotion</p>
                 <p className="mt-2 truncate text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
-                  {activePromotion ? `x${activePromotion.multiplier}` : 'Chưa chạy'}
+                  {activePromotion ? `Đang chạy x${activePromotion.multiplier}` : 'Chưa chạy'}
                 </p>
                 <p className="mt-1 text-[11px] font-semibold text-slate-500">{votingPromotions.length} khung giờ</p>
               </div>
-              <button type="button" onClick={() => setShowPromotionManager((prev) => !prev)} className="admin-btn admin-btn-secondary min-w-[82px]">
-                {showPromotionManager ? 'Thu gọn' : 'Quản lý'}
+              <button type="button" onClick={() => setShowPromotionManager((prev) => !prev)} className="admin-btn admin-btn-secondary min-w-[92px]">
+                {showPromotionManager ? 'Ẩn' : 'Quản lý'}
               </button>
             </div>
-            <div className="flex items-center gap-1.5">
-              <button type="button" onClick={addPromotion} className="admin-btn admin-btn-secondary flex-1">
-                + Thêm
+            <div className="grid grid-cols-2 gap-1.5">
+              <button type="button" onClick={() => addQuickPromotion('NOW', 2)} className="admin-btn admin-btn-secondary !h-8 text-xs">
+                Tạo nhanh
               </button>
-              <button type="button" disabled={settingsSaving} onClick={() => saveVotingSettings()} className="admin-btn admin-btn-primary flex-1">
+              <button type="button" disabled={settingsSaving} onClick={() => saveVotingSettings()} className="admin-btn admin-btn-primary !h-8 text-xs">
                 {settingsSaving ? 'Đang lưu...' : 'Lưu'}
               </button>
             </div>
@@ -1614,48 +1683,87 @@ export default function CandidatesAdminPage() {
 
         {showPromotionManager && (
           <div className="border-t border-slate-200/70 px-3 py-3">
-            <div className="mb-2.5 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Promotion chi tiết</p>
-                <p className="mt-1 text-[13px] font-medium text-slate-500">Quản lý khung giờ nhân điểm mà không làm nặng màn hình chính.</p>
+            <div className="mb-3 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+              <div className="min-w-0">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Quy trình tạo Promotion</p>
+                <p className="mt-1 text-[13px] font-medium text-slate-500">Chọn mẫu thời gian, kiểm tra hệ số nhân điểm, sau đó bấm Lưu để áp dụng.</p>
               </div>
-              <button type="button" onClick={addPromotion} className="admin-btn admin-btn-secondary">
-                + Thêm promotion
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" onClick={() => addQuickPromotion('NOW', 2)} className="admin-btn admin-btn-secondary !h-8 px-3 text-xs">Bắt đầu ngay x2</button>
+                <button type="button" onClick={() => addQuickPromotion('TONIGHT', 2)} className="admin-btn admin-btn-secondary !h-8 px-3 text-xs">Tối nay x2</button>
+                <button type="button" onClick={() => addQuickPromotion('TOMORROW', 3)} className="admin-btn admin-btn-secondary !h-8 px-3 text-xs">Ngày mai x3</button>
+                <button type="button" onClick={() => addQuickPromotion('WEEKEND', 2)} className="admin-btn admin-btn-secondary !h-8 px-3 text-xs">Cuối tuần</button>
+              </div>
             </div>
 
             <div className="grid gap-2 xl:grid-cols-2">
               {votingPromotions.length === 0 ? (
                 <div className="rounded-[14px] border border-dashed border-slate-200 bg-slate-50/80 px-4 py-5 text-sm font-medium text-slate-500">
-                  Chưa có promotion nhân điểm nào.
+                  Chưa có promotion nhân điểm nào. Chọn một mẫu tạo nhanh để bắt đầu.
                 </div>
               ) : (
-                votingPromotions.map((promotion) => (
-                  <div key={promotion.id} className="rounded-[14px] border border-slate-200 bg-white/90 p-3 shadow-sm">
-                    <div className="grid gap-2">
-                      <input value={promotion.name} onChange={(event) => updatePromotion(promotion.id, 'name', event.target.value)} className="admin-input" />
-                      <div className="grid grid-cols-1 gap-2">
-                        <label className="flex items-center gap-2">
-                          <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 shrink-0">Hệ số nhân điểm:</span>
-                          <input type="number" min={2} max={10} value={promotion.multiplier} onChange={(event) => updatePromotion(promotion.id, 'multiplier', Number(event.target.value))} className="admin-input" />
-                        </label>
-                      </div>
-                      <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">
-                        <DateTimeInput value={promotion.startAt} onChange={(val) => updatePromotion(promotion.id, 'startAt', val)} />
-                        <DateTimeInput value={promotion.endAt} onChange={(val) => updatePromotion(promotion.id, 'endAt', val)} />
-                      </div>
-                      <div className="flex items-center justify-between gap-3">
-                        <label className="flex items-center gap-2 text-xs font-bold text-slate-600">
-                          <input type="checkbox" checked={promotion.isEnabled} onChange={(event) => updatePromotion(promotion.id, 'isEnabled', event.target.checked)} />
-                          Kích hoạt
-                        </label>
-                        <button type="button" onClick={() => removePromotion(promotion.id)} className="admin-btn admin-btn-danger !h-8 px-3">
-                          Xóa
-                        </button>
+                votingPromotions.map((promotion) => {
+                  const status = getPromotionStatus(promotion, currentTime);
+                  return (
+                    <div key={promotion.id} className="rounded-[14px] border border-slate-200 bg-white/90 p-3 shadow-sm">
+                      <div className="grid gap-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <input value={promotion.name} onChange={(event) => updatePromotion(promotion.id, 'name', event.target.value)} className="admin-input min-w-0" />
+                          <span className={`shrink-0 rounded-full border px-2 py-1 text-[11px] font-bold ${status.className}`}>{status.label}</span>
+                        </div>
+
+                        <div className="grid gap-2 sm:grid-cols-[1fr_120px]">
+                          <label className="grid gap-1">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Hệ số nhân điểm</span>
+                            <div className="flex gap-1.5">
+                              {[2, 3, 5].map((value) => (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  onClick={() => updatePromotion(promotion.id, 'multiplier', value)}
+                                  className={`admin-btn !h-8 flex-1 text-xs ${promotion.multiplier === value ? 'admin-btn-primary' : 'admin-btn-secondary'}`}
+                                >
+                                  x{value}
+                                </button>
+                              ))}
+                              <input type="number" min={2} max={10} value={promotion.multiplier} onChange={(event) => updatePromotion(promotion.id, 'multiplier', Number(event.target.value))} className="admin-input h-8 w-16" />
+                            </div>
+                          </label>
+                          <label className="grid gap-1">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Áp dụng</span>
+                            <select value={promotion.appliesTo || 'FREE'} onChange={(event) => updatePromotion(promotion.id, 'appliesTo', event.target.value)} className="admin-input h-8">
+                              <option value="FREE">Vote miễn phí</option>
+                              <option value="PAID">Vote trả phí</option>
+                              <option value="ALL">Tất cả vote</option>
+                            </select>
+                          </label>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-2 2xl:grid-cols-2">
+                          <label className="grid gap-1">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Bắt đầu</span>
+                            <DateTimeInput value={promotion.startAt} onChange={(val) => updatePromotion(promotion.id, 'startAt', val)} />
+                          </label>
+                          <label className="grid gap-1">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kết thúc</span>
+                            <DateTimeInput value={promotion.endAt} onChange={(val) => updatePromotion(promotion.id, 'endAt', val)} />
+                          </label>
+                        </div>
+
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2">
+                          <label className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                            <input type="checkbox" checked={promotion.isEnabled} onChange={(event) => updatePromotion(promotion.id, 'isEnabled', event.target.checked)} />
+                            Kích hoạt
+                          </label>
+                          <div className="flex gap-1.5">
+                            <button type="button" onClick={() => duplicatePromotion(promotion)} className="admin-btn admin-btn-secondary !h-8 px-3 text-xs">Nhân bản</button>
+                            <button type="button" onClick={() => removePromotion(promotion.id)} className="admin-btn admin-btn-danger !h-8 px-3 text-xs">Xóa</button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
