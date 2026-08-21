@@ -78,10 +78,11 @@
     letter-spacing: normal;
   }
 
-  /* Fix uppercase letter spacing so IN HOA is natural, crisp, and easy to read */
+  /* Keep Vietnamese uppercase labels readable in admin UI. */
   .uppercase,
   [class*="uppercase"] {
-    letter-spacing: 0.02em !important;
+    letter-spacing: 0 !important;
+    line-height: 1.45;
   }
 
   h1 { font-size: 30px; font-weight: 700; line-height: 1.15; }
@@ -408,4 +409,19 @@
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Final typography override: Tailwind tracking utilities are generated after base,
+   so this must live at the end of the file to protect Vietnamese diacritics. */
+.uppercase,
+[class*="uppercase"] {
+  letter-spacing: 0 !important;
+  line-height: 1.45;
+}
+
+.uppercase.font-black,
+.uppercase.font-extrabold,
+[class*="uppercase"][class*="font-black"],
+[class*="uppercase"][class*="font-extrabold"] {
+  font-weight: 700 !important;
 }
