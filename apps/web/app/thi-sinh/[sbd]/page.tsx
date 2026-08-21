@@ -593,37 +593,38 @@ export default function CandidateDetailPage() {
             )}
           </div>
 
-          {/* Lịch sử bình chọn widget */}
-          <div className="bg-white rounded-[16px] border border-slate-300 p-6 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
-            <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
-              <span>Lịch sử bình chọn</span>
-              <span className="animate-pulse flex h-2 w-2 rounded-full bg-emerald-500" />
-            </h3>
-            
-            <div className="mt-4 divide-y divide-slate-100 max-h-[300px] overflow-y-auto pr-1">
-              {recentVotes.length === 0 ? (
-                <p className="text-xs text-slate-400 text-center py-8 font-semibold">Chưa có lượt bình chọn nào.</p>
-              ) : (
-                recentVotes.slice(0, 5).map((v, idx) => (
-                  <div key={v.id || idx} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
-                    <div className="flex flex-col gap-0.5">
-                      <span className="text-[13px] font-extrabold text-slate-800 truncate max-w-[170px]">{v.voterName}</span>
+          {settings && !settings.hidePublicVoteHistory && (
+            <div className="bg-white rounded-[16px] border border-slate-300 p-6 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>Lịch sử bình chọn</span>
+                <span className="animate-pulse flex h-2 w-2 rounded-full bg-emerald-500" />
+              </h3>
+
+              <div className="mt-4 divide-y divide-slate-100 max-h-[300px] overflow-y-auto pr-1">
+                {recentVotes.length === 0 ? (
+                  <p className="text-xs text-slate-400 text-center py-8 font-semibold">Chưa có lượt bình chọn nào.</p>
+                ) : (
+                  recentVotes.slice(0, 5).map((v, idx) => (
+                    <div key={v.id || idx} className="flex items-center justify-between py-2.5 first:pt-0 last:pb-0">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="text-[13px] font-extrabold text-slate-800 truncate max-w-[170px]">{v.voterName}</span>
+                      </div>
+                      <div className="text-right flex flex-col items-end gap-0.5 shrink-0">
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          {(() => {
+                            const d = new Date(v.voteTime);
+                            const pad = (n: number) => String(n).padStart(2, '0');
+                            const utc7 = new Date(d.getTime() + 7 * 60 * 60 * 1000);
+                            return `${pad(utc7.getUTCHours())}:${pad(utc7.getUTCMinutes())} - ${pad(utc7.getUTCDate())}/${pad(utc7.getUTCMonth() + 1)}`;
+                          })()}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right flex flex-col items-end gap-0.5 shrink-0">
-                      <span className="text-[11px] text-slate-500 font-medium">
-                        {(() => {
-                          const d = new Date(v.voteTime);
-                          const pad = (n: number) => String(n).padStart(2, '0');
-                          const utc7 = new Date(d.getTime() + 7 * 60 * 60 * 1000);
-                          return `${pad(utc7.getUTCHours())}:${pad(utc7.getUTCMinutes())} - ${pad(utc7.getUTCDate())}/${pad(utc7.getUTCMonth() + 1)}`;
-                        })()}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
+                  ))
+                )}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Social share widget */}
           <div className="bg-white rounded-[16px] border border-slate-300 p-6 shadow-sm transition-all duration-300 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] hover:border-slate-400/80">

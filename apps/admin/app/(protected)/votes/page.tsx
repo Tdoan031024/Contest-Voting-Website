@@ -42,7 +42,8 @@ export default function VoteLogsAdminPage() {
   const [search, setSearch] = useState('');
   const [candidateFilter, setCandidateFilter] = useState('ALL');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [isListHidden, setIsListHidden] = useState(false);
+  const [hidePublicVoteHistory, setHidePublicVoteHistory] = useState(false);
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const { showConfirm } = useAlert();
 
   const loadLogs = async () => {
@@ -66,21 +67,40 @@ export default function VoteLogsAdminPage() {
   }, []);
 
   useEffect(() => {
-    try {
-      setIsListHidden(localStorage.getItem('admin_vote_logs_hidden') === 'true');
-    } catch {
-      setIsListHidden(false);
-    }
+    const loadSettings = async () => {
+      try {
+        const res = await fetch(apiUrl('/api/admin/settings'));
+        if (res.ok) {
+          const data = await res.json();
+          setHidePublicVoteHistory(Boolean(data.hidePublicVoteHistory));
+        }
+      } catch (err) {
+        console.error('Lỗi tải cấu hình lịch sử bình chọn:', err);
+      }
+    };
+    loadSettings();
   }, []);
 
-  const toggleListHidden = () => {
-    setIsListHidden((current) => {
-      const next = !current;
-      try {
-        localStorage.setItem('admin_vote_logs_hidden', String(next));
-      } catch {}
-      return next;
-    });
+  const togglePublicVoteHistory = async () => {
+    const next = !hidePublicVoteHistory;
+    try {
+      setSettingsSaving(true);
+      const res = await fetch(apiUrl('/api/admin/settings'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hidePublicVoteHistory: next }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || 'Không thể lưu cấu hình hiển thị lịch sử bình chọn.');
+      }
+      setHidePublicVoteHistory(next);
+    } catch (err: any) {
+      console.error('Lỗi lưu cấu hình lịch sử bình chọn:', err);
+      alert(err?.message || 'Không thể lưu cấu hình lịch sử bình chọn.');
+    } finally {
+      setSettingsSaving(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -230,10 +250,15 @@ export default function VoteLogsAdminPage() {
         <div className="flex items-center gap-2">
           <button
             type="button"
-            onClick={toggleListHidden}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow transition hover:border-[#0f766e] hover:text-[#0f766e] active:scale-[0.98] shrink-0"
+            onClick={togglePublicVoteHistory}
+            disabled={settingsSaving}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow transition hover:border-[#0f766e] hover:text-[#0f766e] active:scale-[0.98] disabled:opacity-60 shrink-0"
           >
-            {isListHidden ? 'Hiện danh sách' : 'Ẩn danh sách'}
+            {settingsSaving
+              ? 'Đang lưu...'
+              : hidePublicVoteHistory
+                ? 'Hiện trên web chính'
+                : 'Ẩn trên web chính'}
           </button>
           <button
             onClick={handleExportCSV}
@@ -307,20 +332,13 @@ export default function VoteLogsAdminPage() {
           </div>
         )}
 
-        {/* Bảng dữ liệu */}
-        {isListHidden ? (
-          <div className="px-5 py-10 text-center">
-            <p className="text-sm font-bold text-[#123c34]">Danh sách lịch sử bình chọn đang được ẩn.</p>
-            <p className="mt-1 text-xs font-semibold text-[#6b7773]">Bộ lọc, KPI và xuất CSV vẫn hoạt động với dữ liệu hiện tại.</p>
-            <button
-              type="button"
-              onClick={toggleListHidden}
-              className="mt-4 inline-flex items-center justify-center rounded-lg bg-[#0f766e] px-4 py-2 text-xs font-bold text-white shadow transition hover:bg-[#0b5f59]"
-            >
-              Hiện danh sách
-            </button>
+        {hidePublicVoteHistory && (
+          <div className="border-b border-amber-100 bg-amber-50/80 px-5 py-3 text-xs font-semibold text-amber-800">
+            Lịch sử bình chọn đang được ẩn trên web chính. Admin vẫn xem và xuất dữ liệu tại đây.
           </div>
-        ) : (
+        )}
+
+        {/* Bảng dữ liệu admin luôn hiển thị để quản trị và đối soát */}
         <div className="overflow-x-auto">
           <table className="w-full min-w-[950px] border-collapse text-left">
             <thead>
@@ -400,7 +418,6 @@ export default function VoteLogsAdminPage() {
             </tbody>
           </table>
         </div>
-        )}
       </section>
     </div>
   );

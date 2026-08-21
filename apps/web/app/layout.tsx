@@ -28,6 +28,7 @@ export interface SystemSettings {
   organizer: string;
   contactEmail: string;
   isMaintenanceMode: boolean;
+  hidePublicVoteHistory?: boolean;
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
