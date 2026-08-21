@@ -148,6 +148,7 @@ function BellButton() {
   const [settings, setSettings] = React.useState<any>(null);
   const [votes, setVotes] = React.useState<any[]>([]);
   const [readIds, setReadIds] = React.useState<string[]>([]);
+  const [readSystemIds, setReadSystemIds] = React.useState<string[]>([]);
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
@@ -160,6 +161,10 @@ function BellButton() {
       const stored = localStorage.getItem('admin_read_vote_ids');
       if (stored) {
         try { setReadIds(JSON.parse(stored)); } catch (e) {}
+      }
+      const storedSystem = localStorage.getItem('admin_read_system_alert_ids');
+      if (storedSystem) {
+        try { setReadSystemIds(JSON.parse(storedSystem)); } catch (e) {}
       }
     }
 
@@ -203,16 +208,22 @@ function BellButton() {
   const systemAlerts = React.useMemo(() => {
     const list: Array<{ id: string; type: 'info' | 'warning' | 'success'; message: string }> = [];
     if (!settings) return list;
+    const parseConfiguredTime = (value: string) => {
+      if (!value) return NaN;
+      let val = value.trim();
+      if (!val.includes('Z') && !/\+\d{2}:?\d{2}$/.test(val) && !/-\d{2}:?\d{2}$/.test(val)) val = `${val}+07:00`;
+      return new Date(val).getTime();
+    };
 
     if (settings.isGateOpen) {
       list.push({
-        id: 'gate-open',
+        id: `gate-open-${settings.isGateOpen}`,
         type: 'success',
         message: 'Cổng bình chọn đang mở và hoạt động bình thường.',
       });
     } else {
       list.push({
-        id: 'gate-closed',
+        id: `gate-closed-${settings.isGateOpen}`,
         type: 'warning',
         message: 'Cổng bình chọn đang đóng. Vui lòng mở cổng để người dùng vote.',
       });
@@ -236,13 +247,13 @@ function BellButton() {
         } catch { return val; }
       })();
       list.push({
-        id: 'reg-open',
+        id: `reg-open-${settings.registrationDeadline || 'none'}`,
         type: 'info',
         message: `Hệ thống đang nhận hồ sơ đăng ký. Hạn chót: ${deadlineStr}.`,
       });
     } else {
       list.push({
-        id: 'reg-closed',
+        id: `reg-closed-${settings.registrationDeadline || 'none'}`,
         type: 'warning',
         message: 'Hạn nhận hồ sơ đăng ký dự án đã kết thúc.',
       });
@@ -252,15 +263,15 @@ function BellButton() {
     const activePromo = Array.isArray(settings.votingPromotions)
       ? settings.votingPromotions.find((p: any) => {
           if (!p.isEnabled) return false;
-          const start = new Date(p.startAt).getTime();
-          const end = new Date(p.endAt).getTime();
+          const start = parseConfiguredTime(p.startAt);
+          const end = parseConfiguredTime(p.endAt);
           return start <= now && end >= now;
         })
       : null;
 
     if (activePromo) {
       list.push({
-        id: 'promo-active',
+        id: `promo-active-${activePromo.id || activePromo.startAt}-${activePromo.multiplier}`,
         type: 'success',
         message: `Khung giờ vàng đang mở (Điểm vote nhân ×${activePromo.multiplier}).`,
       });
@@ -274,9 +285,13 @@ function BellButton() {
     return votes.filter(v => !readIds.includes(v.id));
   }, [votes, readIds]);
 
+  const unreadSystemAlerts = React.useMemo(() => {
+    return systemAlerts.filter((alert) => !readSystemIds.includes(alert.id));
+  }, [systemAlerts, readSystemIds]);
+
   const badgeCount = React.useMemo(() => {
-    return unreadVotes.length;
-  }, [unreadVotes]);
+    return unreadVotes.length + unreadSystemAlerts.length;
+  }, [unreadVotes, unreadSystemAlerts]);
 
   // Actions
   const handleMarkAsRead = (id: string) => {
@@ -286,11 +301,22 @@ function BellButton() {
     localStorage.setItem('admin_read_vote_ids', JSON.stringify(updated));
   };
 
+  const handleMarkSystemAsRead = (id: string) => {
+    if (readSystemIds.includes(id)) return;
+    const updated = [...readSystemIds, id];
+    setReadSystemIds(updated);
+    localStorage.setItem('admin_read_system_alert_ids', JSON.stringify(updated));
+  };
+
   const handleMarkAllAsRead = () => {
     const allIds = votes.map(v => v.id);
     const updated = Array.from(new Set([...readIds, ...allIds]));
+    const allSystemIds = systemAlerts.map((alert) => alert.id);
+    const updatedSystem = Array.from(new Set([...readSystemIds, ...allSystemIds]));
     setReadIds(updated);
+    setReadSystemIds(updatedSystem);
     localStorage.setItem('admin_read_vote_ids', JSON.stringify(updated));
+    localStorage.setItem('admin_read_system_alert_ids', JSON.stringify(updatedSystem));
   };
 
   function timeAgo(dateStr: string) {
@@ -355,7 +381,7 @@ function BellButton() {
             </div>
 
             {/* Actions Bar */}
-            {unreadVotes.length > 0 && (
+            {badgeCount > 0 && (
               <div className="flex items-center justify-end bg-slate-50 px-5 py-2 border-b border-slate-100">
                 <button
                   type="button"
@@ -374,6 +400,7 @@ function BellButton() {
               <div className="space-y-2">
                 <h4 className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-400 px-1">Cấu hình & Trạng thái</h4>
                 {systemAlerts.map((alert) => {
+                  const isUnreadSystem = !readSystemIds.includes(alert.id);
                   let alertBg = 'bg-blue-50 border-blue-100 text-blue-800';
                   let iconColor = 'text-blue-500';
                   let iconSvg = (
@@ -401,10 +428,18 @@ function BellButton() {
                   }
 
                   return (
-                    <div key={alert.id} className={`flex gap-3 rounded-xl border p-3 ${alertBg}`}>
+                    <button
+                      key={alert.id}
+                      type="button"
+                      onClick={() => handleMarkSystemAsRead(alert.id)}
+                      className={`relative flex w-full gap-3 rounded-xl border p-3 text-left transition hover:shadow-sm ${alertBg} ${isUnreadSystem ? 'ring-2 ring-blue-100' : 'opacity-70'}`}
+                    >
+                      {isUnreadSystem && (
+                        <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-600 ring-2 ring-white" />
+                      )}
                       <span className={`shrink-0 ${iconColor}`}>{iconSvg}</span>
                       <p className="text-[12.5px] font-semibold leading-relaxed">{alert.message}</p>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
