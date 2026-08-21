@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, UseInterceptors, UploadedFile, UnauthorizedException, UseGuards, Headers, Query, InternalServerErrorException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, UseInterceptors, UploadedFile, UnauthorizedException, UseGuards, Headers, Query, InternalServerErrorException, Req } from '@nestjs/common';
 import { AppService, SystemSettings } from './app.service';
 import { Candidate, Sponsor, TimelineEvent, Banner, VotePackage, WebUser } from '@huitfest/shared';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -91,6 +91,16 @@ export class AppController {
         role: adminUser.role,
       },
     };
+  }
+
+  @Put('admin/account/password')
+  @UseGuards(AdminSessionGuard)
+  async changeAdminPassword(
+    @Req() req: any,
+    @Body('currentPassword') currentPassword: string,
+    @Body('newPassword') newPassword: string,
+  ): Promise<{ success: boolean }> {
+    return this.appService.changeAdminPassword(req.admin.id, currentPassword, newPassword);
   }
 
   // --- FILE UPLOAD ---

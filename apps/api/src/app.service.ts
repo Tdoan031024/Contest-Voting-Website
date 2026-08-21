@@ -1636,6 +1636,37 @@ export class AppService implements OnModuleInit {
     };
   }
 
+  async changeAdminPassword(adminId: string, currentPassword: string, newPassword: string): Promise<{ success: boolean }> {
+    if (!currentPassword || !newPassword) {
+      throw new BadRequestException('Vui lòng nhập đầy đủ mật khẩu hiện tại và mật khẩu mới.');
+    }
+    if (newPassword.length < 8) {
+      throw new BadRequestException('Mật khẩu mới phải có ít nhất 8 ký tự.');
+    }
+
+    const adminUser = await this.prisma.adminUser.findUnique({
+      where: { id: adminId },
+    });
+
+    if (!adminUser || !adminUser.isActive) {
+      throw new UnauthorizedException('Tài khoản quản trị không tồn tại hoặc đã bị khóa.');
+    }
+
+    const isPasswordMatched = await bcrypt.compare(currentPassword, adminUser.passwordHash);
+    const isLegacyPlainPassword = adminUser.passwordHash === currentPassword;
+    if (!isPasswordMatched && !isLegacyPlainPassword) {
+      throw new UnauthorizedException('Mật khẩu hiện tại không chính xác.');
+    }
+
+    const passwordHash = await bcrypt.hash(newPassword, 10);
+    await this.prisma.adminUser.update({
+      where: { id: adminId },
+      data: { passwordHash },
+    });
+
+    return { success: true };
+  }
+
   getAdminSessionSecret(): string {
     try {
       return getEnvVar('ADMIN_SESSION_SECRET');

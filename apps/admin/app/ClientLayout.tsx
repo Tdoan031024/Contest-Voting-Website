@@ -508,6 +508,12 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   const [sidebarWidth, setSidebarWidth] = React.useState(238);
   const [isResizing, setIsResizing] = React.useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
+  const [isAccountMenuOpen, setIsAccountMenuOpen] = React.useState(false);
+  const [accountModal, setAccountModal] = React.useState<'profile' | 'password' | null>(null);
+  const [passwordForm, setPasswordForm] = React.useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [passwordSaving, setPasswordSaving] = React.useState(false);
+  const [passwordMessage, setPasswordMessage] = React.useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const accountMenuRef = React.useRef<HTMLDivElement>(null);
 
   // Global Image Lightbox state
   const [lightboxImage, setLightboxImage] = React.useState<{ url: string; title?: string } | null>(null);
@@ -581,6 +587,46 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   }, [isTabModalOpen]);
 
   React.useEffect(() => {
+    if (!isAccountMenuOpen) return;
+
+    const handlePointerDown = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!accountMenuRef.current?.contains(target)) {
+        setIsAccountMenuOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsAccountMenuOpen(false);
+        setAccountModal(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isAccountMenuOpen]);
+
+  React.useEffect(() => {
+    if (!accountModal) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setAccountModal(null);
+        setPasswordMessage(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [accountModal]);
+
+  React.useEffect(() => {
     const savedWidth = localStorage.getItem('admin_sidebar_width');
     if (savedWidth) setSidebarWidth(parseInt(savedWidth, 10));
     const savedCollapsed = localStorage.getItem('admin_sidebar_collapsed');
@@ -615,6 +661,42 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
       console.error(error);
     } finally {
       window.location.href = '/admin/login';
+    }
+  };
+
+  const handleChangePassword = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setPasswordMessage(null);
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordMessage({ type: 'error', text: 'Mật khẩu xác nhận không khớp.' });
+      return;
+    }
+    if (passwordForm.newPassword.length < 8) {
+      setPasswordMessage({ type: 'error', text: 'Mật khẩu mới phải có ít nhất 8 ký tự.' });
+      return;
+    }
+
+    setPasswordSaving(true);
+    try {
+      const res = await fetch(apiUrl('/api/admin/account/password'), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || 'Không thể đổi mật khẩu.');
+      }
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordMessage({ type: 'success', text: 'Đổi mật khẩu thành công. Bạn có thể dùng mật khẩu mới ở lần đăng nhập tiếp theo.' });
+    } catch (error: any) {
+      setPasswordMessage({ type: 'error', text: error.message || 'Không thể đổi mật khẩu.' });
+    } finally {
+      setPasswordSaving(false);
     }
   };
 
@@ -724,7 +806,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
         </nav>
 
         <div className={`${isCollapsed ? 'p-2' : 'p-4'} border-t border-slate-200/60`}>
-          <div className={`rounded-[14px] border border-slate-200 bg-white/92 shadow-sm ${isCollapsed ? 'p-2' : 'p-3'}`}>
+          <div ref={accountMenuRef} className={`relative rounded-[14px] border border-slate-200 bg-white/92 shadow-sm ${isCollapsed ? 'p-2' : 'p-3'}`}>
             <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'justify-between gap-3'}`}>
               <div className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-3 min-w-0'}`}>
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-[12px] border border-slate-200 bg-slate-50">
@@ -738,20 +820,82 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                 )}
               </div>
               {!isCollapsed && (
-                <button type="button" className="grid h-8 w-8 place-items-center rounded-[10px] text-slate-500 transition hover:bg-slate-100" aria-label="Tài khoản">
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <button
+                  type="button"
+                  onClick={() => setIsAccountMenuOpen((open) => !open)}
+                  className="grid h-8 w-8 place-items-center rounded-[10px] text-slate-500 transition hover:bg-slate-100"
+                  aria-label="Mở menu tài khoản"
+                  aria-expanded={isAccountMenuOpen}
+                >
+                  <svg viewBox="0 0 24 24" className={`h-4 w-4 transition ${isAccountMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </button>
               )}
             </div>
-            {!isCollapsed && (
-              <button
-                onClick={handleLogout}
-                className="mt-3 w-full rounded-[12px] border border-slate-200 px-3 py-2 text-[12px] font-semibold text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
-              >
-                Đăng xuất
-              </button>
+            {!isCollapsed && isAccountMenuOpen && (
+              <div className="absolute bottom-[calc(100%+8px)] left-0 right-0 z-[120] rounded-2xl border border-slate-200 bg-white p-2 shadow-2xl">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccountModal('profile');
+                    setIsAccountMenuOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-blue-50 text-blue-600">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M20 21a8 8 0 1 0-16 0" />
+                      <circle cx="12" cy="7" r="4" />
+                    </svg>
+                  </span>
+                  Hồ sơ admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccountModal('password');
+                    setIsAccountMenuOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-slate-50 text-slate-500">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="11" width="18" height="10" rx="2" />
+                      <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                    </svg>
+                  </span>
+                  Đổi mật khẩu
+                </button>
+                <Link
+                  href="/settings"
+                  onClick={() => setIsAccountMenuOpen(false)}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-700"
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-slate-50 text-slate-500">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z" />
+                      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1A2 2 0 1 1 4.2 17l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.3 7A2 2 0 1 1 7.1 4.2l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1A2 2 0 1 1 19.8 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z" />
+                    </svg>
+                  </span>
+                  Cài đặt tài khoản
+                </Link>
+                <div className="my-1 h-px bg-slate-100" />
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-[12px] font-bold text-rose-600 transition hover:bg-rose-50"
+                >
+                  <span className="grid h-7 w-7 place-items-center rounded-lg bg-rose-50 text-rose-500">
+                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <path d="M16 17l5-5-5-5" />
+                      <path d="M21 12H9" />
+                    </svg>
+                  </span>
+                  Đăng xuất
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -922,6 +1066,103 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           </div>
         </main>
       </div>
+
+      {accountModal && (
+        <div className="fixed inset-0 z-[99990] flex items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-[420px] rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-blue-600">Tài khoản quản trị</p>
+                <h3 className="mt-1 text-[18px] font-black text-slate-950">
+                  {accountModal === 'profile' ? 'Hồ sơ admin' : 'Đổi mật khẩu'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setAccountModal(null);
+                  setPasswordMessage(null);
+                }}
+                className="grid h-8 w-8 place-items-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                aria-label="Đóng"
+              >
+                ✕
+              </button>
+            </div>
+
+            {accountModal === 'profile' ? (
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-slate-200 bg-white">
+                    <img src="/admin/uploads/logo-startup.png" alt="Administrator" className="h-full w-full object-contain p-1.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-black text-slate-950">Administrator</p>
+                    <p className="truncate text-xs font-semibold text-slate-500">Quản trị viên hệ thống</p>
+                  </div>
+                </div>
+                <div className="grid gap-2 text-sm">
+                  <div className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2">
+                    <span className="text-xs font-bold text-slate-500">Tên đăng nhập</span>
+                    <span className="text-xs font-black text-slate-900">Startup.Huitmedia</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-xl border border-slate-100 px-3 py-2">
+                    <span className="text-xs font-bold text-slate-500">Vai trò</span>
+                    <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-black text-blue-700">Admin</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleChangePassword} className="mt-4 space-y-3">
+                <label className="grid gap-1.5">
+                  <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">Mật khẩu hiện tại</span>
+                  <input
+                    type="password"
+                    value={passwordForm.currentPassword}
+                    onChange={(event) => setPasswordForm((prev) => ({ ...prev, currentPassword: event.target.value }))}
+                    className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    required
+                  />
+                </label>
+                <label className="grid gap-1.5">
+                  <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">Mật khẩu mới</span>
+                  <input
+                    type="password"
+                    value={passwordForm.newPassword}
+                    onChange={(event) => setPasswordForm((prev) => ({ ...prev, newPassword: event.target.value }))}
+                    className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    minLength={8}
+                    required
+                  />
+                </label>
+                <label className="grid gap-1.5">
+                  <span className="text-[11px] font-black uppercase tracking-[0.12em] text-slate-500">Xác nhận mật khẩu mới</span>
+                  <input
+                    type="password"
+                    value={passwordForm.confirmPassword}
+                    onChange={(event) => setPasswordForm((prev) => ({ ...prev, confirmPassword: event.target.value }))}
+                    className="h-10 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-400 focus:bg-white focus:ring-4 focus:ring-blue-100"
+                    minLength={8}
+                    required
+                  />
+                </label>
+                {passwordMessage && (
+                  <p className={`rounded-xl px-3 py-2 text-xs font-bold ${passwordMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                    {passwordMessage.text}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={passwordSaving}
+                  className="admin-btn admin-btn-primary w-full disabled:opacity-60"
+                >
+                  {passwordSaving ? 'Đang đổi mật khẩu...' : 'Lưu mật khẩu mới'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Global Image Lightbox Modal */}
       {lightboxImage && (
