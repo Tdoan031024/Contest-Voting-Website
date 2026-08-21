@@ -27,22 +27,22 @@ const defaultSections: SectionConfig[] = [
       {
         number: '01',
         description: 'Tạo tài khoản mới hoặc đăng nhập để bắt đầu bình chọn.',
-        image: '/original_assets/imagefca6.png',
+        image: '',
       },
       {
         number: '02',
         description: 'Mỗi tài khoản có 2 lượt bình chọn miễn phí mỗi ngày cho toàn bộ hệ thống.',
-        image: '/original_assets/imagef1be.png',
+        image: '',
       },
       {
         number: '03',
         description: 'Chọn dự án bạn muốn ủng hộ từ trang chủ, bảng xếp hạng hoặc trang chi tiết dự án.',
-        image: '/original_assets/image81d3.png',
+        image: '',
       },
       {
         number: '04',
         description: 'Mỗi lần xác nhận sẽ cộng 1 lượt bình chọn cho dự án. Khi dùng hết 2 lượt, bạn cần chờ đến ngày hôm sau.',
-        image: '/original_assets/image20da.png',
+        image: '',
       },
     ],
   },
@@ -93,9 +93,20 @@ function normalizeSections(rawSections: any[]): SectionConfig[] {
     title: section.title || `Mục ${index + 1}`,
     steps: section.steps.map((step: any, stepIndex: number) => ({
       ...step,
-      image: step.image || defaultSections[index]?.steps?.[stepIndex]?.image || defaultSections[0]?.steps?.[stepIndex]?.image || '',
+      image: step.image || '',
     })),
   }));
+}
+
+function StepScreenshot({ src, alt }: { src: string; alt: string }) {
+  const [hasError, setHasError] = useState(false);
+  if (!src || hasError) return null;
+
+  return (
+    <div className="step-screenshot">
+      <img src={src} alt={alt} loading="lazy" onError={() => setHasError(true)} />
+    </div>
+  );
 }
 
 function extractDigits(value: any): string {
@@ -345,11 +356,7 @@ export default function TheLePage() {
                       <h4 style={{ fontSize: 'clamp(20px, 2.2vw, 25px)', fontWeight: 900, marginBottom: 6 }}>Bước {step.number}</h4>
                       <p style={{ fontSize: 'clamp(15px, 1.5vw, 18px)', lineHeight: 1.7, fontWeight: 500 }}>{step.description}</p>
                     </div>
-                    {step.image && (
-                      <div className="step-screenshot">
-                        <img src={step.image} alt={`Bước ${step.number}`} loading="lazy" />
-                      </div>
-                    )}
+                    <StepScreenshot src={step.image} alt={`Bước ${step.number}`} />
                   </div>
                 ))}
               </div>

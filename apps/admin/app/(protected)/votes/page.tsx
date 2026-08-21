@@ -268,8 +268,7 @@ export default function VoteLogsAdminPage() {
       {/* Header section */}
       <section className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Nhật ký cử tri</p>
-          <h2 className="mt-0.5 text-lg font-black text-[#123c34]">Lịch sử bình chọn chi tiết</h2>
+          <h2 className="text-lg font-black text-[#123c34]">Lịch sử bình chọn chi tiết</h2>
           <p className="text-xs text-[#6b7773] mt-0.5">Theo dõi thời gian, thông tin cử tri và mã dự án nhận bình chọn. Dữ liệu thời gian thực từ cơ sở dữ liệu.</p>
         </div>
         <div className="flex items-center gap-2">

@@ -128,11 +128,12 @@ interface PageHeaderProps {
 }
 
 export function PageHeader({ category, title, description, action }: PageHeaderProps) {
+  void category;
+
   return (
     <div className="admin-card flex flex-col gap-3 px-5 py-4 md:flex-row md:items-end md:justify-between select-none">
       <div>
-        <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[var(--primary-strong)]">{category}</p>
-        <h2 className="mt-1.5 text-[24px] font-extrabold tracking-[-0.03em] text-slate-950">{title}</h2>
+        <h2 className="text-[24px] font-extrabold tracking-[-0.03em] text-slate-950">{title}</h2>
         <p className="mt-1.5 max-w-2xl text-[13px] font-medium leading-5 text-slate-500">{description}</p>
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}

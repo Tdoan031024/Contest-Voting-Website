@@ -371,7 +371,6 @@ export default function SponsorsAdminPage() {
       {/* Title Header */}
       <div className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Quản lý đối tác</p>
           <h1 className="text-lg font-black text-[#123c34]">Nhà tài trợ &amp; Đối tác</h1>
           <p className="text-xs text-[#6b7773] mt-0.5">Danh sách nhà tài trợ đồng hành cùng sự kiện HUIT Startup 2026.</p>
         </div>

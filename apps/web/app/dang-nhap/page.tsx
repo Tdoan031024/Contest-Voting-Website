@@ -111,9 +111,12 @@ export default function LoginPage() {
   const [loginErrors, setLoginErrors] = useState<{ email?: string; password?: string }>({});
   const [regErrors, setRegErrors] = useState<{ fullName?: string; phone?: string; email?: string; password?: string }>({});
 
-  // Forgot password modal state
-  const [forgotOpen, setForgotOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'login' | 'forgot'>('login');
+  const [forgotStep, setForgotStep] = useState<'email' | 'code'>('email');
   const [forgotEmail, setForgotEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetPasswordConfirm, setResetPasswordConfirm] = useState('');
   const [forgotSubmitted, setForgotSubmitted] = useState(false);
 
   useEffect(() => {
@@ -296,13 +299,67 @@ export default function LoginPage() {
     }
   };
 
-  const handleForgotSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleForgotSubmit = async (e?: React.FormEvent | React.MouseEvent) => {
+    e?.preventDefault();
     if (!validateEmail(forgotEmail)) {
       showAlert('Vui lòng nhập đúng địa chỉ email đã đăng ký.', 'warning', 'Email không hợp lệ');
       return;
     }
-    setForgotSubmitted(true);
+    setLoading(true);
+    try {
+      const res = await fetch(apiUrl('/api/web/auth/password-reset/request'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || 'Không thể gửi mã xác thực.');
+      setForgotStep('code');
+      setResetCode('');
+      await showAlert(data?.message || 'Nếu email tồn tại trong hệ thống, mã xác thực sẽ được gửi đến hộp thư của bạn.', 'success', 'Đã gửi mã xác thực');
+    } catch (error: any) {
+      showAlert(error.message || 'Không thể gửi mã xác thực.', 'error', 'Lỗi khôi phục');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!/^\d{6}$/.test(resetCode.trim())) {
+      showAlert('Mã xác thực gồm 6 chữ số.', 'warning', 'Mã không hợp lệ');
+      return;
+    }
+    if (!resetPassword || resetPassword.length < 6) {
+      showAlert('Mật khẩu mới phải từ 6 ký tự trở lên.', 'warning', 'Mật khẩu chưa hợp lệ');
+      return;
+    }
+    if (resetPassword !== resetPasswordConfirm) {
+      showAlert('Mật khẩu xác nhận chưa khớp.', 'warning', 'Xác nhận mật khẩu');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch(apiUrl('/api/web/auth/password-reset/confirm'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: forgotEmail,
+          code: resetCode,
+          newPassword: resetPassword,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.message || 'Không thể cập nhật mật khẩu.');
+      setForgotSubmitted(true);
+      setPassword('');
+      await showAlert(data?.message || 'Mật khẩu đã được cập nhật.', 'success', 'Đặt lại mật khẩu thành công');
+    } catch (error: any) {
+      showAlert(error.message || 'Không thể cập nhật mật khẩu.', 'error', 'Lỗi đặt lại mật khẩu');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -512,12 +569,168 @@ export default function LoginPage() {
           {/* Header */}
           <div className={`text-center mb-10 ${mounted ? 'anim-up anim-d100' : 'opacity-0'}`}>
             <h1 className="text-[28px] sm:text-[36px] font-extrabold text-white uppercase tracking-[0.06em] mb-1">
-              Đăng nhập
+              {authMode === 'forgot' ? 'Hỗ trợ mật khẩu' : 'Đăng nhập'}
             </h1>
-            <p className="text-[13px] text-white/40 tracking-wider">HUIT STARTUP 2026 — Cổng bình chọn chính thức</p>
+            <p className="text-[13px] text-white/40 tracking-wider">
+              {authMode === 'forgot'
+                ? 'HUIT STARTUP 2026 — Hỗ trợ khôi phục tài khoản'
+                : 'HUIT STARTUP 2026 — Cổng bình chọn chính thức'}
+            </p>
             <div className="h-[2.5px] w-[50px] bg-gradient-to-r from-[#0A2FFF] to-[#79BCC2] mx-auto rounded-full mt-4 transition-all duration-[1000ms]" style={{ width: mounted ? '50px' : '0px' }} />
           </div>
 
+          {authMode === 'forgot' ? (
+            <div className={`mx-auto w-full max-w-[620px] ${mounted ? 'anim-up anim-d200' : 'opacity-0'}`}>
+              {!forgotSubmitted ? (
+                <form onSubmit={forgotStep === 'email' ? handleForgotSubmit : handleResetPasswordSubmit} className="space-y-6">
+                  <div className="rounded-[24px] border border-sky-200/70 bg-sky-50/90 p-5 text-slate-700 shadow-sm dark:border-[#79BCC2]/20 dark:bg-[#79BCC2]/10 dark:text-white/75">
+                    <div className="flex items-start gap-4">
+                      <div className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-white text-[#0284c7] shadow-sm dark:bg-white/10 dark:text-[#79BCC2]">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="3" y="11" width="18" height="10" rx="2" />
+                          <path d="M7 11V7a5 5 0 0 1 9.3-2.6" />
+                          <path d="M12 15v2" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h2 className="text-[20px] font-extrabold text-slate-950 dark:text-white">Yêu cầu hỗ trợ đổi mật khẩu</h2>
+                        <p className="mt-2 text-[14px] leading-6 text-slate-600 dark:text-white/65">
+                          {forgotStep === 'email'
+                            ? 'Nhập email đã đăng ký. Hệ thống sẽ gửi mã xác thực để bạn tự đặt lại mật khẩu.'
+                            : 'Nhập mã 6 số đã gửi đến email của bạn, sau đó tạo mật khẩu mới.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {forgotStep === 'email' ? (
+                    <label className="block space-y-2">
+                      <span className="text-[14px] font-semibold text-slate-700 dark:text-white/80 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#79BCC2" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="4"></circle>
+                          <path d="M16 12v1.5a2.5 2.5 0 0 0 5 0V12a9 9 0 1 0-5.5 8.28"></path>
+                        </svg>
+                        Email tài khoản cần hỗ trợ
+                      </span>
+                      <input
+                        type="email"
+                        required
+                        value={forgotEmail}
+                        onChange={(e) => setForgotEmail(e.target.value)}
+                        placeholder="Nhập địa chỉ email đã đăng ký"
+                        className="login-input h-[50px] w-full rounded-[14px] px-4 text-[15px]"
+                      />
+                    </label>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-3 text-[13px] font-semibold text-slate-600 dark:border-white/10 dark:bg-white/5 dark:text-white/65">
+                        Mã xác thực đã được gửi đến <span className="text-[#0284c7] dark:text-[#79BCC2]">{forgotEmail}</span>. Mã có hiệu lực trong 10 phút.
+                      </div>
+                      <label className="block space-y-2">
+                        <span className="text-[14px] font-semibold text-slate-700 dark:text-white/80">Mã xác thực 6 số</span>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          required
+                          value={resetCode}
+                          onChange={(e) => setResetCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                          placeholder="Nhập mã xác thực"
+                          className="login-input h-[54px] w-full rounded-[14px] px-4 text-center text-[22px] font-extrabold tracking-[0.35em]"
+                        />
+                      </label>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <label className="block space-y-2">
+                          <span className="text-[14px] font-semibold text-slate-700 dark:text-white/80">Mật khẩu mới</span>
+                          <input
+                            type="password"
+                            required
+                            minLength={6}
+                            value={resetPassword}
+                            onChange={(e) => setResetPassword(e.target.value)}
+                            placeholder="Tối thiểu 6 ký tự"
+                            className="login-input h-[50px] w-full rounded-[14px] px-4 text-[15px]"
+                          />
+                        </label>
+                        <label className="block space-y-2">
+                          <span className="text-[14px] font-semibold text-slate-700 dark:text-white/80">Xác nhận mật khẩu</span>
+                          <input
+                            type="password"
+                            required
+                            minLength={6}
+                            value={resetPasswordConfirm}
+                            onChange={(e) => setResetPasswordConfirm(e.target.value)}
+                            placeholder="Nhập lại mật khẩu"
+                            className="login-input h-[50px] w-full rounded-[14px] px-4 text-[15px]"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('login');
+                        setForgotStep('email');
+                        setForgotSubmitted(false);
+                      }}
+                      className="h-[48px] rounded-[14px] border border-slate-300 bg-white px-5 text-[14px] font-bold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 dark:border-white/15 dark:bg-white/5 dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+                    >
+                      Quay lại đăng nhập
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="btn-login h-[48px] rounded-[14px] bg-gradient-to-r from-[#0077b6] via-[#0096c7] to-[#0284c7] px-5 text-[14px] font-extrabold uppercase tracking-wider text-white shadow-lg shadow-sky-600/30"
+                    >
+                      {loading ? 'Đang xử lý...' : forgotStep === 'email' ? 'Gửi mã xác thực' : 'Đổi mật khẩu'}
+                    </button>
+                  </div>
+                  {forgotStep === 'code' && (
+                    <button
+                      type="button"
+                      disabled={loading}
+                      onClick={handleForgotSubmit}
+                      className="mx-auto block text-[13px] font-semibold text-[#0284c7] underline-offset-4 hover:underline disabled:opacity-60 dark:text-[#79BCC2]"
+                    >
+                      Gửi lại mã xác thực
+                    </button>
+                  )}
+                </form>
+              ) : (
+                <div className="space-y-5 text-center">
+                  <div className="mx-auto grid h-16 w-16 place-items-center rounded-full border border-emerald-300 bg-emerald-50 text-2xl font-bold text-emerald-600 dark:border-emerald-500/40 dark:bg-emerald-500/15 dark:text-emerald-300">
+                    ✓
+                  </div>
+                  <div>
+                    <h2 className="text-[22px] font-extrabold text-slate-950 dark:text-white">Đổi mật khẩu thành công</h2>
+                    <p className="mx-auto mt-2 max-w-[520px] text-[14px] leading-6 text-slate-600 dark:text-white/65">
+                      Bạn có thể quay lại đăng nhập bằng mật khẩu mới cho tài khoản <strong className="text-slate-950 dark:text-white">{forgotEmail}</strong>.
+                    </p>
+                  </div>
+                  <div className="mx-auto max-w-[280px]">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEmail(forgotEmail);
+                        setAuthMode('login');
+                        setForgotStep('email');
+                        setForgotSubmitted(false);
+                        setResetCode('');
+                        setResetPassword('');
+                        setResetPasswordConfirm('');
+                      }}
+                      className="btn-login flex h-[46px] w-full items-center justify-center rounded-[14px] bg-gradient-to-r from-[#0077b6] via-[#0096c7] to-[#0284c7] px-5 text-[14px] font-extrabold text-white shadow-lg shadow-sky-600/30"
+                    >
+                      Đăng nhập ngay
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
           <div className="flex flex-col md:flex-row items-start justify-between gap-10 md:gap-16">
 
             {/* Left Column: Email/Password Form */}
@@ -610,8 +823,12 @@ export default function LoginPage() {
                   type="button"
                   onClick={() => {
                     setForgotEmail(email);
+                    setForgotStep('email');
                     setForgotSubmitted(false);
-                    setForgotOpen(true);
+                    setResetCode('');
+                    setResetPassword('');
+                    setResetPasswordConfirm('');
+                    setAuthMode('forgot');
                   }}
                   className="link-hover text-[#79BCC2] text-[13px] font-semibold underline-offset-4 hover:underline"
                 >
@@ -676,6 +893,7 @@ export default function LoginPage() {
 
             </div>
           </div>
+          )}
         </div>
 
         {registerOpen && (
@@ -927,91 +1145,6 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Forgot Password Modal */}
-        {forgotOpen && (
-          <div
-            className="fixed inset-0 z-[1150] flex items-center justify-center bg-black/70 px-4 backdrop-blur-md"
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) setForgotOpen(false);
-            }}
-          >
-            <div className="login-card w-full max-w-[480px] rounded-[28px] p-6 sm:p-8 relative">
-              <div className="flex items-start justify-between border-b border-white/10 pb-4 mb-5">
-                <div>
-                  <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-[#79BCC2]">Khôi phục mật khẩu</p>
-                  <h3 className="text-[20px] font-extrabold text-white mt-1">Yêu cầu hỗ trợ tài khoản</h3>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setForgotOpen(false)}
-                  className="grid h-9 w-9 place-items-center rounded-xl border border-white/10 bg-white/5 text-white/60 transition hover:text-white"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {!forgotSubmitted ? (
-                <form onSubmit={handleForgotSubmit} className="space-y-4">
-                  <p className="text-[13.5px] leading-relaxed text-white/70">
-                    Nhập địa chỉ email bạn đã sử dụng để đăng ký. Ban tổ chức sẽ gửi hướng dẫn khôi phục lại mật khẩu cho bạn.
-                  </p>
-                  <div className="space-y-1.5">
-                    <label className="text-[12px] font-semibold text-white/80">Địa chỉ email</label>
-                    <input
-                      type="email"
-                      required
-                      value={forgotEmail}
-                      onChange={(e) => setForgotEmail(e.target.value)}
-                      placeholder="Nhập địa chỉ email của bạn"
-                      className="login-input h-[46px] w-full rounded-[14px] border-2 border-transparent bg-white/90 px-4 text-[14px] text-neutral-800"
-                    />
-                  </div>
-                  <div className="pt-2 flex gap-3 justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setForgotOpen(false)}
-                      className="h-[44px] rounded-[12px] border border-white/15 px-4 text-[13px] font-bold text-white/65 hover:text-white"
-                    >
-                      Hủy
-                    </button>
-                    <button
-                      type="submit"
-                      className="btn-login h-[44px] rounded-[12px] bg-gradient-to-r from-[#0A2FFF] to-[#1a5aff] px-5 text-[13px] font-bold text-white uppercase tracking-wider"
-                    >
-                      Gửi yêu cầu
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="space-y-4 text-center py-2">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 grid place-items-center mx-auto text-xl font-bold">
-                    ✓
-                  </div>
-                  <h4 className="text-[17px] font-bold text-white">Yêu cầu đã được ghi nhận</h4>
-                  <p className="text-[13.5px] text-white/70 leading-relaxed">
-                    Vui lòng liên hệ với Ban tổ chức qua email <strong className="text-[#79BCC2]">iec@huit.edu.vn</strong> kèm email <strong className="text-white">{forgotEmail}</strong> để được cấp lại mật khẩu ngay lập tức.
-                  </p>
-                  <div className="pt-3 flex flex-col gap-2">
-                    <a
-                      href={`mailto:iec@huit.edu.vn?subject=Khôi phục mật khẩu tài khoản ${forgotEmail}&body=Kính gửi BTC, tôi cần khôi phục mật khẩu cho tài khoản email: ${forgotEmail}`}
-                      className="btn-login h-[44px] rounded-[12px] bg-gradient-to-r from-[#0A2FFF] to-[#1a5aff] px-5 text-[13px] font-bold text-white flex items-center justify-center gap-2"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 7L2 7"/></svg>
-                      Gửi email trực tiếp cho BTC
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => setForgotOpen(false)}
-                      className="h-[40px] text-[13px] text-white/50 hover:text-white underline"
-                    >
-                      Quay lại đăng nhập
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </main>
     </>
   );

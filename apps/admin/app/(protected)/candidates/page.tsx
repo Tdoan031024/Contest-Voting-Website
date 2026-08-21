@@ -1550,8 +1550,7 @@ export default function CandidatesAdminPage() {
       <section className="admin-card relative z-[80] overflow-visible p-0">
         <div className="flex flex-col gap-2.5 border-b border-slate-200/70 px-4 py-3.5 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[var(--primary-strong)]">Quản lý cuộc thi</p>
-            <h2 className="mt-0.5 text-[20px] font-extrabold tracking-[-0.04em] text-slate-950">Danh sách dự án tham gia</h2>
+            <h2 className="text-[20px] font-extrabold tracking-[-0.04em] text-slate-950">Danh sách dự án tham gia</h2>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
             <button onClick={handleExportCandidates} className="admin-btn admin-btn-secondary !h-8 !min-h-0 px-2.5 text-xs gap-1.5 rounded-lg">
@@ -1592,7 +1591,7 @@ export default function CandidatesAdminPage() {
           ].map(([label, value]) => (
             <div key={label} className="dashboard-stat-card flex min-h-[104px] flex-col justify-center xl:col-span-1">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">{label}</p>
+                <p className="text-sm font-semibold text-slate-500">{label}</p>
                 <p className="mt-1.5 text-[20px] font-extrabold tracking-[-0.04em] text-slate-950">{value}</p>
               </div>
             </div>
@@ -1601,8 +1600,7 @@ export default function CandidatesAdminPage() {
           <div className="dashboard-stat-card relative z-[220] flex min-h-[118px] flex-col justify-between !overflow-visible xl:col-span-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Đăng ký</p>
-                <p className="mt-2 text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
+                <p className="text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
                   {isRegistrationOpen ? 'Đang mở' : 'Đang đóng'}
                 </p>
               </div>
@@ -1620,7 +1618,7 @@ export default function CandidatesAdminPage() {
               </button>
             </div>
             <div className="space-y-1">
-              <label className="block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Hạn đăng ký</label>
+              <label className="block text-xs font-semibold text-slate-500">Hạn đăng ký</label>
               <DateTimeInput
                 value={registrationDeadline}
                 onChange={(val) => setRegistrationDeadline(val)}
@@ -1632,8 +1630,7 @@ export default function CandidatesAdminPage() {
           <div className="dashboard-stat-card flex min-h-[118px] flex-col justify-between xl:col-span-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Bình chọn</p>
-                <p className="mt-2 text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
+                <p className="text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
                   {isGateOpen ? 'Đang mở' : 'Đang đóng'}
                 </p>
               </div>
@@ -1651,7 +1648,6 @@ export default function CandidatesAdminPage() {
               </button>
             </div>
             <div className="space-y-1 text-left">
-              <span className="block text-[10px] font-bold uppercase tracking-[0.16em] text-slate-400">Trạng thái cổng</span>
               <p className="text-[11px] font-semibold text-slate-500 truncate leading-normal">
                 {isGateOpen ? 'Đang mở nhận lượt vote' : 'Đã đóng nhận lượt vote'}
               </p>
@@ -1661,8 +1657,7 @@ export default function CandidatesAdminPage() {
           <div className="dashboard-stat-card relative z-40 flex min-h-[118px] flex-col justify-between !overflow-visible xl:col-span-2">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-slate-400">Promotion</p>
-                <p className="mt-2 truncate text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
+                <p className="truncate text-[22px] font-extrabold tracking-[-0.04em] text-slate-950">
                   {activePromotion ? `Đang chạy x${activePromotion.multiplier}` : 'Chưa chạy'}
                 </p>
                 <p className="mt-1 text-[11px] font-semibold text-slate-500">{votingPromotions.length} khung giờ</p>
@@ -1686,7 +1681,6 @@ export default function CandidatesAdminPage() {
           <div className="relative z-[100] border-t border-slate-200/70 px-3 py-3">
             <div className="mb-3 flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-400">Quy trình tạo Promotion</p>
                 <p className="mt-1 text-[13px] font-medium text-slate-500">Chọn mẫu thời gian, kiểm tra hệ số nhân điểm, sau đó bấm Lưu để áp dụng.</p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -1715,7 +1709,7 @@ export default function CandidatesAdminPage() {
 
                         <div className="grid gap-2 sm:grid-cols-[1fr_120px]">
                           <label className="grid gap-1">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Hệ số nhân điểm</span>
+                            <span className="text-xs font-semibold text-slate-500">Hệ số nhân điểm</span>
                             <div className="flex gap-1.5">
                               {[2, 3, 5].map((value) => (
                                 <button
@@ -1731,7 +1725,7 @@ export default function CandidatesAdminPage() {
                             </div>
                           </label>
                           <div className="relative z-40 grid gap-1">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Áp dụng</span>
+                            <span className="text-xs font-semibold text-slate-500">Áp dụng</span>
                             <button
                               type="button"
                               onClick={() => setOpenPromotionApplyId((current) => current === promotion.id ? null : promotion.id)}
@@ -1772,11 +1766,11 @@ export default function CandidatesAdminPage() {
 
                         <div className="relative z-30 grid grid-cols-1 gap-2 2xl:grid-cols-2">
                           <label className="grid gap-1">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Bắt đầu</span>
+                            <span className="text-xs font-semibold text-slate-500">Bắt đầu</span>
                             <DateTimeInput value={promotion.startAt} onChange={(val) => updatePromotion(promotion.id, 'startAt', val)} />
                           </label>
                           <label className="grid gap-1">
-                            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Kết thúc</span>
+                            <span className="text-xs font-semibold text-slate-500">Kết thúc</span>
                             <DateTimeInput value={promotion.endAt} onChange={(val) => updatePromotion(promotion.id, 'endAt', val)} />
                           </label>
                         </div>

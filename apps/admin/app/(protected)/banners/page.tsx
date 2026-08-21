@@ -40,8 +40,7 @@ function BannerModal({
       <form onSubmit={onSubmit} className="w-full max-w-[850px] rounded-xl border border-[#dce5e1] bg-white p-5 shadow-2xl animate-in fade-in zoom-in duration-200">
         <div className="flex items-start justify-between gap-3 border-b border-[#edf2f0] pb-3">
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Quản lý giao diện</p>
-            <h3 className="mt-0.5 text-base font-black text-[#123c34]">{title}</h3>
+            <h3 className="text-base font-black text-[#123c34]">{title}</h3>
           </div>
           <button type="button" onClick={onClose} className="rounded border border-[#dce5e1] px-2.5 py-1 text-[10px] font-bold text-[#52605b] hover:border-[#0f766e] hover:text-[#0f766e] transition-colors">
             Đóng
@@ -605,8 +604,7 @@ export default function BannersAdminPage() {
     <div className="space-y-4">
       <section className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Quản lý giao diện</p>
-          <h2 className="mt-0.5 text-lg font-black text-[#123c34]">Banner trang chủ</h2>
+          <h2 className="text-lg font-black text-[#123c34]">Banner trang chủ</h2>
           <p className="text-xs text-[#6b7773] mt-0.5">Quản lý banner đầu trang công khai và ẩn hiện nhanh.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

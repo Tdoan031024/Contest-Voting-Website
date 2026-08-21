@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as bcrypt from 'bcryptjs';
 import * as crypto from 'crypto';
+import * as nodemailer from 'nodemailer';
 
 function hashPasswordMd5(value: string): string {
   return crypto.createHash('md5').update(String(value || '')).digest('hex');
@@ -13,6 +14,22 @@ function hashPasswordMd5(value: string): string {
 
 function isMd5Hash(value?: string | null): boolean {
   return !!value && /^[a-f0-9]{32}$/i.test(value);
+}
+
+function hashResetCode(email: string, code: string, secret: string): string {
+  return crypto
+    .createHash('sha256')
+    .update(`${normalizeEmail(email)}:${String(code).trim()}:${secret}`)
+    .digest('hex');
+}
+
+function escapeHtml(value: string): string {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
 
 export function normalizeEmail(email: string): string {
@@ -428,10 +445,10 @@ export class AppService implements OnModuleInit {
         {
           title: 'Bình chọn miễn phí mỗi ngày',
           steps: [
-            { number: '01', description: 'Đăng ký hoặc đăng nhập tài khoản để bình chọn.', image: '/original_assets/imagefca6.png' },
-            { number: '02', description: 'Mỗi tài khoản có 2 lượt bình chọn miễn phí trong mỗi ngày.', image: '/original_assets/imagef1be.png' },
-            { number: '03', description: 'Mỗi lần bình chọn tăng 1 lượt cho dự án bạn chọn.', image: '/original_assets/image81d3.png' },
-            { number: '04', description: 'Dùng hết 2 lượt trong ngày thì không thể bình chọn cho bất kỳ dự án nào khác cho đến ngày hôm sau.', image: '/original_assets/image20da.png' },
+            { number: '01', description: 'Đăng ký hoặc đăng nhập tài khoản để bình chọn.', image: '' },
+            { number: '02', description: 'Mỗi tài khoản có 2 lượt bình chọn miễn phí trong mỗi ngày.', image: '' },
+            { number: '03', description: 'Mỗi lần bình chọn tăng 1 lượt cho dự án bạn chọn.', image: '' },
+            { number: '04', description: 'Dùng hết 2 lượt trong ngày thì không thể bình chọn cho bất kỳ dự án nào khác cho đến ngày hôm sau.', image: '' },
           ],
         },
       ] as any;
@@ -1452,6 +1469,103 @@ export class AppService implements OnModuleInit {
     return { ok: true, user: this.publicWebUser(updated), token: generateWebToken(updated.id, this.getAdminSessionSecret()) };
   }
 
+  async requestWebPasswordReset(emailInput: string): Promise<{ ok: boolean; message: string }> {
+    const email = normalizeEmail(emailInput);
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      throw new BadRequestException('Định dạng email không hợp lệ.');
+    }
+
+    const genericMessage = 'Nếu email tồn tại trong hệ thống, mã xác thực sẽ được gửi đến hộp thư của bạn.';
+    const user = await this.prisma.webUser.findUnique({ where: { email } });
+    if (!user || user.status === 'LOCKED') {
+      return { ok: true, message: genericMessage };
+    }
+
+    const code = crypto.randomInt(100000, 999999).toString();
+    const secret = this.getAdminSessionSecret();
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    await this.prisma.passwordResetCode.updateMany({
+      where: { email, usedAt: null },
+      data: { usedAt: new Date() },
+    });
+
+    await this.prisma.passwordResetCode.create({
+      data: {
+        email,
+        codeHash: hashResetCode(email, code, secret),
+        expiresAt,
+      },
+    });
+
+    await this.sendPasswordResetEmail(email, user.fullName, code);
+
+    return { ok: true, message: genericMessage };
+  }
+
+  async confirmWebPasswordReset(emailInput: string, codeInput: string, newPassword: string): Promise<{ ok: boolean; message: string }> {
+    const email = normalizeEmail(emailInput);
+    const code = String(codeInput || '').trim();
+    if (!/^\d{6}$/.test(code)) {
+      throw new BadRequestException('Mã xác thực gồm 6 chữ số.');
+    }
+    if (!newPassword || newPassword.length < 6) {
+      throw new BadRequestException('Mật khẩu mới phải có ít nhất 6 ký tự.');
+    }
+
+    const resetCode = await this.prisma.passwordResetCode.findFirst({
+      where: {
+        email,
+        usedAt: null,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (!resetCode) {
+      throw new BadRequestException('Mã xác thực đã hết hạn hoặc không tồn tại.');
+    }
+
+    if (resetCode.attempts >= 5) {
+      await this.prisma.passwordResetCode.update({
+        where: { id: resetCode.id },
+        data: { usedAt: new Date() },
+      });
+      throw new BadRequestException('Mã xác thực đã bị khóa do nhập sai quá nhiều lần.');
+    }
+
+    const expectedHash = hashResetCode(email, code, this.getAdminSessionSecret());
+    if (resetCode.codeHash !== expectedHash) {
+      await this.prisma.passwordResetCode.update({
+        where: { id: resetCode.id },
+        data: { attempts: { increment: 1 } },
+      });
+      throw new BadRequestException('Mã xác thực không chính xác.');
+    }
+
+    const user = await this.prisma.webUser.findUnique({ where: { email } });
+    if (!user || user.status === 'LOCKED') {
+      throw new BadRequestException('Tài khoản không tồn tại hoặc đã bị khóa.');
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.webUser.update({
+        where: { id: user.id },
+        data: {
+          passwordHash: await bcrypt.hash(newPassword, 10),
+          provider: user.provider || 'email',
+        },
+      }),
+      this.prisma.passwordResetCode.update({
+        where: { id: resetCode.id },
+        data: { usedAt: new Date() },
+      }),
+    ]);
+
+    return { ok: true, message: 'Mật khẩu đã được cập nhật. Bạn có thể đăng nhập bằng mật khẩu mới.' };
+  }
+
   async googleLogin(payload: Partial<WebUser> & { googleId?: string; accessToken?: string }): Promise<{ ok: boolean; user: WebUser; token: string }> {
     let googleProfile: any = null;
 
@@ -2195,5 +2309,58 @@ export class AppService implements OnModuleInit {
     });
 
     return { success: true, count: votes.length };
+  }
+
+  private async sendPasswordResetEmail(email: string, fullName: string, code: string) {
+    const host = getEnvVar('SMTP_HOST', '');
+    const port = Number(getEnvVar('SMTP_PORT', '587'));
+    const user = getEnvVar('SMTP_USER', '');
+    const pass = getEnvVar('SMTP_PASS', '');
+    const from = getEnvVar('SMTP_FROM', user || 'no-reply@huitmedia.edu.vn');
+
+    if (!host || !user || !pass) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`[PASSWORD_RESET] SMTP chưa cấu hình. Mã đặt lại mật khẩu cho ${email}: ${code}`);
+        return;
+      }
+      throw new InternalServerErrorException('Dịch vụ email chưa được cấu hình.');
+    }
+
+    const transporter = nodemailer.createTransport({
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
+    });
+
+    const safeName = String(fullName || 'bạn').trim() || 'bạn';
+    const safeNameHtml = escapeHtml(safeName);
+    await transporter.sendMail({
+      from,
+      to: email,
+      subject: 'Mã xác thực đặt lại mật khẩu HUIT Startup 2026',
+      text: [
+        `Xin chào ${safeName},`,
+        '',
+        `Mã xác thực đặt lại mật khẩu của bạn là: ${code}`,
+        'Mã có hiệu lực trong 10 phút và chỉ dùng được một lần.',
+        '',
+        'Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.',
+        '',
+        'HUIT Startup 2026',
+      ].join('\n'),
+      html: `
+        <div style="font-family:Arial,sans-serif;line-height:1.6;color:#0f172a;background:#f8fafc;padding:24px">
+          <div style="max-width:560px;margin:0 auto;background:#ffffff;border:1px solid #e2e8f0;border-radius:18px;padding:28px">
+            <h2 style="margin:0 0 10px;color:#0f172a">Đặt lại mật khẩu HUIT Startup 2026</h2>
+            <p>Xin chào <strong>${safeNameHtml}</strong>,</p>
+            <p>Mã xác thực đặt lại mật khẩu của bạn là:</p>
+            <div style="font-size:34px;letter-spacing:8px;font-weight:800;color:#0077b6;background:#eff6ff;border:1px solid #bfdbfe;border-radius:14px;padding:14px 18px;text-align:center">${code}</div>
+            <p style="color:#475569">Mã có hiệu lực trong <strong>10 phút</strong> và chỉ dùng được một lần.</p>
+            <p style="color:#64748b;font-size:13px">Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này.</p>
+          </div>
+        </div>
+      `,
+    });
   }
 }

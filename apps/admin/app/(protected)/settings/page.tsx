@@ -185,7 +185,6 @@ export default function SettingsAdminPage() {
       {/* Title Header */}
       <div className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Thiết lập hệ thống</p>
           <h1 className="text-lg font-black text-[#123c34]">Cấu hình cổng bình chọn</h1>
           <p className="text-xs text-[#6b7773] mt-0.5">Điều chỉnh thời gian mở cổng bình chọn, giới hạn lượt vote và thiết lập bảo trì.</p>
         </div>

@@ -193,8 +193,7 @@ export default function TimelineAdminPage() {
       <section className="overflow-hidden rounded-[28px] border border-[rgba(0,106,209,0.14)] bg-[linear-gradient(135deg,#f8fbff_0%,#eef6ff_55%,#ffffff_100%)] p-6 shadow-[0_20px_60px_rgba(16,42,67,0.08)]">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-[#006AD1]">Quản lý lộ trình</p>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">Thời gian & Lộ trình cuộc thi</h1>
+            <h1 className="text-3xl font-black tracking-tight text-slate-950">Thời gian & Lộ trình cuộc thi</h1>
             <p className="mt-3 text-sm leading-7 text-slate-600">
               Toàn bộ mốc thời gian được gom vào một màn hình gọn, dễ thao tác trên laptop mà không cần kéo ngang.
             </p>

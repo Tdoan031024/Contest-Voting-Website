@@ -352,8 +352,7 @@ export default function IntroductionAdminPage() {
       {/* Page Header */}
       <section className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-xs font-bold text-[#0f766e] font-heading">Quản lý giao diện</p>
-          <h2 className="mt-0.5 text-lg font-bold text-[#123c34] font-heading">Cấu hình thông tin cuộc thi</h2>
+          <h2 className="text-lg font-bold text-[#123c34] font-heading">Cấu hình thông tin cuộc thi</h2>
           <p className="text-xs text-[#6b7773] mt-0.5">Chỉnh sửa chi tiết nội dung trang Giới thiệu hiển thị trên trang chủ của website bình chọn.</p>
         </div>
       </section>

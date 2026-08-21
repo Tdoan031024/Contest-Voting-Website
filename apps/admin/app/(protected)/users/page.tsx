@@ -450,8 +450,7 @@ export default function UsersAdminPage() {
     <div className="space-y-4">
       <section className="flex flex-col gap-3 rounded-xl border border-[#dce5e1] bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#0f766e]">Quản lý người dùng web</p>
-          <h2 className="mt-0.5 text-lg font-black text-[#123c34]">Người dùng đã đăng ký ở website chính</h2>
+          <h2 className="text-lg font-black text-[#123c34]">Người dùng đã đăng ký ở website chính</h2>
           <p className="text-xs text-[#6b7773] mt-0.5">Theo dõi tài khoản bình chọn, hình thức đăng ký, thông tin liên hệ và lịch sử đăng nhập gần nhất.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">

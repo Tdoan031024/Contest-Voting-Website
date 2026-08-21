@@ -315,6 +315,20 @@ export class AppController {
     return this.appService.loginWebUser(email, password);
   }
 
+  @Post('web/auth/password-reset/request')
+  async requestWebPasswordReset(@Body('email') email: string): Promise<{ ok: boolean; message: string }> {
+    return this.appService.requestWebPasswordReset(email);
+  }
+
+  @Post('web/auth/password-reset/confirm')
+  async confirmWebPasswordReset(
+    @Body('email') email: string,
+    @Body('code') code: string,
+    @Body('newPassword') newPassword: string
+  ): Promise<{ ok: boolean; message: string }> {
+    return this.appService.confirmWebPasswordReset(email, code, newPassword);
+  }
+
   @Post('web/auth/google')
   async googleLogin(@Body() payload: any): Promise<{ ok: boolean; user: WebUser; token: string }> {
     return this.appService.googleLogin(payload);
