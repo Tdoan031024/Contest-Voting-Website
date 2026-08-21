@@ -41,6 +41,8 @@ export default function VoteLogsAdminPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [candidateFilter, setCandidateFilter] = useState('ALL');
+  const [projectSearch, setProjectSearch] = useState('');
+  const [appliedProjectSearch, setAppliedProjectSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [hidePublicVoteHistory, setHidePublicVoteHistory] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
@@ -164,8 +166,18 @@ export default function VoteLogsAdminPage() {
 
   const filteredLogs = useMemo(() => {
     const keyword = search.trim().toLowerCase();
+    const projectKeyword = appliedProjectSearch.trim().toLowerCase();
     return logs
       .filter((log) => candidateFilter === 'ALL' || log.candidateSbd === candidateFilter)
+      .filter((log) => {
+        if (!projectKeyword) return true;
+        const projectLabel = `${log.candidateSbd} - ${log.candidateName}`.toLowerCase();
+        return (
+          projectLabel.includes(projectKeyword) ||
+          log.candidateName.toLowerCase().includes(projectKeyword) ||
+          log.candidateSbd.toLowerCase().includes(projectKeyword)
+        );
+      })
       .filter((log) =>
         !keyword ||
         log.voterPhone.toLowerCase().includes(keyword) ||
@@ -174,7 +186,7 @@ export default function VoteLogsAdminPage() {
         log.candidateName.toLowerCase().includes(keyword) ||
         log.candidateSbd.toLowerCase().includes(keyword)
       );
-  }, [candidateFilter, search, logs]);
+  }, [appliedProjectSearch, candidateFilter, search, logs]);
 
   const uniqueCandidates = useMemo(() => {
     const seen = new Set<string>();
@@ -187,6 +199,19 @@ export default function VoteLogsAdminPage() {
     }
     return list.sort((a, b) => a.sbd.localeCompare(b.sbd));
   }, [logs]);
+
+  const applyProjectSearch = () => {
+    setAppliedProjectSearch(projectSearch.trim());
+    setCandidateFilter('ALL');
+    setSelectedIds(new Set());
+  };
+
+  const clearProjectSearch = () => {
+    setProjectSearch('');
+    setAppliedProjectSearch('');
+    setCandidateFilter('ALL');
+    setSelectedIds(new Set());
+  };
 
   const toggleSelectAll = () => {
     if (selectedIds.size === filteredLogs.length) {
@@ -291,16 +316,51 @@ export default function VoteLogsAdminPage() {
 
       {/* Filter card */}
       <section className="rounded-xl border border-[#dce5e1] bg-white shadow-sm">
-        <div className="grid gap-3 border-b border-[#edf2f0] p-4 md:grid-cols-[1fr_260px]">
+        <div className="grid gap-3 border-b border-[#edf2f0] p-4 xl:grid-cols-[minmax(0,1fr)_minmax(260px,360px)_260px]">
           <input
             value={search}
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={(event) => {
+              setSearch(event.target.value);
+              setSelectedIds(new Set());
+            }}
             placeholder="Tìm theo số điện thoại, tên, email cử tri hoặc tên dự án..."
             className="h-10 rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-semibold text-[#18211f] outline-none focus:border-[#0f766e] focus:bg-white"
           />
+          <div className="flex min-w-0 gap-2">
+            <input
+              value={projectSearch}
+              onChange={(event) => setProjectSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault();
+                  applyProjectSearch();
+                }
+              }}
+              list="vote-project-filter-options"
+              placeholder="Tìm dự án theo tên hoặc SBD..."
+              className="h-10 min-w-0 flex-1 rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-semibold text-[#18211f] outline-none focus:border-[#0f766e] focus:bg-white"
+            />
+            <datalist id="vote-project-filter-options">
+              {uniqueCandidates.map((c) => (
+                <option key={c.sbd} value={`${c.sbd} - ${c.name}`} />
+              ))}
+            </datalist>
+            <button
+              type="button"
+              onClick={applyProjectSearch}
+              className="h-10 shrink-0 rounded-lg bg-[#0f766e] px-3.5 text-xs font-bold text-white shadow transition hover:bg-[#0b5f59] active:scale-[0.98]"
+            >
+              Tìm dự án
+            </button>
+          </div>
           <select
             value={candidateFilter}
-            onChange={(event) => setCandidateFilter(event.target.value)}
+            onChange={(event) => {
+              setCandidateFilter(event.target.value);
+              setProjectSearch('');
+              setAppliedProjectSearch('');
+              setSelectedIds(new Set());
+            }}
             className="h-10 rounded-lg border border-[#dce5e1] bg-[#fbfdfc] px-3 text-xs font-bold text-[#52605b] outline-none focus:border-[#0f766e]"
           >
             <option value="ALL">Tất cả dự án</option>
@@ -310,6 +370,20 @@ export default function VoteLogsAdminPage() {
               </option>
             ))}
           </select>
+          {(appliedProjectSearch || candidateFilter !== 'ALL') && (
+            <div className="flex flex-wrap items-center gap-2 xl:col-span-3">
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] font-bold text-emerald-700">
+                Đang lọc dự án: {candidateFilter !== 'ALL' ? `SBD ${candidateFilter}` : appliedProjectSearch}
+              </span>
+              <button
+                type="button"
+                onClick={clearProjectSearch}
+                className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-bold text-slate-500 transition hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+              >
+                Xóa lọc dự án
+              </button>
+            </div>
+          )}
         </div>
 
         {selectedIds.size > 0 && (
