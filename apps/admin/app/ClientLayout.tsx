@@ -989,14 +989,14 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
           <div ref={tabSwitcherRef} className="fixed right-6 top-[118px] z-[80] w-[340px] max-w-[calc(100vw-2rem)] rounded-2xl border border-slate-200 bg-white p-3 shadow-2xl">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <div>
-                <h3 className="text-xs font-extrabold text-slate-900">Danh sach tab dang mo</h3>
-                <p className="text-[11px] font-medium text-slate-500">Chuyen nhanh hoac dong bot trang</p>
+                <h3 className="text-xs font-extrabold text-slate-900">Danh sách tab đang mở</h3>
+                <p className="text-[11px] font-medium text-slate-500">Chuyển nhanh hoặc đóng bớt trang</p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsTabModalOpen(false)}
                 className="grid h-7 w-7 place-items-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition"
-                aria-label="Dong"
+                aria-label="Đóng"
               >
                 x
               </button>
@@ -1022,7 +1022,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                       <span className="truncate text-xs font-bold">{tab.label}</span>
                       {active && (
                         <span className="rounded-md bg-blue-600 px-1.5 py-0.5 text-[9px] font-black text-white uppercase">
-                          Dang xem
+                          Đang xem
                         </span>
                       )}
                     </div>
@@ -1031,7 +1031,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
                         type="button"
                         onClick={(e) => closeTab(e, tab.href)}
                         className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-rose-100 hover:text-rose-600 transition"
-                        title="Dong tab nay"
+                        title="Đóng tab này"
                       >
                         x
                       </button>
@@ -1044,17 +1044,17 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
             <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-xs">
               {openTabs.length > 1 ? (
                 <button type="button" onClick={closeOtherTabs} className="font-bold text-rose-600 hover:underline">
-                  Dong cac tab khac
+                  Đóng các tab khác
                 </button>
               ) : (
-                <span className="text-[11px] text-slate-400">Dang chi mo 1 tab</span>
+                <span className="text-[11px] text-slate-400">Đang chỉ mở 1 tab</span>
               )}
               <button
                 type="button"
                 onClick={() => setIsTabModalOpen(false)}
                 className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800 transition"
               >
-                Dong
+                Đóng
               </button>
             </div>
           </div>

@@ -329,7 +329,7 @@ export class AppService implements OnModuleInit {
     return {
       id: 'free-daily-vote',
       code: 'FREE_DAILY_VOTE',
-      name: '1 lÆ°á»£t bÃ¬nh chá»n',
+      name: '1 lượt bình chọn',
       points: 1,
       price: 0,
       currency: 'VND',
@@ -917,14 +917,14 @@ export class AppService implements OnModuleInit {
 
   async voteCandidate(sbd: string, body: any = {}, authHeader?: string): Promise<any> {
     if (!this.settings.isGateOpen) {
-      throw new BadRequestException('C???ng b??nh ch???n hi???n ??ang ????ng ho???c ch??a ?????n th???i gian m??? c???ng.');
+      throw new BadRequestException('Cổng bình chọn hiện đang đóng hoặc chưa đến thời gian mở cổng.');
     }
 
     const candidate = await this.prisma.candidate.findUnique({
       where: { sbd },
     });
     if (!candidate) {
-      throw new NotFoundException(`Kh??ng t??m th???y th?? sinh v???i SBD ${sbd}`);
+      throw new NotFoundException(`Không tìm thấy thí sinh với SBD ${sbd}`);
     }
 
     const selectedPackage = this.getFreeVotePackage();
@@ -937,19 +937,19 @@ export class AppService implements OnModuleInit {
     }
 
     if (!userId) {
-      throw new UnauthorizedException('B??nh ch???n mi???n ph?? y??u c???u ????ng nh???p t??i kho???n h???p l???.');
+      throw new UnauthorizedException('Bình chọn miễn phí yêu cầu đăng nhập tài khoản hợp lệ.');
     }
 
     const webUser = await this.prisma.webUser.findUnique({
       where: { id: userId },
     });
     if (!webUser || webUser.status === 'LOCKED') {
-      throw new UnauthorizedException('T??i kho???n ng?????i d??ng kh??ng t???n t???i ho???c ???? b??? kh??a.');
+      throw new UnauthorizedException('Tài khoản người dùng không tồn tại hoặc đã bị khóa.');
     }
 
     const quota = await this.getFreeVoteQuotaSecure(webUser);
     if (quota.remaining <= 0) {
-      throw new BadRequestException('T??i kho???n ???? d??ng h???t 2 l?????t b??nh ch???n trong ng??y h??m nay.');
+      throw new BadRequestException('Tài khoản đã dùng hết 2 lượt bình chọn trong ngày hôm nay.');
     }
 
     const updatedCandidate = await this.prisma.$transaction(async (tx: any) => {
