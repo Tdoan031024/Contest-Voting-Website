@@ -375,44 +375,33 @@ export default function SponsorsAdminPage() {
           <h1 className="text-lg font-black text-[#123c34]">Nhà tài trợ &amp; Đối tác</h1>
           <p className="text-xs text-[#6b7773] mt-0.5">Danh sách nhà tài trợ đồng hành cùng sự kiện HUIT Startup 2026.</p>
         </div>
-        <button
-          onClick={openAddModal}
-          className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 rounded-xl text-white font-extrabold text-xs shadow transition active:scale-[0.98]"
-        >
-          + Thêm nhà tài trợ mới
-        </button>
-      </div>
-
-      {/* Sponsor Banner Toggle Card */}
-      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="grid h-10 w-10 place-items-center rounded-xl bg-amber-500/10 text-amber-600 font-bold text-lg">
-            {hideSponsorBanner ? '🙈' : '👁️'}
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-extrabold text-slate-800">Hiển thị Banner &amp; Logo Nhà tài trợ trên Trang chủ</h3>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${hideSponsorBanner ? 'bg-rose-50 text-rose-600 border border-rose-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                }`}>
-                {hideSponsorBanner ? 'ĐANG ẨN' : 'ĐANG HIỂN THỊ'}
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 mt-0.5">Kích hoạt nút này để Bật hoặc Ẩn toàn bộ phần banner và logo chạy ngang nhà tài trợ ngoài trang chủ công khai.</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          disabled={savingToggle}
-          onClick={handleToggleHideSponsorBanner}
-          className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${!hideSponsorBanner ? 'bg-emerald-600' : 'bg-slate-300'
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            disabled={savingToggle}
+            onClick={handleToggleHideSponsorBanner}
+            className={`inline-flex h-10 items-center gap-2 rounded-xl border px-3 text-xs font-bold shadow-sm transition active:scale-[0.98] disabled:opacity-60 ${
+              hideSponsorBanner
+                ? 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100'
+                : 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
             }`}
-          title={hideSponsorBanner ? 'Hiện banner nhà tài trợ' : 'Ẩn banner nhà tài trợ'}
-        >
-          <span
-            className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${!hideSponsorBanner ? 'translate-x-5' : 'translate-x-0'
-              }`}
-          />
-        </button>
+            title={hideSponsorBanner ? 'Hiện banner và logo nhà tài trợ trên trang chủ' : 'Ẩn banner và logo nhà tài trợ trên trang chủ'}
+          >
+            <span className={`relative inline-flex h-5 w-9 items-center rounded-full transition ${!hideSponsorBanner ? 'bg-emerald-600' : 'bg-slate-300'}`}>
+              <span className={`h-4 w-4 rounded-full bg-white shadow transition ${!hideSponsorBanner ? 'translate-x-4' : 'translate-x-0.5'}`} />
+            </span>
+            <span className="whitespace-nowrap">Banner &amp; Logo</span>
+            <span className="whitespace-nowrap text-[10px] font-black">
+              {hideSponsorBanner ? 'Đang ẩn' : 'Đang hiện'}
+            </span>
+          </button>
+          <button
+            onClick={openAddModal}
+            className="h-10 px-4 bg-emerald-700 hover:bg-emerald-800 rounded-xl text-white font-extrabold text-xs shadow transition active:scale-[0.98]"
+          >
+            + Thêm nhà tài trợ mới
+          </button>
+        </div>
       </div>
 
       {/* Controls Bar: Search + Popover View Config Button */}
